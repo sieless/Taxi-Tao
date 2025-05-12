@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taxitao Services - Quick & Reliable Rides</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            300: '#86efac',
+                            400: '#4ade80',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .hero-bg {
+            background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1502224562085-639556652f33?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed; /* Note: fixed background can have performance/rendering issues on some mobile devices */
+        }
+        .taxi-card {
+            transition: all 0.3s ease;
+        }
+        .taxi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+            }
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+            }
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+            }
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px; /* full pill shape */
+            font-size: 0.75rem; /* text-xs */
+            font-weight: 600;
+            line-height: 1;
+        }
+        .status-available {
+            background-color: #dcfce7; /* primary-100 */
+            color: #166534; /* primary-800 */
+        }
+        .status-in-use {
+            background-color: #fee2e2; /* red-100 */
+            color: #991b1b; /* red-800 */
+        }
+        .status-out-of-area {
+            background-color: #fef9c3; /* yellow-100 */
+            color: #854d0e; /* yellow-800 */
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .whatsapp-btn {
+            background-color: #25D366;
+        }
+        .whatsapp-btn:hover {
+            background-color: #128C7E;
+        }
+        /* Reduce margins from full screen for the main content container */
+        .main-container {
+            max-width: 1280px; /* You can adjust this value */
+            margin-left: auto;
+            margin-right: auto;
+        }
+        /* Ensure images in taxi cards are responsive and maintain aspect ratio */
+        .taxi-image {
+            width: 100%;
+            height: 200px; /* Fixed height for uniformity */
+            object-fit: cover; /* Cover the area, cropping if necessary */
+        }
+    </style>
+</head>
+<body class="font-sans bg-gray-50">
+
+    <nav class="bg-primary-700 text-white shadow-lg sticky top-0 z-50">
+        <div class="main-container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-taxi text-2xl"></i>
+                <a href="#home" class="text-xl font-bold">taxitao</a>
+            </div>
+            <div class="hidden md:flex space-x-6 items-center">
+                <a href="#home" class="hover:text-primary-200 transition">Home</a>
+                <a href="#services" class="hover:text-primary-200 transition">Services</a>
+                <a href="#taxis" class="hover:text-primary-200 transition">Available Taxis</a>
+                <a href="#about" class="hover:text-primary-200 transition">About</a>
+                <a href="#contact" class="hover:text-primary-200 transition">Contact</a>
+                <a href="tel:+254708674665" class="bg-white text-primary-700 px-4 py-1 rounded-full font-medium hover:bg-gray-100 transition flex items-center">
+                    <i class="fas fa-phone mr-1"></i> Call Now
+                </a>
+            </div>
+            <div class="md:hidden">
+                <button class="mobile-menu-button focus:outline-none">
+                    <i class="fas fa-bars text-2xl"></i>
+                </button>
+            </div>
+        </div>
+        <div class="mobile-menu hidden md:hidden bg-primary-800">
+            <div class="main-container mx-auto px-4 py-2">
+                <a href="#home" class="block py-2 hover:bg-primary-700 transition px-2 mobile-menu-link">Home</a>
+                <a href="#services" class="block py-2 hover:bg-primary-700 transition px-2 mobile-menu-link">Services</a>
+                <a href="#taxis" class="block py-2 hover:bg-primary-700 transition px-2 mobile-menu-link">Available Taxis</a>
+                <a href="#about" class="block py-2 hover:bg-primary-700 transition px-2 mobile-menu-link">About</a>
+                <a href="#contact" class="block py-2 hover:bg-primary-700 transition px-2 mobile-menu-link">Contact</a>
+                <a href="tel:+254708674665" class="block py-2 hover:bg-primary-700 transition px-2 mt-2 border-t border-primary-700 pt-2">
+                    <i class="fas fa-phone mr-2"></i> Call Now
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <section id="home" class="hero-bg text-white py-20 md:py-32">
+        <div class="main-container mx-auto px-4 text-center">
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 fade-in">Quick & Reliable Taxi Services</h1>
+            <p class="text-xl md:text-2xl mb-8 max-w-3xl mx-auto fade-in" style="animation-delay: 0.2s;">Experience seamless transportation with taxitao's professional drivers and well-maintained vehicles in Machakos.</p>
+            <div class="flex flex-col md:flex-row justify-center gap-4 fade-in" style="animation-delay: 0.4s;">
+                <a href="#booking" class="bg-primary-500 hover:bg-primary-600 text-white font-bold py-4 px-8 rounded-full text-lg transition flex items-center justify-center gap-2 pulse">
+                    <i class="fas fa-calendar-check"></i> Book Online
+                </a>
+                <a href="tel:+254708674665" class="bg-white hover:bg-gray-100 text-primary-600 font-bold py-4 px-8 rounded-full text-lg transition flex items-center justify-center gap-2">
+                    <i class="fas fa-phone"></i> Call Now
+                </a>
+            </div>
+            <div class="mt-12 flex flex-wrap justify-center gap-4 fade-in" style="animation-delay: 0.6s;">
+                <div class="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-4 border border-white border-opacity-20 text-center w-32">
+                    <i class="fas fa-clock text-2xl mb-2 text-primary-300"></i>
+                    <p class="font-semibold text-sm">24/7 Service</p>
+                </div>
+                <div class="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-4 border border-white border-opacity-20 text-center w-32">
+                    <i class="fas fa-car text-2xl mb-2 text-primary-300"></i>
+                    <p class="font-semibold text-sm">Clean Vehicles</p>
+                </div>
+                <div class="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-4 border border-white border-opacity-20 text-center w-32">
+                    <i class="fas fa-shield-alt text-2xl mb-2 text-primary-300"></i>
+                    <p class="font-semibold text-sm">Safe Rides</p>
+                </div>
+                <div class="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-4 border border-white border-opacity-20 text-center w-32">
+                    <i class="fas fa-wallet text-2xl mb-2 text-primary-300"></i>
+                    <p class="font-semibold text-sm">Affordable Prices</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="booking" class="bg-white py-16">
+        <div class="main-container mx-auto px-4">
+            <div class="max-w-4xl mx-auto bg-primary-50 rounded-xl shadow-lg overflow-hidden">
+                <div class="p-6 md:p-8">
+                    <h2 class="text-3xl font-bold text-primary-700 mb-2">Book Your Taxi Now</h2>
+                    <p class="text-gray-600 mb-6">Fill in the details below to request a taxi via WhatsApp</p>
+
+                    <form id="bookingForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-gray-700 mb-2 font-medium" for="name">Your Name</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-user text-gray-400"></i>
+                                </div>
+                                <input type="text" id="name" name="name" placeholder="Enter your full name" required
+                                    class="w-full pl-10 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2 font-medium" for="phone">Phone Number</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-phone text-gray-400"></i>
+                                </div>
+                                <input type="tel" id="phone" name="phone" placeholder="Enter your phone number" required
+                                    class="w-full pl-10 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2 font-medium" for="pickup">Pickup Location</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-map-marker-alt text-gray-400"></i>
+                                </div>
+                                <input type="text" id="pickup" name="pickup" placeholder="Enter pickup address" required
+                                    class="w-full pl-10 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2 font-medium" for="destination">Destination</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-flag text-gray-400"></i>
+                                </div>
+                                <input type="text" id="destination" name="destination" placeholder="Enter destination" required
+                                    class="w-full pl-10 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2 font-medium" for="date">Pickup Date</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-calendar-day text-gray-400"></i>
+                                </div>
+                                <input type="date" id="date" name="date" required
+                                    class="w-full pl-10 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2 font-medium" for="time">Pickup Time</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-clock text-gray-400"></i>
+                                </div>
+                                <input type="time" id="time" name="time" required
+                                    class="w-full pl-10 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                            </div>
+                        </div>
+                        <div class="md:col-span-2">
+                            <button type="button" id="whatsappBookingBtn" class="w-full whatsapp-btn hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg transition flex items-center justify-center gap-2">
+                                <i class="fab fa-whatsapp text-xl"></i> Book via WhatsApp
+                            </button>
+                        </div>
+                    </form>
+                    <p id="bookingStatus" class="mt-4 text-center"></p>
+                </div>
+                <div class="bg-primary-100 border-t border-primary-200 p-4 text-center">
+                    <p class="text-primary-700">Need immediate service? <a href="tel:+254708674665" class="font-semibold hover:underline">Call us now!</a></p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="taxis" class="py-16 bg-gray-50">
+        <div class="main-container mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center mb-4">Available Taxis Near You</h2>
+            <p class="text-xl text-center text-gray-600 mb-12 max-w-2xl mx-auto">Our fleet of professional drivers ready to serve you in Machakos.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="taxiGrid">
+                <div class="taxi-card bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
+                    <img src="http://googleusercontent.com/image_generation_content/5" alt="Standard Saloon Taxi" class="taxi-image" onerror="this.onerror=null;this.src='https://placehold.co/600x400/22c55e/FFFFFF?text=Standard+Taxi';">
+                    <div class="p-6 flex flex-col flex-grow">
+                        <div class="flex justify-between items-start mb-3">
+                            <h3 class="text-xl font-bold text-gray-800">Standard Saloon</h3>
+                            <span class="status-badge status-available">Available</span>
+                        </div>
+                        <p class="text-gray-600 mb-1 text-sm">Driver: <span class="font-medium">John K.</span></p>
+                        <p class="text-gray-600 mb-1 text-sm">Capacity: <span class="font-medium">4 Passengers</span></p>
+                        <p class="text-gray-600 mb-4 text-sm">Features: <span class="font-medium">Air Conditioned, Radio</span></p>
+                        <div class="mt-auto">
+                             <a href="tel:+254708674665" class="w-full bg-primary-500 hover:bg-primary-600 text-white font-semibold py-2 px-4 rounded-lg transition flex items-center justify-center gap-2 text-sm">
+                                <i class="fas fa-phone"></i> Call to Book
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="taxi-card bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
+                    <img src="http://googleusercontent.com/image_generation_content/3" alt="Executive Sedan Taxi" class="taxi-image" onerror="this.onerror=null;this.src='https://placehold.co/600x400/16a34a/FFFFFF?text=Executive+Ride';">
+                    <div class="p-6 flex flex-col flex-grow">
+                        <div class="flex justify-between items-start mb-3">
+                            <h3 class="text-xl font-bold text-gray-800">Executive Sedan</h3>
+                            <span class="status-badge status-available">Available</span>
+                        </div>
+                        <p class="text-gray-600 mb-1 text-sm">Driver: <span class="font-medium">Alice M.</span></p>
+                        <p class="text-gray-600 mb-1 text-sm">Capacity: <span class="font-medium">4 Passengers</span></p>
+                        <p class="text-gray-600 mb-4 text-sm">Features: <span class="font-medium">Leather Seats, Premium Sound, WiFi</span></p>
+                         <div class="mt-auto">
+                             <a href="tel:+254708674665" class="w-full bg-primary-500 hover:bg-primary-600 text-white font-semibold py-2 px-4 rounded-lg transition flex items-center justify-center gap-2 text-sm">
+                                <i class="fas fa-phone"></i> Call to Book
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="taxi-card bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
+                     <img src="http://googleusercontent.com/image_generation_content/4" alt="Group Van Taxi" class="taxi-image" onerror="this.onerror=null;this.src='https://placehold.co/600x400/15803d/FFFFFF?text=Group+Van';">
+                    <div class="p-6 flex flex-col flex-grow">
+                        <div class="flex justify-between items-start mb-3">
+                            <h3 class="text-xl font-bold text-gray-800">Group Van</h3>
+                             <span class="status-badge status-in-use">In Use</span>
+                        </div>
+                        <p class="text-gray-600 mb-1 text-sm">Driver: <span class="font-medium">Peter O.</span></p>
+                        <p class="text-gray-600 mb-1 text-sm">Capacity: <span class="font-medium">7 Passengers</span></p>
+                        <p class="text-gray-600 mb-4 text-sm">Features: <span class="font-medium">Spacious, Luggage Room</span></p>
+                         <div class="mt-auto">
+                             <a href="tel:+254708674665" class="w-full bg-gray-400 text-white font-semibold py-2 px-4 rounded-lg transition flex items-center justify-center gap-2 text-sm cursor-not-allowed" disabled>
+                                <i class="fas fa-phone-slash"></i> Currently Unavailable
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="services" class="py-16 bg-white">
+        <div class="main-container mx-auto px-4">
+            <div class="text-center mb-12">
+                <span class="inline-block bg-primary-100 text-primary-700 px-4 py-1 rounded-full text-sm font-semibold mb-3">OUR SERVICES</span>
+                <h2 class="text-3xl font-bold mb-4">Custom Transportation Solutions</h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">We offer a variety of services to meet all your transportation needs</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="taxi-card bg-white rounded-xl shadow-md overflow-hidden transition duration-300 border border-gray-100 hover:border-primary-200 flex flex-col">
+                    <div class="h-48 bg-primary-50 flex items-center justify-center relative">
+                        <i class="fas fa-taxi text-6xl text-primary-600"></i>
+                        <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-400 to-primary-600"></div>
+                    </div>
+                    <div class="p-6 flex flex-col flex-grow">
+                        <div class="flex justify-between items-start mb-3">
+                            <h3 class="text-xl font-bold">Standard Taxi</h3>
+                            <span class="status-badge status-available">Available</span>
+                        </div>
+                        <p class="text-gray-600 mb-4 flex-grow">Affordable and comfortable rides for individuals and small groups around Machakos town.</p>
+                        <div class="flex justify-between items-center mt-auto">
+                            <span class="font-bold text-primary-600">From KES 300</span>
+                            <a href="#booking" class="text-primary-600 hover:text-primary-700 font-semibold flex items-center">
+                                Book <i class="fas fa-arrow-right ml-1 text-xs"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="taxi-card bg-white rounded-xl shadow-md overflow-hidden transition duration-300 border border-gray-100 hover:border-primary-200 flex flex-col">
+                    <div class="h-48 bg-primary-50 flex items-center justify-center relative">
+                        <i class="fas fa-car-alt text-6xl text-primary-600"></i>
+                        <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-400 to-primary-600"></div>
+                    </div>
+                    <div class="p-6 flex flex-col flex-grow">
+                        <div class="flex justify-between items-start mb-3">
+                            <h3 class="text-xl font-bold">Executive Ride</h3>
+                            <span class="status-badge status-available">Available</span>
+                        </div>
+                        <p class="text-gray-600 mb-4 flex-grow">Premium vehicles with professional drivers for business meetings, events or special occasions.</p>
+                        <div class="flex justify-between items-center mt-auto">
+                            <span class="font-bold text-primary-600">From KES 800</span>
+                             <a href="#booking" class="text-primary-600 hover:text-primary-700 font-semibold flex items-center">
+                                Book <i class="fas fa-arrow-right ml-1 text-xs"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="taxi-card bg-white rounded-xl shadow-md overflow-hidden transition duration-300 border border-gray-100 hover:border-primary-200 flex flex-col">
+                    <div class="h-48 bg-primary-50 flex items-center justify-center relative">
+                        <i class="fas fa-shuttle-van text-6xl text-primary-600"></i>
+                        <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-400 to-primary-600"></div>
+                    </div>
+                    <div class="p-6 flex flex-col flex-grow">
+                        <div class="flex justify-between items-start mb-3">
+                            <h3 class="text-xl font-bold">Group Transport</h3>
+                            <span class="status-badge status-available">Available</span>
+                        </div>
+                        <p class="text-gray-600 mb-4 flex-grow">Minibuses and vans for larger groups, events, school trips, or corporate outings.</p>
+                        <div class="flex justify-between items-center mt-auto">
+                            <span class="font-bold text-primary-600">From KES 1,500</span>
+                             <a href="#booking" class="text-primary-600 hover:text-primary-700 font-semibold flex items-center">
+                                Book <i class="fas fa-arrow-right ml-1 text-xs"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="bg-primary-600 text-white py-16">
+        <div class="main-container mx-auto px-4 text-center">
+            <div class="max-w-4xl mx-auto">
+                <div class="inline-block bg-white text-primary-600 rounded-full p-4 mb-6 shadow-lg">
+                    <i class="fas fa-headset text-4xl"></i>
+                </div>
+                <h2 class="text-3xl font-bold mb-6">24/7 Call Center</h2>
+                <p class="text-xl mb-8 max-w-2xl mx-auto">Our friendly operators are available round the clock to assist with your taxi bookings and inquiries.</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+                     <div class="bg-white text-primary-600 rounded-lg p-6 shadow-lg transform transition hover:scale-105">
+                        <div class="text-2xl font-bold mb-2">
+                            <i class="fas fa-phone mr-2"></i> +254 708 674 665
+                        </div>
+                        <p class="text-sm text-gray-600">Primary Booking Line</p>
+                        <a href="tel:+254708674665" class="inline-block mt-3 text-sm bg-primary-100 hover:bg-primary-200 px-3 py-1 rounded-full transition text-primary-700 font-medium">Call Now</a>
+                    </div>
+                    <div class="bg-white text-primary-600 rounded-lg p-6 shadow-lg transform transition hover:scale-105">
+                        <div class="text-2xl font-bold mb-2">
+                            <i class="fas fa-phone mr-2"></i> +254 723 456 789
+                        </div>
+                        <p class="text-sm text-gray-600">Customer Support</p>
+                        <a href="tel:+254723456789" class="inline-block mt-3 text-sm bg-primary-100 hover:bg-primary-200 px-3 py-1 rounded-full transition text-primary-700 font-medium">Call Now</a>
+                    </div>
+                     <div class="bg-white text-primary-600 rounded-lg p-6 shadow-lg transform transition hover:scale-105">
+                        <div class="text-2xl font-bold mb-2">
+                            <i class="fas fa-phone mr-2"></i> +254 734 567 890
+                        </div>
+                        <p class="text-sm text-gray-600">Corporate Bookings</p>
+                         <a href="tel:+254734567890" class="inline-block mt-3 text-sm bg-primary-100 hover:bg-primary-200 px-3 py-1 rounded-full transition text-primary-700 font-medium">Call Now</a>
+                    </div>
+                </div>
+
+                <div class="mt-12">
+                     <a href="tel:+254708674665" class="inline-flex items-center bg-white text-primary-600 rounded-full p-4 pulse shadow-lg">
+                        <i class="fas fa-phone-volume text-2xl mr-3"></i>
+                        <span class="text-xl font-bold">CALL NOW FOR IMMEDIATE SERVICE</span>
+                     </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="testimonials" class="py-16 bg-gray-50">
+        <div class="main-container mx-auto px-4">
+            <div class="text-center mb-12">
+                <span class="inline-block bg-primary-100 text-primary-700 px-4 py-1 rounded-full text-sm font-semibold mb-3">TESTIMONIALS</span>
+                <h2 class="text-3xl font-bold mb-4">What Our Customers Say</h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">Hear from people who have used our services</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-bold mr-4 text-lg">JK</div>
+                        <div>
+                            <h4 class="font-bold text-gray-800">James Kariuki</h4>
+                            <div class="flex text-yellow-400 text-sm">
+                                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 italic">"I use taxitao daily for my commute. They're always on time and the drivers are very professional. Highly recommend!"</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-bold mr-4 text-lg">AW</div>
+                        <div>
+                            <h4 class="font-bold text-gray-800">Ann Wanjiru</h4>
+                            <div class="flex text-yellow-400 text-sm">
+                                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 italic">"The executive ride service is excellent for business meetings. Clean cars, punctual, and the drivers know all the best routes."</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-bold mr-4 text-lg">DM</div>
+                        <div>
+                            <h4 class="font-bold text-gray-800">David Mwangi</h4>
+                            <div class="flex text-yellow-400 text-sm">
+                                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 italic">"Booked a van for our family outing and everything was perfect. The driver was patient and very helpful. Will definitely use taxitao again."</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="about" class="py-16 bg-white">
+        <div class="main-container mx-auto px-4">
+            <div class="flex flex-col lg:flex-row items-center gap-12">
+                <div class="lg:w-1/2">
+                    <img src="https://images.unsplash.com/photo-1552915217-7d8b72884e81?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
+                         alt="Friendly taxi driver" class="rounded-xl shadow-lg w-full object-cover h-80 lg:h-auto">
+                </div>
+                <div class="lg:w-1/2">
+                    <span class="inline-block bg-primary-100 text-primary-700 px-4 py-1 rounded-full text-sm font-semibold mb-3">ABOUT US</span>
+                    <h2 class="text-3xl font-bold mb-6 text-gray-800">Your Trusted Taxi Service in Machakos</h2>
+                    <p class="text-gray-600 mb-4 leading-relaxed">Taxitao has been providing reliable transportation services to residents and visitors of Machakos County since 2015. We take pride in our commitment to safety, comfort, and excellent customer service.</p>
+                    <p class="text-gray-600 mb-6 leading-relaxed">Our fleet of well-maintained vehicles and professional, vetted drivers ensure that you reach your destination on time, every time. We operate 24/7 to meet all your transportation needs, day or night.</p>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="flex items-center">
+                            <div class="bg-primary-100 p-2 rounded-full mr-3 flex-shrink-0"><i class="fas fa-check text-primary-600"></i></div>
+                            <p class="text-gray-700">Professional Drivers</p>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="bg-primary-100 p-2 rounded-full mr-3 flex-shrink-0"><i class="fas fa-check text-primary-600"></i></div>
+                            <p class="text-gray-700">Well-Maintained Vehicles</p>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="bg-primary-100 p-2 rounded-full mr-3 flex-shrink-0"><i class="fas fa-check text-primary-600"></i></div>
+                            <p class="text-gray-700">24/7 Customer Support</p>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="bg-primary-100 p-2 rounded-full mr-3 flex-shrink-0"><i class="fas fa-check text-primary-600"></i></div>
+                            <p class="text-gray-700">Many Satisfied Customers</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact" class="py-16 bg-gray-50">
+        <div class="main-container mx-auto px-4">
+            <div class="text-center mb-12">
+                <span class="inline-block bg-primary-100 text-primary-700 px-4 py-1 rounded-full text-sm font-semibold mb-3">CONTACT US</span>
+                <h2 class="text-3xl font-bold mb-4">Get In Touch</h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">Have questions or feedback? We'd love to hear from you.</p>
+            </div>
+
+            <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h3 class="text-xl font-bold mb-4 text-gray-800">Contact Information</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-start">
+                            <div class="bg-primary-100 p-3 rounded-full mr-4 flex-shrink-0 w-10 h-10 flex items-center justify-center">
+                                <i class="fas fa-map-marker-alt text-primary-600"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-700">Address</h4>
+                                <p class="text-gray-600">Taxitao Office, Main Stage, Next to Post Office, Machakos Town, Kenya</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="bg-primary-100 p-3 rounded-full mr-4 flex-shrink-0 w-10 h-10 flex items-center justify-center">
+                                <i class="fas fa-phone-alt text-primary-600"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-700">Phone</h4>
+                                <p class="text-gray-600"><a href="tel:+254708674665" class="hover:text-primary-600">+254 708 674 665</a> (Booking)</p>
+                                <p class="text-gray-600"><a href="tel:+254723456789" class="hover:text-primary-600">+254 723 456 789</a> (Support)</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                             <div class="bg-primary-100 p-3 rounded-full mr-4 flex-shrink-0 w-10 h-10 flex items-center justify-center">
+                                <i class="fas fa-envelope text-primary-600"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-700">Email</h4>
+                                <p class="text-gray-600"><a href="mailto:info@taxitao.co.ke" class="hover:text-primary-600">info@taxitao.co.ke</a></p>
+                                <p class="text-gray-600"><a href="mailto:support@taxitao.co.ke" class="hover:text-primary-600">support@taxitao.co.ke</a></p>
+                            </div>
+                        </div>
+                         <div class="flex items-start">
+                             <div class="bg-primary-100 p-3 rounded-full mr-4 flex-shrink-0 w-10 h-10 flex items-center justify-center">
+                                <i class="fas fa-clock text-primary-600"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-700">Operating Hours</h4>
+                                <p class="text-gray-600">24 hours a day, 7 days a week</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h3 class="text-xl font-bold mb-4 text-gray-800">Our Location</h3>
+                    <div class="aspect-w-16 aspect-h-9">
+                        <iframe
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d31909.003477707707!2d37.24992989018939!3d-1.519029111659155!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x182f184895333521%3A0x5629b13615536985!2sMachakos!5e0!3m2!1sen!2ske!4v1678886000000!5m2!1sen!2ske"
+                            width="100%" height="300" style="border:0; border-radius: 0.5rem;" allowfullscreen="" loading="lazy"
+                            referrerpolicy="no-referrer-when-downgrade" title="Machakos Location"></iframe>
+                    </div>
+                     <p class="text-sm text-gray-500 mt-2">Find us easily in Machakos Town.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-primary-800 text-primary-200 py-12">
+        <div class="main-container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+                <div>
+                    <h4 class="text-lg font-semibold text-white mb-3">taxitao</h4>
+                    <p class="text-sm">Your reliable partner for quick and safe rides in Machakos. Available 24/7.</p>
+                    <div class="mt-4 flex space-x-3">
+                        <a href="#" class="text-primary-200 hover:text-white transition"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-primary-200 hover:text-white transition"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-primary-200 hover:text-white transition"><i class="fab fa-instagram"></i></a>
+                        <a href="https://wa.me/254708674665" target="_blank" class="text-primary-200 hover:text-white transition"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold text-white mb-3">Quick Links</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#home" class="hover:text-white transition">Home</a></li>
+                        <li><a href="#services" class="hover:text-white transition">Our Services</a></li>
+                        <li><a href="#taxis" class="hover:text-white transition">Available Taxis</a></li>
+                        <li><a href="#booking" class="hover:text-white transition">Book Now</a></li>
+                        <li><a href="#about" class="hover:text-white transition">About Us</a></li>
+                        <li><a href="#contact" class="hover:text-white transition">Contact Us</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold text-white mb-3">Contact Info</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><i class="fas fa-map-marker-alt mr-2"></i> Machakos Town, Kenya</li>
+                        <li><i class="fas fa-phone-alt mr-2"></i> <a href="tel:+254708674665" class="hover:text-white transition">+254 708 674 665</a></li>
+                        <li><i class="fas fa-envelope mr-2"></i> <a href="mailto:info@taxitao.co.ke" class="hover:text-white transition">info@taxitao.co.ke</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-primary-700 pt-8 text-center text-sm">
+                <p>&copy; <span id="currentYear"></span> Taxitao Services. All Rights Reserved. Designed with <i class="fas fa-heart text-red-500"></i> in Machakos.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu toggle
+        const menuButton = document.querySelector('.mobile-menu-button');
+        const mobileMenu = document.querySelector('.mobile-menu');
+        const mobileMenuLinks = document.querySelectorAll('.mobile-menu-link');
+
+        if (menuButton && mobileMenu) {
+            menuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            // Close mobile menu when a link is clicked
+            mobileMenuLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    mobileMenu.classList.add('hidden');
+                });
+            });
+        }
+
+
+        // Set min date for date input to today
+        const dateInput = document.getElementById('date');
+        if (dateInput) {
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.setAttribute('min', today);
+        }
+
+        // WhatsApp Booking Form
+        const bookingForm = document.getElementById('bookingForm');
+        const whatsappBookingBtn = document.getElementById('whatsappBookingBtn');
+        const bookingStatus = document.getElementById('bookingStatus');
+        const businessPhoneNumber = "+254708674665"; // Replace with your business WhatsApp number
+
+        if (bookingForm && whatsappBookingBtn && bookingStatus) {
+            whatsappBookingBtn.addEventListener('click', () => {
+                // Basic form validation
+                const name = document.getElementById('name').value.trim();
+                const phone = document.getElementById('phone').value.trim();
+                const pickup = document.getElementById('pickup').value.trim();
+                const destination = document.getElementById('destination').value.trim();
+                const date = document.getElementById('date').value;
+                const time = document.getElementById('time').value; 
+            
+                if (!name || !phone || !pickup || !destination || !date || !time) {
+                    bookingStatus.textContent = 'Please fill in all required fields.';
+                    bookingStatus.className = 'mt-4 text-center text-red-600 font-semibold';
+                    // Highlight empty fields (optional)
+                    Array.from(bookingForm.elements).forEach(el => {
+                        if (el.required && !el.value) {
+                            el.classList.add('border-red-500');
+                            el.classList.remove('border-gray-300');
+                        } else {
+                             el.classList.remove('border-red-500');
+                             el.classList.add('border-gray-300');
+                        }
+                    });
+                    return;
+                }
+                 // Clear previous error states
+                bookingStatus.textContent = '';
+                bookingStatus.className = 'mt-4 text-center';
+                 Array.from(bookingForm.elements).forEach(el => {
+                    el.classList.remove('border-red-500');
+                    if(el.type !== 'button') el.classList.add('border-gray-300');
+                });
+
+
+                // Format date for better readability
+                const pickupDate = new Date(date);
+                const formattedDate = pickupDate.toLocaleDateString('en-GB', {
+                    day: 'numeric', month: 'short', year: 'numeric'
+                });
+
+
+                const message = `*New Taxi Booking Request*:\n\n` +
+                                `*Name*: ${name}\n` +
+                                `*Phone*: ${phone}\n` +
+                                `*Pickup Location*: ${pickup}\n` +
+                                `*Destination*: ${destination}\n` +
+                                `*Date*: ${formattedDate}\n` +
+                                `*Time*: ${time}\n\n` +
+                                `Please confirm availability.`;
+
+                const whatsappUrl = `https://wa.me/${businessPhoneNumber}?text=${encodeURIComponent(message)}`;
+
+                // Open WhatsApp
+                window.open(whatsappUrl, '_blank');
+
+                bookingStatus.textContent = 'Your booking request is being redirected to WhatsApp...';
+                bookingStatus.className = 'mt-4 text-center text-green-600 font-semibold';
+                // bookingForm.reset(); // Optionally reset form
+            });
+        }
+
+        // Set current year in footer
+        const currentYearElement = document.getElementById('currentYear');
+        if (currentYearElement) {
+            currentYearElement.textContent = new Date().getFullYear();
+        }
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+    </script>
+</body>
+</html>
