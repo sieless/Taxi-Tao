@@ -111,7 +111,9 @@
     <nav class="bg-primary-700 text-white shadow-lg sticky top-0 z-50">
         <div class="main-container mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-2">
-                <i class="fas fa-taxi text-2xl"></i>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M5 11h14l-1.68-5.04A2 2 0 0 0 15.38 4H8.62a2 2 0 0 0-1.94 1.46L5 11zm14 2H5a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-1h10v1a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-5a1 1 0 0 0-1-1zm-11 4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm8 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
+                </svg>
                 <a href="#home" class="text-xl font-bold">taxitao</a>
             </div>
             <div class="hidden md:flex space-x-6 items-center">
@@ -266,7 +268,7 @@
             <p class="text-xl text-center text-gray-600 mb-12 max-w-2xl mx-auto">Our fleet of professional drivers ready to serve you in Machakos.</p>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="taxiGrid">
                 <div class="taxi-card bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
-                    <img src="http://googleusercontent.com/image_generation_content/5" alt="Standard Saloon Taxi" class="taxi-image" onerror="this.onerror=null;this.src='https://placehold.co/600x400/22c55e/FFFFFF?text=Standard+Taxi';">
+                    <img src="assets/images/standard-saloon1.jpg" alt="Standard Saloon Taxi" class="taxi-image" onerror="this.onerror=null;this.src='https://placehold.co/600x400/22c55e/FFFFFF?text=Standard+Taxi';">
                     <div class="p-6 flex flex-col flex-grow">
                         <div class="flex justify-between items-start mb-3">
                             <h3 class="text-xl font-bold text-gray-800">Standard Saloon</h3>
@@ -284,7 +286,7 @@
                 </div>
 
                 <div class="taxi-card bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
-                    <img src="http://googleusercontent.com/image_generation_content/3" alt="Executive Sedan Taxi" class="taxi-image" onerror="this.onerror=null;this.src='https://placehold.co/600x400/16a34a/FFFFFF?text=Executive+Ride';">
+                    <img src="assets/images/executive-sedan2.jpg" alt="Executive Sedan Taxi" class="taxi-image" onerror="this.onerror=null;this.src='https://placehold.co/600x400/16a34a/FFFFFF?text=Executive+Ride';">
                     <div class="p-6 flex flex-col flex-grow">
                         <div class="flex justify-between items-start mb-3">
                             <h3 class="text-xl font-bold text-gray-800">Executive Sedan</h3>
@@ -302,7 +304,7 @@
                 </div>
 
                 <div class="taxi-card bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
-                     <img src="http://googleusercontent.com/image_generation_content/4" alt="Group Van Taxi" class="taxi-image" onerror="this.onerror=null;this.src='https://placehold.co/600x400/15803d/FFFFFF?text=Group+Van';">
+                     <img src="assets/images/group-van2.jpg" alt="Group Van Taxi" class="taxi-image" onerror="this.onerror=null;this.src='https://placehold.co/600x400/15803d/FFFFFF?text=Group+Van';">
                     <div class="p-6 flex flex-col flex-grow">
                         <div class="flex justify-between items-start mb-3">
                             <h3 class="text-xl font-bold text-gray-800">Group Van</h3>
@@ -333,8 +335,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 <div class="taxi-card bg-white rounded-xl shadow-md overflow-hidden transition duration-300 border border-gray-100 hover:border-primary-200 flex flex-col">
                     <div class="h-48 bg-primary-50 flex items-center justify-center relative">
-                        <i class="fas fa-taxi text-6xl text-primary-600"></i>
-                        <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-400 to-primary-600"></div>
+                        <img src="assets/images/standard-saloon4.jpg" alt="Standard Taxi" class="h-full object-contain">
                     </div>
                     <div class="p-6 flex flex-col flex-grow">
                         <div class="flex justify-between items-start mb-3">
@@ -353,8 +354,7 @@
 
                 <div class="taxi-card bg-white rounded-xl shadow-md overflow-hidden transition duration-300 border border-gray-100 hover:border-primary-200 flex flex-col">
                     <div class="h-48 bg-primary-50 flex items-center justify-center relative">
-                        <i class="fas fa-car-alt text-6xl text-primary-600"></i>
-                        <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-400 to-primary-600"></div>
+                        <img src="assets/images/executive-sedan3.jpg" alt="Executive Ride" class="h-full object-contain">
                     </div>
                     <div class="p-6 flex flex-col flex-grow">
                         <div class="flex justify-between items-start mb-3">
@@ -373,8 +373,7 @@
 
                 <div class="taxi-card bg-white rounded-xl shadow-md overflow-hidden transition duration-300 border border-gray-100 hover:border-primary-200 flex flex-col">
                     <div class="h-48 bg-primary-50 flex items-center justify-center relative">
-                        <i class="fas fa-shuttle-van text-6xl text-primary-600"></i>
-                        <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-400 to-primary-600"></div>
+                        <img src="assets/images/group-van1.jpg" alt="Group Transport" class="h-full object-contain">
                     </div>
                     <div class="p-6 flex flex-col flex-grow">
                         <div class="flex justify-between items-start mb-3">
@@ -492,7 +491,7 @@
         <div class="main-container mx-auto px-4">
             <div class="flex flex-col lg:flex-row items-center gap-12">
                 <div class="lg:w-1/2">
-                    <img src="assets/aboutusimage.jpg" alt="Friendly taxi driver" class="rounded-xl shadow-lg w-full object-cover h-80 lg:h-auto">
+                    <img src="assets/images/aboutus0.jpg" alt="Friendly taxi driver" class="rounded-xl shadow-lg w-full object-cover h-80 lg:h-auto">
                     </div>
                 <div class="lg:w-1/2">
                     <span class="inline-block bg-primary-100 text-primary-700 px-4 py-1 rounded-full text-sm font-semibold mb-3">ABOUT US</span>
@@ -579,7 +578,14 @@
                 <div class="bg-white p-6 rounded-xl shadow-md">
                     <h3 class="text-xl font-bold mb-4 text-gray-800">Our Location</h3>
                     <div class="aspect-w-16 aspect-h-9">
-                        <iframe style="width: 100%; height: 300px; border: 0; border-radius: 0.5rem;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Machakos Location"></iframe>
+                        <iframe 
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d31909.0034777!2d37.263414!3d-1.5177!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x182f184895333521%3A0x5629b13615536985!2sMachakos!5e0!3m2!1sen!2ske!4v1678886000000!5m2!1sen!2ske" 
+                            style="width: 100%; height: 300px; border: 0; border-radius: 0.5rem;" 
+                            allowfullscreen="" 
+                            loading="lazy" 
+                            referrerpolicy="no-referrer-when-downgrade" 
+                            title="Machakos Location">
+                        </iframe>
                     </div>
                      <p class="text-sm text-gray-500 mt-2">Find us easily in Machakos Town.</p>
                 </div>
