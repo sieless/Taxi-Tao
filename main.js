@@ -1,6 +1,9 @@
-// main.js - Handles booking form, WhatsApp redirection, UI behaviors
+import { inject } from "@vercel/analytics";
 
-// Menu toggle
+// Inject Vercel Analytics script
+inject();
+
+// Menu toggle functionality
 const menuButton = document.querySelector('.mobile-menu-button');
 const mobileMenu = document.querySelector('.mobile-menu');
 const mobileMenuLinks = document.querySelectorAll('.mobile-menu-link');
