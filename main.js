@@ -1,6 +1,5 @@
-import { inject } from "@vercel/analytics";
-
 // Inject Vercel Analytics script
+import { inject } from "@vercel/analytics";
 inject();
 
 // Menu toggle functionality
@@ -101,5 +100,14 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     if (targetElement) {
       targetElement.scrollIntoView({ behavior: 'smooth' });
     }
+  });
+});
+
+// Fix "Call Now" button functionality
+document.addEventListener('DOMContentLoaded', () => {
+  const callButtons = document.querySelectorAll('.call-now-btn');
+  callButtons.forEach(button => {
+    const phoneNumber = button.closest('.contact-container').querySelector('.phone-number').textContent.trim();
+    button.setAttribute('href', `tel:${phoneNumber}`);
   });
 });
