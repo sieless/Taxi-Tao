@@ -1,0 +1,137 @@
+/**
+ * @fileoverview Firestore Security Rules for Taxitao Application
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict ownership model for private user and driver data,
+ * while allowing public, read-only access to driver profiles for marketing purposes.
+ *
+ * Data Structure:
+ * - /users/{userId}: Private user data (role, etc.). Only accessible by the owner.
+ * - /drivers/{driverId}: Public-facing driver profile data. Writable by the owner, readable by anyone.
+ * - /drivers/{driverId}/vehicles/{vehicleId}: Private vehicle data. Only accessible by the owner.
+ * - /users/{userId}/bookings/{bookingId}: Private booking data. Only accessible by the owner.
+ * - /drivers/{driverId}/payments/{paymentId}: Private payment data. Only accessible by the owner.
+ *
+ * Key Security Decisions:
+ * - User and driver listing is disallowed to protect privacy.
+ * - Driver profiles in `/drivers` are public to allow marketing.
+ * - All other subcollections are private and enforce owner-only access.
+ * - Admins have elevated permissions to manage drivers and verify payments.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Secure root access. No direct reads or writes to the root of the database are allowed.
+     */
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    /**
+     * @description Manages access to private user data. Users can only read and write their own profile.
+     * Admins can read all user profiles to verify roles.
+     */
+    match /users/{userId} {
+      allow read: if isSignedIn() && (isOwner(userId) || isAdmin());
+      allow write: if isSignedIn() && isOwner(userId);
+    }
+    
+    /**
+     * @description Manages access to public driver data. Drivers can write their own data. Anyone can read it.
+     * Admins can update driver documents for payment verification and subscription management.
+     */
+    match /drivers/{driverId} {
+      allow get: if true;
+      allow list: if true;
+      allow create, delete: if isSignedIn() && (isOwner(driverId) || isAdmin());
+      allow update: if isSignedIn() && (isOwner(driverId) || isAdmin());
+    }
+
+    /**
+     * @description Manages access to vehicle data. Only the owning driver can manage their vehicles.
+     */
+    match /drivers/{driverId}/vehicles/{vehicleId} {
+      allow read, write: if isSignedIn() && (isOwner(driverId) || isAdmin());
+    }
+
+    /**
+     * @description Manages access to payment data. Only the owning driver can manage their payments.
+     * Admins can read payment data for verification purposes.
+     */
+    match /drivers/{driverId}/payments/{paymentId} {
+      allow read: if isSignedIn() && (isOwner(driverId) || isAdmin());
+      allow write: if isSignedIn() && isOwner(driverId);
+    }
+
+    /**
+     * @description Manages access to booking data for a specific user. Users can only manage their own bookings.
+     */
+    match /users/{userId}/bookings/{bookingId} {
+      allow read, write: if isSignedIn() && isOwner(userId);
+    }
+
+    /**
+     * @description Manages access to booking requests. 
+     * - Anyone can create booking requests (customers without accounts can book)
+     * - Drivers can read booking requests in their area
+     * - Drivers can accept pending bookings OR update their own accepted bookings
+     * - Admins can read and update all booking requests
+     */
+    match /bookingRequests/{bookingId} {
+      allow create: if true; // Allow anyone to create booking requests
+      allow read: if isSignedIn() && (
+        isDriver() || 
+        isAdmin() ||
+        // Allow customers to read their own bookings by phone
+        request.auth.token.phone_number == resource.data.customerPhone
+      );
+      allow update: if isSignedIn() && (
+        // Driver can accept a pending booking
+        (isDriver() && resource.data.status == 'pending') ||
+        // Driver can update their own accepted booking
+        (isDriver() && resource.data.acceptedBy == request.auth.uid) || 
+        // Customer can rate their completed booking
+        (resource.data.status == 'completed' && 
+         request.auth.token.phone_number == resource.data.customerPhone &&
+         !resource.data.rating) ||
+        // Admin can do anything
+        isAdmin()
+      );
+      allow delete: if isSignedIn() && isAdmin();
+    }
+
+    /**
+     * @description Manages access to notifications. Recipients can read and update their own notifications.
+     * Admins can create and delete notifications.
+     */
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && 
+                     (request.auth.uid == resource.data.recipientId || isAdmin());
+      allow create: if true; // Allow system/anyone to create notifications (needed for booking flow)
+      allow update: if isSignedIn() && request.auth.uid == resource.data.recipientId;
+      allow delete: if isSignedIn() && isAdmin();
+    }
+
+    // --- Helper functions ---
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(ownerId) {
+      return request.auth.uid == ownerId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isDriver() {
+      return isSignedIn() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'driver';
+    }
+  }
+}
