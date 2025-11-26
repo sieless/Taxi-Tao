@@ -3,12 +3,12 @@ import { Timestamp } from "firebase/firestore";
 /**
  * Calculate if a driver's subscription is expired based on nextPaymentDue
  */
-export function isSubscriptionExpired(nextPaymentDue: any): boolean {
+export function isSubscriptionExpired(nextPaymentDue: Timestamp | Date | undefined): boolean {
   if (!nextPaymentDue) return true;
   
   const dueDate = nextPaymentDue instanceof Timestamp 
     ? nextPaymentDue.toDate() 
-    : new Date(nextPaymentDue);
+    : nextPaymentDue instanceof Date ? nextPaymentDue : new Date(nextPaymentDue);
   
   return new Date() > dueDate;
 }
@@ -25,12 +25,12 @@ export function getNextPaymentDueDate(): Date {
 /**
  * Check if payment is due soon (within 3 days)
  */
-export function isPaymentDueSoon(nextPaymentDue: any): boolean {
+export function isPaymentDueSoon(nextPaymentDue: Timestamp | Date | undefined): boolean {
   if (!nextPaymentDue) return true;
   
   const dueDate = nextPaymentDue instanceof Timestamp 
     ? nextPaymentDue.toDate() 
-    : new Date(nextPaymentDue);
+    : nextPaymentDue instanceof Date ? nextPaymentDue : new Date(nextPaymentDue);
   
   const threeDaysFromNow = new Date();
   threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
@@ -51,14 +51,14 @@ export function formatPeriodCovered(date: Date = new Date()): string {
  * Get subscription status based on payment date
  */
 export function getSubscriptionStatus(
-  lastPaymentDate: any,
-  nextPaymentDue: any
+  lastPaymentDate: Timestamp | Date | undefined,
+  nextPaymentDue: Timestamp | Date | undefined
 ): 'active' | 'pending' | 'expired' | 'suspended' {
   if (!nextPaymentDue) return 'expired';
   
   const dueDate = nextPaymentDue instanceof Timestamp 
     ? nextPaymentDue.toDate() 
-    : new Date(nextPaymentDue);
+    : nextPaymentDue instanceof Date ? nextPaymentDue : new Date(nextPaymentDue);
   
   const now = new Date();
   

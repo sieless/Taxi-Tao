@@ -1,4 +1,4 @@
-import { collection, addDoc, getDocs, query, where, orderBy, updateDoc, doc, Timestamp } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where, orderBy, updateDoc, doc, Timestamp, deleteDoc } from "firebase/firestore";
 import { db } from "./firebase";
 import { Notification } from "./types";
 
@@ -109,6 +109,18 @@ export async function markAllAsRead(driverId: string): Promise<void> {
     await Promise.all(updatePromises);
   } catch (error) {
     console.error("Error marking all as read:", error);
+    throw error;
+  }
+}
+
+/**
+ * Delete a notification
+ */
+export async function deleteNotification(notificationId: string): Promise<void> {
+  try {
+    await deleteDoc(doc(db, "notifications", notificationId));
+  } catch (error) {
+    console.error("Error deleting notification:", error);
     throw error;
   }
 }

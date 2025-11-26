@@ -15,6 +15,9 @@ const MOCK_DRIVER: Driver = {
   email: "john@taxitao.co.ke",
   active: true,
   rating: 4.8,
+  totalRides: 150,
+  averageRating: 4.8,
+  totalRatings: 120,
   vehicles: ["mock-vehicle"],
   createdAt: new Date(),
   subscriptionStatus: "active",
@@ -22,6 +25,7 @@ const MOCK_DRIVER: Driver = {
   nextPaymentDue: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 5),
   paymentHistory: [],
   isVisibleToPublic: true,
+  status: "available",
 };
 
 const MOCK_VEHICLE: Vehicle = {

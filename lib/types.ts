@@ -29,6 +29,7 @@ export interface Driver {
     plate: string;
     color: string;
     type: 'sedan' | 'suv' | 'van' | 'bike' | 'tuk-tuk';
+    carPhotoUrl?: string;
   };
   experienceYears?: number;
   businessLocation?: string; // Base of operations
@@ -78,7 +79,7 @@ export interface BookingRequest {
   destination: string;
   pickupDate: string;
   pickupTime: string;
-  status: 'pending' | 'accepted' | 'expired' | 'cancelled' | 'completed';
+  status: 'pending' | 'accepted' | 'assigned' | 'expired' | 'cancelled' | 'completed';
   acceptedBy?: string; // Driver ID
   acceptedAt?: any; // Firestore Timestamp
   createdAt: any; // Firestore Timestamp
@@ -90,6 +91,23 @@ export interface BookingRequest {
   fare?: number; // Actual fare charged
   rating?: number; // 1-5 stars
   review?: string; // Optional customer feedback
+  earnings?: number; // Driver earnings from this ride
+}
+
+export interface RideRequest {
+  id: string;
+  customerName: string;
+  from: string; // Pickup location
+  to: string; // Destination
+  date: string; // Pickup date
+  time: string; // Pickup time
+  passengers: number; // Number of passengers
+  status: 'pending' | 'accepted' | 'cancelled';
+  driverId?: string; // Driver ID who accepted
+  driverName?: string;
+  driverPhone?: string;
+  acceptedAt?: any; // Firestore Timestamp
+  createdAt: any; // Firestore Timestamp
 }
 
 export interface Payment {

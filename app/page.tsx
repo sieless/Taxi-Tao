@@ -171,12 +171,12 @@ export default function Home() {
             >
               <Calendar className="w-5 h-5" /> Book Online
             </Link>
-            <a
-              href="tel:+254710450640"
-              className="bg-white hover:bg-gray-100 text-green-600 font-bold py-4 px-8 rounded-full text-lg transition flex items-center justify-center gap-2"
+            <Link
+              href="/book-with-price"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-8 rounded-full text-lg transition flex items-center justify-center gap-2"
             >
-              <Phone className="w-5 h-5" /> Call Now
-            </a>
+              <MapPin className="w-5 h-5" /> Find Drivers
+            </Link>
           </div>
           <div className="mt-12 flex flex-wrap justify-center gap-4 animate-fade-in delay-600">
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20 text-center w-32">

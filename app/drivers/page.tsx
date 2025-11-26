@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Driver } from "@/lib/types";
-import { Star, Car, MapPin, Briefcase, Loader2, Search } from "lucide-react";
+import { Star, Car, MapPin, Briefcase, Loader2, Search, Navigation } from "lucide-react";
 import Link from "next/link";
+import { getDriverPricing, createRouteKey } from "@/lib/pricing-service";
 
 export default function AllDriversPage() {
   const [drivers, setDrivers] = useState<Driver[]>([]);
@@ -15,29 +16,54 @@ export default function AllDriversPage() {
   const [selectedLocation, setSelectedLocation] = useState("all");
   const [selectedType, setSelectedType] = useState("all");
   const [sortBy, setSortBy] = useState("rating");
+  
+  // Route-based search
+  const [routeFrom, setRouteFrom] = useState("");
+  const [routeTo, setRouteTo] = useState("");
+  const [driverPricing, setDriverPricing] = useState<Record<string, any>>({});
 
+  // Available locations for filter dropdown
+  const locations = [
+    "Nairobi",
+    "Mombasa",
+    "Kisumu",
+    "Nakuru",
+    "Eldoret",
+    "Thika",
+    "Malindi",
+    "Kitale",
+    "Garissa",
+    "Kakamega"
+  ];
+
+  // Count online drivers
+  const onlineCount = drivers.filter(d => d.status === "available").length;
+
+  // Fetch all drivers on mount
   useEffect(() => {
     fetchAllDrivers();
   }, []);
 
+  // Apply filters whenever dependencies change
   useEffect(() => {
     filterAndSortDrivers();
-  }, [drivers, searchTerm, selectedLocation, selectedType, sortBy]);
+  }, [drivers, searchTerm, selectedLocation, selectedType, sortBy, routeFrom, routeTo]);
 
   async function fetchAllDrivers() {
     try {
       const q = query(
         collection(db, "drivers"),
-        where("subscriptionStatus", "==", "active")
+        where("active", "==", true),
+        where("subscriptionStatus", "==", "active"),
+        where("isVisibleToPublic", "==", true)
       );
-
       const snapshot = await getDocs(q);
       const allDrivers: Driver[] = [];
       snapshot.forEach((doc) => {
         allDrivers.push({ id: doc.id, ...doc.data() } as Driver);
       });
-
       setDrivers(allDrivers);
+      setFilteredDrivers(allDrivers);
       setLoading(false);
     } catch (error) {
       console.error("Error fetching drivers:", error);
@@ -45,49 +71,88 @@ export default function AllDriversPage() {
     }
   }
 
-  function filterAndSortDrivers() {
+  async function filterAndSortDrivers() {
     let filtered = [...drivers];
 
-    // Search filter
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (driver) =>
-          driver.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          driver.businessLocation?.toLowerCase().includes(searchTerm.toLowerCase())
+    // ROUTE-BASED SEARCH: Show only drivers with pricing for this route
+    if (routeFrom && routeTo) {
+      const routeKey = createRouteKey(routeFrom, routeTo);
+      const reverseKey = createRouteKey(routeTo, routeFrom);
+      
+      // Load pricing for all drivers
+      const pricingPromises = drivers.map(driver => 
+        getDriverPricing(driver.id)
       );
-    }
+      const pricingResults = await Promise.all(pricingPromises);
+      
+      // Store pricing data and filter drivers
+      const newPricing: Record<string, any> = {};
+      const driversWithRoute: Driver[] = [];
+      
+      pricingResults.forEach((fullPricing, index) => {
+        const driver = drivers[index];
+        if (fullPricing?.routePricing) {
+          // Check if driver has this route (or reverse)
+          const routeData = fullPricing.routePricing[routeKey] || 
+                           fullPricing.routePricing[reverseKey];
+          
+          if (routeData) {
+            newPricing[driver.id] = routeData;
+            driversWithRoute.push(driver);
+          }
+        }
+      });
+      
+      setDriverPricing(newPricing);
+      filtered = driversWithRoute;
 
-    // Location filter
-    if (selectedLocation !== "all") {
-      filtered = filtered.filter(
-        (driver) => driver.businessLocation === selectedLocation
-      );
-    }
-
-    // Vehicle type filter
-    if (selectedType !== "all") {
-      filtered = filtered.filter(
-        (driver) => driver.vehicle?.type === selectedType
-      );
-    }
-
-    // Sorting
-    filtered.sort((a, b) => {
-      if (sortBy === "rating") {
-        return (b.averageRating || 0) - (a.averageRating || 0);
-      } else if (sortBy === "experience") {
-        return (b.experienceYears || 0) - (a.experienceYears || 0);
-      } else if (sortBy === "name") {
-        return a.name.localeCompare(b.name);
+      // Sort by price (lowest first) when route search is active
+      filtered.sort((a, b) => {
+        const priceA = newPricing[a.id]?.price || Infinity;
+        const priceB = newPricing[b.id]?.price || Infinity;
+        return priceA - priceB;
+      });
+    } else {
+      // Regular filters when no route search
+      
+      // Search filter
+      if (searchTerm) {
+        filtered = filtered.filter(
+          (driver) =>
+            driver.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            driver.businessLocation?.toLowerCase().includes(searchTerm.toLowerCase())
+        );
       }
-      return 0;
-    });
+
+      // Location filter
+      if (selectedLocation !== "all") {
+        filtered = filtered.filter(
+          (driver) => driver.businessLocation === selectedLocation
+        );
+      }
+
+      // Vehicle type filter
+      if (selectedType !== "all") {
+        filtered = filtered.filter(
+          (driver) => driver.vehicle?.type === selectedType
+        );
+      }
+
+      // Regular sorting
+      filtered.sort((a, b) => {
+        if (sortBy === "rating") {
+          return (b.averageRating || 0) - (a.averageRating || 0);
+        } else if (sortBy === "experience") {
+          return (b.experienceYears || 0) - (a.experienceYears || 0);
+        } else if (sortBy === "name") {
+          return a.name.localeCompare(b.name);
+        }
+        return 0;
+      });
+    }
 
     setFilteredDrivers(filtered);
   }
-
-  const onlineCount = drivers.filter((d) => d.status === "available").length;
-  const locations = Array.from(new Set(drivers.map((d) => d.businessLocation).filter(Boolean)));
 
   if (loading) {
     return (
@@ -131,13 +196,43 @@ export default function AllDriversPage() {
             />
           </div>
 
-          {/* Filters */}
+          {/* ROUTE-BASED SEARCH */}
+          <div className="mb-4 p-4 bg-green-50 rounded-lg border border-green-200">
+            <div className="flex items-center gap-2 mb-3">
+              <Navigation className="w-5 h-5 text-green-600" />
+              <span className="font-semibold text-gray-700">Search by Route</span>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <input
+                type="text"
+                placeholder="From (e.g., Nairobi)"
+                value={routeFrom}
+                onChange={(e) => setRouteFrom(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+              />
+              <input
+                type="text"
+                placeholder="To (e.g., Mombasa)"
+                value={routeTo}
+                onChange={(e) => setRouteTo(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+            {routeFrom && routeTo && (
+              <p className="text-xs text-green-700 mt-2">
+                Showing drivers with set prices for {routeFrom} → {routeTo}
+              </p>
+            )}
+          </div>
+
+          {/* Regular Filters */}
           <div className="flex flex-wrap gap-4 items-center">
             {/* Location Filter */}
             <select
               value={selectedLocation}
               onChange={(e) => setSelectedLocation(e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white"
+              disabled={!!(routeFrom && routeTo)}
             >
               <option value="all">All Locations</option>
               {locations.map((location) => (
@@ -152,6 +247,7 @@ export default function AllDriversPage() {
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white"
+              disabled={!!(routeFrom && routeTo)}
             >
               <option value="all">All Vehicles</option>
               <option value="sedan">Sedan</option>
@@ -165,6 +261,7 @@ export default function AllDriversPage() {
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white ml-auto"
+              disabled={!!(routeFrom && routeTo)}
             >
               <option value="rating">Highest Rated</option>
               <option value="experience">Most Experienced</option>
@@ -184,7 +281,10 @@ export default function AllDriversPage() {
             <Car className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-bold text-gray-800 mb-2">No Drivers Found</h3>
             <p className="text-gray-600">
-              Try adjusting your search or filters to find more drivers.
+              {routeFrom && routeTo 
+                ? `No drivers have set prices for ${routeFrom} → ${routeTo} route yet.`
+                : "Try adjusting your search or filters to find more drivers."
+              }
             </p>
           </div>
         ) : (
@@ -195,7 +295,7 @@ export default function AllDriversPage() {
                 className="bg-white rounded-2xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 overflow-visible group relative"
                 style={{ boxShadow: '0 10px 40px rgba(0,0,0,0.1)' }}
               >
-                {/* Profile Picture - Fully Visible at Top Left */}
+                {/* Profile Picture */}
                 <div className="absolute -top-6 left-4 z-20">
                   <div className="relative w-24 h-24 rounded-full border-4 border-white shadow-2xl overflow-hidden bg-white">
                     {driver.profilePhotoUrl ? (
@@ -212,7 +312,6 @@ export default function AllDriversPage() {
                       </div>
                     )}
                   </div>
-                  {/* Online status indicator */}
                   {driver.status === "available" && (
                     <div className="absolute bottom-1 right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white shadow-lg"></div>
                   )}
@@ -231,16 +330,12 @@ export default function AllDriversPage() {
                       <Car className="w-16 h-16 text-white/50" />
                     </div>
                   )}
-
-                  {/* Online Badge */}
                   {driver.status === "available" && (
                     <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
                       <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
                       ONLINE
                     </div>
                   )}
-
-                  {/* Registration Number */}
                   {driver.vehicle?.plate && (
                     <div className="absolute bottom-2 right-2 bg-white/95 backdrop-blur-sm text-gray-800 px-2 py-1 rounded text-xs font-bold shadow-md border border-gray-200">
                       🚗 {driver.vehicle.plate}
@@ -253,6 +348,21 @@ export default function AllDriversPage() {
                   <h3 className="text-lg font-bold text-gray-800 mb-1">
                     {driver.name}
                   </h3>
+
+                  {/* ROUTE PRICE DISPLAY */}
+                  {routeFrom && routeTo && driverPricing[driver.id] && (
+                    <div className="mb-3 p-2 bg-green-50 rounded-lg border border-green-200">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-600">Route Price:</span>
+                        <span className="text-lg font-bold text-green-600">
+                          KES {driverPricing[driver.id].price.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {routeFrom} → {routeTo}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Rating */}
                   <div className="flex items-center gap-2 mb-3">

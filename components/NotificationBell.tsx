@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bell } from "lucide-react";
-import { getDriverNotifications, getUnreadCount, markAsRead, markAllAsRead } from "@/lib/notifications";
+import { Bell, Phone, Trash2 } from "lucide-react";
+import { Timestamp } from "firebase/firestore";
+import { getDriverNotifications, getUnreadCount, markAsRead, markAllAsRead, deleteNotification } from "@/lib/notifications";
 import { Notification } from "@/lib/types";
 
 interface NotificationBellProps {
@@ -93,6 +94,24 @@ export default function NotificationBell({ driverId }: NotificationBellProps) {
     }
   }
 
+  async function handleDelete(e: React.MouseEvent, notificationId: string) {
+    e.stopPropagation();
+    if (!confirm('Are you sure you want to delete this notification?')) return;
+    
+    try {
+      await deleteNotification(notificationId);
+      setNotifications(prev => prev.filter(n => n.id !== notificationId));
+      if (unreadCount > 0) fetchNotifications(); // Refresh count if needed
+    } catch (error) {
+      console.error("Error deleting notification:", error);
+    }
+  }
+
+  function handleCall(e: React.MouseEvent, phone: string) {
+    e.stopPropagation();
+    window.location.href = `tel:${phone}`;
+  }
+
   return (
     <div className="relative">
       {/* Bell Button */}
@@ -161,13 +180,36 @@ export default function NotificationBell({ driverId }: NotificationBellProps) {
                             <h4 className="font-semibold text-gray-800 text-sm">
                               {notification.title}
                             </h4>
-                            {!notification.read && (
-                              <span className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0 mt-1" />
-                            )}
+                            <div className="flex items-center gap-2">
+                              {!notification.read && (
+                                <span className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0" />
+                              )}
+                              <button
+                                onClick={(e) => handleDelete(e, notification.id)}
+                                className="text-gray-400 hover:text-red-500 transition p-1"
+                                title="Delete"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </div>
                           <p className="text-sm text-gray-600 mt-1 whitespace-pre-wrap">
                             {notification.message}
                           </p>
+                          
+                          {/* Action Buttons */}
+                          {notification.metadata?.customerPhone && (
+                            <div className="mt-3 flex gap-2">
+                              <button
+                                onClick={(e) => handleCall(e, notification.metadata!.customerPhone!)}
+                                className="flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-md text-xs font-bold hover:bg-green-200 transition"
+                              >
+                                <Phone className="w-3 h-3" />
+                                Call Customer
+                              </button>
+                            </div>
+                          )}
+
                           {notification.metadata?.rejectionReason && (
                             <div className={`mt-2 p-2 rounded border ${getNotificationColor(notification.type)}`}>
                               <p className="text-xs font-medium text-gray-700">
@@ -176,7 +218,7 @@ export default function NotificationBell({ driverId }: NotificationBellProps) {
                             </div>
                           )}
                           <p className="text-xs text-gray-400 mt-2">
-                            {notification.createdAt?.toDate?.().toLocaleString() || 'Just now'}
+                            {(notification.createdAt instanceof Timestamp ? notification.createdAt.toDate() : new Date(notification.createdAt)).toLocaleString() || 'Just now'}
                           </p>
                         </div>
                       </div>
@@ -184,7 +226,7 @@ export default function NotificationBell({ driverId }: NotificationBellProps) {
                   ))}
                 </div>
               )}
-            </div>
+          </div>
           </div>
         </>
       )}

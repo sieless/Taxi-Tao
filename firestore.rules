@@ -30,11 +30,11 @@ service cloud.firestore {
     }
 
     /**
-     * @description Manages access to private user data. Users can only read and write their own profile.
-     * Admins can read all user profiles to verify roles.
+     * @description Manages access to private user data. Users can read their own profile.
+     * Admins can read all user profiles. Authenticated users can read for driver matching.
      */
     match /users/{userId} {
-      allow read: if isSignedIn() && (isOwner(userId) || isAdmin());
+      allow read: if isSignedIn();  // Allow all authenticated users to read (needed for driver matching)
       allow write: if isSignedIn() && isOwner(userId);
     }
     
@@ -96,6 +96,69 @@ service cloud.firestore {
         (resource.data.status == 'completed' && 
          request.auth.token.phone_number == resource.data.customerPhone &&
          !resource.data.rating) ||
+        // Admin can do anything
+        isAdmin()
+      );
+      allow delete: if isSignedIn() && isAdmin();
+    }
+
+    /**
+     * @description Manages access to driver pricing configuration.
+     * - Anyone can read pricing (needed for guest customers to search drivers).
+     * - Drivers can write their own pricing (matched by driverId field in users collection).
+     */
+    match /driverPricing/{driverId} {
+      allow read: if true; // Allow anyone to read pricing for driver search
+      allow write: if isSignedIn() && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.driverId == driverId ||
+        isAdmin()
+      );
+    }
+
+    /**
+     * @description Manages access to price negotiations.
+     * - Anyone can create negotiations (for guest customers).
+     * - Drivers can list negotiations (client-side filters by driverId).
+     * - Only the customer and driver involved can read/update specific negotiations.
+     */
+    match /negotiations/{negotiationId} {
+      allow create: if true; // Allow anyone to create (for guest customers)
+      
+      // Single document read - strict access control
+      allow get: if isSignedIn() && (
+        request.auth.uid == resource.data.customerId ||
+        (isDriver() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.driverId == resource.data.driverId) ||
+        isAdmin()
+      );
+      
+      // List/query operations - allow all drivers and admins
+      // Client-side query filters by driverId for security
+      allow list: if isSignedIn() && (isDriver() || isAdmin());
+      
+      allow update: if isSignedIn() && (
+        request.auth.uid == resource.data.customerId ||
+        (isDriver() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.driverId == resource.data.driverId)
+      );
+    }
+
+    /**
+     * @description Manages access to ride requests (fallback when no drivers found).
+     * - Anyone can create ride requests (customers without accounts can post).
+     * - Drivers can read all pending requests to find opportunities.
+     * - Only the accepting driver can update the request they accepted.
+     * - Admins can manage all requests.
+     */
+    match /rideRequests/{requestId} {
+      allow create: if true; // Allow anyone to create ride requests
+      allow read: if isSignedIn() && (
+        isDriver() || 
+        isAdmin()
+      );
+      allow update: if isSignedIn() && (
+        // Driver can accept a pending request
+        (isDriver() && resource.data.status == 'pending') ||
+        // Driver can update their own accepted request
+        (isDriver() && resource.data.driverId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.driverId) ||
         // Admin can do anything
         isAdmin()
       );

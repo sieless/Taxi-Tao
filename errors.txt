@@ -1,0 +1,37 @@
+﻿app/driver/requests/page.tsx(6,10): error TS2305: Module '"@/lib/types"' has no exported member 'RideRequest'.
+components/BookingRequestForm.tsx(67,11): error TS2345: Argument of type 'undefined' is not assignable to parameter of type 'string | null'.
+components/ComplianceAlerts.tsx(3,18): error TS2305: Module '"@/lib/types"' has no exported member 'ComplianceAlert'.
+components/ComplianceAlerts.tsx(15,14): error TS2339: Property 'insuranceExpiry' does not exist on type 'Driver'.
+components/ComplianceAlerts.tsx(16,34): error TS2339: Property 'insuranceExpiry' does not exist on type 'Driver'.
+components/ComplianceAlerts.tsx(16,80): error TS2339: Property 'insuranceExpiry' does not exist on type 'Driver'.
+components/ComplianceAlerts.tsx(16,123): error TS2339: Property 'insuranceExpiry' does not exist on type 'Driver'.
+components/ComplianceAlerts.tsx(22,28): error TS2339: Property 'insuranceExpiry' does not exist on type 'Driver'.
+components/ComplianceAlerts.tsx(30,14): error TS2339: Property 'licenseExpiry' does not exist on type 'Driver'.
+components/ComplianceAlerts.tsx(31,32): error TS2339: Property 'licenseExpiry' does not exist on type 'Driver'.
+components/ComplianceAlerts.tsx(31,76): error TS2339: Property 'licenseExpiry' does not exist on type 'Driver'.
+components/ComplianceAlerts.tsx(31,117): error TS2339: Property 'licenseExpiry' does not exist on type 'Driver'.
+components/ComplianceAlerts.tsx(37,28): error TS2339: Property 'licenseExpiry' does not exist on type 'Driver'.
+components/ComplianceAlerts.tsx(45,14): error TS2339: Property 'vehicleInspectionDue' does not exist on type 'Driver'.
+components/ComplianceAlerts.tsx(46,35): error TS2339: Property 'vehicleInspectionDue' does not exist on type 'Driver'.
+components/ComplianceAlerts.tsx(46,86): error TS2339: Property 'vehicleInspectionDue' does not exist on type 'Driver'.
+components/ComplianceAlerts.tsx(46,134): error TS2339: Property 'vehicleInspectionDue' does not exist on type 'Driver'.
+components/ComplianceAlerts.tsx(52,28): error TS2339: Property 'vehicleInspectionDue' does not exist on type 'Driver'.
+components/CustomerNegotiationStatus.tsx(6,10): error TS2305: Module '"../lib/types"' has no exported member 'Negotiation'.
+components/CustomerNegotiationStatus.tsx(158,38): error TS7006: Parameter 'msg' implicitly has an 'any' type.
+components/CustomerNegotiationStatus.tsx(158,43): error TS7006: Parameter 'idx' implicitly has an 'any' type.
+components/DriverNegotiations.tsx(7,10): error TS2305: Module '"../lib/types"' has no exported member 'Negotiation'.
+components/NegotiationModal.tsx(6,10): error TS2305: Module '"@/lib/types"' has no exported member 'Negotiation'.
+components/NegotiationModal.tsx(249,44): error TS7006: Parameter 'msg' implicitly has an 'any' type.
+components/NegotiationModal.tsx(249,49): error TS7006: Parameter 'idx' implicitly has an 'any' type.
+lib/earnings-service.ts(26,24): error TS2339: Property 'earnings' does not exist on type 'BookingRequest'.
+lib/earnings-service.ts(57,24): error TS2339: Property 'earnings' does not exist on type 'BookingRequest'.
+lib/earnings-service.ts(95,31): error TS2339: Property 'earnings' does not exist on type 'BookingRequest'.
+lib/negotiation-service.ts(5,10): error TS2305: Module '"./types"' has no exported member 'Negotiation'.
+lib/ride-request-service.ts(5,10): error TS2305: Module '"./types"' has no exported member 'RideRequest'.
+tests/pricing-service.test.ts(18,1): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/pricing-service.test.ts(19,3): error TS2582: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/pricing-service.test.ts(20,18): error TS2554: Expected 3 arguments, but got 2.
+tests/pricing-service.test.ts(21,5): error TS2304: Cannot find name 'expect'.
+tests/pricing-service.test.ts(24,3): error TS2582: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tests/pricing-service.test.ts(25,18): error TS2554: Expected 3 arguments, but got 2.
+tests/pricing-service.test.ts(26,5): error TS2304: Cannot find name 'expect'.

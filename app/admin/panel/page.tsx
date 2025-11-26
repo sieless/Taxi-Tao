@@ -1,14 +1,15 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { collection, getDocs, doc, updateDoc, query, where, Timestamp, deleteDoc } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, query, where, deleteDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { Driver } from "@/lib/types";
+import { Driver, BookingRequest } from "@/lib/types";
 import { LogOut, CheckCircle, XCircle, AlertTriangle, Users, FileText, MessageSquare, Car, RefreshCw, MapPin, Flag, Calendar, Trash2 } from "lucide-react";
 import { getNextPaymentDueDate } from "@/lib/subscription-utils";
-import { createNotification, generateVerificationMessage, generateRejectionMessage } from "@/lib/notifications";
+import { createNotification } from "@/lib/notifications";
 
 const docs = [
   { id: 'readme', title: 'Project Overview', file: 'README.md' },
@@ -104,16 +105,16 @@ export default function AdminPanel() {
       });
 
       // Create notification
-      await createNotification({
-        recipientId: driverId,
-        recipientEmail: email,
-        recipientPhone: phone,
-        recipientName: name,
-        type: 'payment_verified',
-        title: 'Subscription Activated',
-        message: `Your payment has been verified. Your subscription is active until ${nextDue.toLocaleDateString()}.`,
-        createdBy: user?.uid || 'admin'
-      });
+      await createNotification(
+        driverId,
+        email,
+        phone,
+        name,
+        'payment_verified',
+        'Subscription Activated',
+        `Your payment has been verified. Your subscription is active until ${nextDue.toLocaleDateString()}.`,
+        user?.uid || 'admin'
+      );
 
       alert(`Payment verified for ${name}`);
       fetchDrivers(); // Refresh list
@@ -136,17 +137,17 @@ export default function AdminPanel() {
       });
 
       // Create notification
-      await createNotification({
-        recipientId: driverId,
-        recipientEmail: email,
-        recipientPhone: phone,
-        recipientName: name,
-        type: 'payment_rejected',
-        title: 'Payment Rejected',
-        message: `Your payment was rejected. Reason: ${reason}`,
-        createdBy: user?.uid || 'admin',
-        metadata: { rejectionReason: reason }
-      });
+      await createNotification(
+        driverId,
+        email,
+        phone,
+        name,
+        'payment_rejected',
+        'Payment Rejected',
+        `Your payment was rejected. Reason: ${reason}`,
+        user?.uid || 'admin',
+        { rejectionReason: reason }
+      );
 
       alert(`Payment rejected for ${name}`);
       fetchDrivers();
@@ -345,7 +346,7 @@ export default function AdminPanel() {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {drivers.map((driver) => {
-                      const nextDue = driver.nextPaymentDue?.toDate?.() || new Date(driver.nextPaymentDue);
+                      const nextDue = driver.nextPaymentDue ? (driver.nextPaymentDue instanceof Timestamp ? driver.nextPaymentDue.toDate() : new Date(driver.nextPaymentDue)) : new Date();
                       return (
                         <tr key={driver.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap">

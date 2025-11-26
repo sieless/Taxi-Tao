@@ -1,0 +1,287 @@
+
+> temp_app@0.1.0 lint
+> eslint
+
+
+C:\Users\Administrator\Desktop\Taxi-Tao\app\admin\expired\page.tsx
+   17:10  warning  'selectedDrivers' is assigned a value but never used     @typescript-eslint/no-unused-vars
+   17:27  warning  'setSelectedDrivers' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   57:43  error    Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+   89:21  error    Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  153:21  error    Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+
+C:\Users\Administrator\Desktop\Taxi-Tao\app\admin\panel\page.tsx
+   6:61  warning  'Timestamp' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+  11:30  warning  'generateVerificationMessage' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+  11:59  warning  'generateRejectionMessage' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unused-vars
+  20:17  warning  'userProfile' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+  20:47  warning  'authLoading' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+  23:10  warning  'loading' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+  25:58  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @typescript-eslint/no-explicit-any
+  32:7   error    Error: Cannot access variable before it is declared
+
+`fetchBookingRequests` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Administrator\Desktop\Taxi-Tao\app\admin\panel\page.tsx:32:7
+  30 |   useEffect(() => {
+  31 |     if (activeTab === 'dispatch') {
+> 32 |       fetchBookingRequests();
+     |       ^^^^^^^^^^^^^^^^^^^^ `fetchBookingRequests` accessed before it is declared
+  33 |     }
+  34 |   }, [activeTab]);
+  35 |
+
+C:\Users\Administrator\Desktop\Taxi-Tao\app\admin\panel\page.tsx:36:3
+  34 |   }, [activeTab]);
+  35 |
+> 36 |   async function fetchBookingRequests() {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 37 |     try {
+     | ^^^^^^^^^
+> 38 |       const q = query(collection(db, "bookingRequests"), where("status", "==", "pending"));
+     ???
+     | ^^^^^^^^^
+> 47 |     }
+     | ^^^^^^^^^
+> 48 |   }
+     | ^^^^ `fetchBookingRequests` is declared here
+  49 |
+  50 |   // Calculate counts
+  51 |   const pendingCount = drivers.filter(d => d.subscriptionStatus === 'pending').length;  react-hooks/immutability
+  56:5   error    Error: Cannot access variable before it is declared
+
+`fetchDrivers` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Administrator\Desktop\Taxi-Tao\app\admin\panel\page.tsx:56:5
+  54 |   // Fetch drivers
+  55 |   useEffect(() => {
+> 56 |     fetchDrivers();
+     |     ^^^^^^^^^^^^ `fetchDrivers` accessed before it is declared
+  57 |   }, []);
+  58 |
+  59 |   async function fetchDrivers() {
+
+C:\Users\Administrator\Desktop\Taxi-Tao\app\admin\panel\page.tsx:59:3
+  57 |   }, []);
+  58 |
+> 59 |   async function fetchDrivers() {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 60 |     try {
+     | ^^^^^^^^^
+> 61 |       const q = query(collection(db, "drivers"));
+     ???
+     | ^^^^^^^^^
+> 72 |     }
+     | ^^^^^^^^^
+> 73 |   }
+     | ^^^^ `fetchDrivers` is declared here
+  74 |
+  75 |   const handleLogout = async () => {
+  76 |     await logout();                                                                                                                                                                   react-hooks/immutability
+  80:41  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @typescript-eslint/no-explicit-any
+
+C:\Users\Administrator\Desktop\Taxi-Tao\app\customer\bookings\page.tsx
+    8:20  warning  'MapPin' is defined but never used                                                                               @typescript-eslint/no-unused-vars
+   12:17  warning  'userProfile' is assigned a value but never used                                                                 @typescript-eslint/no-unused-vars
+   27:6   warning  React Hook useEffect has a missing dependency: 'loadBookings'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   64:34  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+   74:34  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+  123:56  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                  react/no-unescaped-entities
+  228:33  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                  react/no-unescaped-entities
+  228:50  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                  react/no-unescaped-entities
+
+C:\Users\Administrator\Desktop\Taxi-Tao\app\d\[driverId]\page.tsx
+  157:94  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\Administrator\Desktop\Taxi-Tao\app\driver\dashboard\page.tsx
+  1123:0  error  Parsing error: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+
+C:\Users\Administrator\Desktop\Taxi-Tao\app\driver\history\page.tsx
+   30:6   warning  React Hook useEffect has a missing dependency: 'loadRideHistory'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   60:34  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+   70:34  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+  205:71  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                     react/no-unescaped-entities
+  205:85  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                     react/no-unescaped-entities
+
+C:\Users\Administrator\Desktop\Taxi-Tao\app\driver\settings\page.tsx
+    9:60  warning  'Globe' is defined but never used                                @typescript-eslint/no-unused-vars
+  337:85  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\Administrator\Desktop\Taxi-Tao\app\drivers\page.tsx
+   20:5   error    Error: Cannot access variable before it is declared
+
+`fetchAllDrivers` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Administrator\Desktop\Taxi-Tao\app\drivers\page.tsx:20:5
+  18 |
+  19 |   useEffect(() => {
+> 20 |     fetchAllDrivers();
+     |     ^^^^^^^^^^^^^^^ `fetchAllDrivers` accessed before it is declared
+  21 |   }, []);
+  22 |
+  23 |   useEffect(() => {
+
+C:\Users\Administrator\Desktop\Taxi-Tao\app\drivers\page.tsx:27:3
+  25 |   }, [drivers, searchTerm, selectedLocation, selectedType, sortBy]);
+  26 |
+> 27 |   async function fetchAllDrivers() {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 28 |     try {
+     | ^^^^^^^^^
+> 29 |       const q = query(
+     ???
+     | ^^^^^^^^^
+> 45 |     }
+     | ^^^^^^^^^
+> 46 |   }
+     | ^^^^ `fetchAllDrivers` is declared here
+  47 |
+  48 |   function filterAndSortDrivers() {
+  49 |     let filtered = [...drivers];                                                                                                                                                                                                                                               react-hooks/immutability
+   24:5   error    Error: Cannot access variable before it is declared
+
+`filterAndSortDrivers` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Administrator\Desktop\Taxi-Tao\app\drivers\page.tsx:24:5
+  22 |
+  23 |   useEffect(() => {
+> 24 |     filterAndSortDrivers();
+     |     ^^^^^^^^^^^^^^^^^^^^ `filterAndSortDrivers` accessed before it is declared
+  25 |   }, [drivers, searchTerm, selectedLocation, selectedType, sortBy]);
+  26 |
+  27 |   async function fetchAllDrivers() {
+
+C:\Users\Administrator\Desktop\Taxi-Tao\app\drivers\page.tsx:48:3
+  46 |   }
+  47 |
+> 48 |   function filterAndSortDrivers() {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 49 |     let filtered = [...drivers];
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 50 |
+     ???
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 86 |     setFilteredDrivers(filtered);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 87 |   }
+     | ^^^^ `filterAndSortDrivers` is declared here
+  88 |
+  89 |   const onlineCount = drivers.filter((d) => d.status === "available").length;
+  90 |   const locations = Array.from(new Set(drivers.map((d) => d.businessLocation).filter(Boolean)));  react-hooks/immutability
+   25:6   warning  React Hook useEffect has a missing dependency: 'filterAndSortDrivers'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              react-hooks/exhaustive-deps
+  202:23  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @next/next/no-img-element
+  224:21  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @next/next/no-img-element
+
+C:\Users\Administrator\Desktop\Taxi-Tao\app\login\page.tsx
+  39:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  59:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Administrator\Desktop\Taxi-Tao\app\page.tsx
+    7:8    warning  'DriverCard' is defined but never used                                                                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
+    8:8    warning  'FindDriversButton' is defined but never used                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+   11:10   warning  'getAllDriversWithVehicles' is defined but never used                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+   16:7    warning  'MOCK_DRIVERS' is assigned a value but never used                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+  154:11   warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  165:60   error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+  428:17   error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+  428:58   error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+  428:133  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+  445:17   error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+  445:144  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+  462:17   error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+  462:156  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+  538:45   error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+
+C:\Users\Administrator\Desktop\Taxi-Tao\app\signup\page.tsx
+  103:19  error  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  272:37  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  272:52  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  347:60  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\Administrator\Desktop\Taxi-Tao\components\AvailableDrivers.tsx
+   89:21  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  109:19  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\Administrator\Desktop\Taxi-Tao\components\BookingGuidelines.tsx
+  27:72  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  27:94  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  57:32  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  87:33  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  91:33  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  95:51  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  95:58  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+C:\Users\Administrator\Desktop\Taxi-Tao\components\DriverCard.tsx
+  15:11  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\Administrator\Desktop\Taxi-Tao\components\FindDriversButton.tsx
+  12:10  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Administrator\Desktop\Taxi-Tao\components\LiveDriverCarousel.tsx
+   46:6   warning  React Hook useEffect has a missing dependency: 'vehicleType'. Either include it or remove the dependency array                                                                                                                                                                           react-hooks/exhaustive-deps
+   94:9   warning  'currentDriver' is assigned a value but never used                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+  138:15  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  154:21  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\Administrator\Desktop\Taxi-Tao\components\MpesaPayment.tsx
+  97:24  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  97:39  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  98:24  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  98:47  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+C:\Users\Administrator\Desktop\Taxi-Tao\components\NotificationBell.tsx
+  29:6  warning  React Hook useEffect has a missing dependency: 'fetchNotifications'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Administrator\Desktop\Taxi-Tao\components\NotificationsFeed.tsx
+  19:6   warning  React Hook useEffect has a missing dependency: 'fetchNotifications'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  60:34  error    Unexpected any. Specify a different type                                                                               @typescript-eslint/no-explicit-any
+
+C:\Users\Administrator\Desktop\Taxi-Tao\components\ProfileIcon.tsx
+    5:10  warning  'User' is defined but never used                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+    5:24  warning  'Settings' is defined but never used                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+   97:13  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  112:19  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\Administrator\Desktop\Taxi-Tao\components\RecentClients.tsx
+  19:6  warning  React Hook useEffect has a missing dependency: 'fetchRecentClients'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Administrator\Desktop\Taxi-Tao\components\UpcomingBookings.tsx
+   4:61  warning  'Timestamp' is defined but never used                                                                                    @typescript-eslint/no-unused-vars
+  19:6   warning  React Hook useEffect has a missing dependency: 'fetchUpcomingBooking'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Administrator\Desktop\Taxi-Tao\lib\booking-service.ts
+  10:3  warning  'getDoc' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Administrator\Desktop\Taxi-Tao\lib\subscription-utils.ts
+   6:55  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  28:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  54:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  55:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Administrator\Desktop\Taxi-Tao\lib\types.ts
+   16:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   20:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   21:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   43:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   44:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   45:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   80:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   93:16  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   94:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   95:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   99:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  116:11  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  117:16  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  127:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  128:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  129:16  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  131:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  132:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  140:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  153:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  157:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  166:18  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  173:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+??? 114 problems (75 errors, 39 warnings)
+

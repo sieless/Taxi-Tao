@@ -1,0 +1,38 @@
+rules_version = '2';
+
+// Firebase Storage Security Rules
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper function to check if user is authenticated
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user is the owner
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    // Driver profile pictures
+    match /drivers/{driverId}/{allPaths=**} {
+      // Allow authenticated drivers to upload/update their own profile pictures
+      allow write: if isSignedIn() && isOwner(driverId);
+      // Allow anyone to read driver profile pictures (for public display)
+      allow read: if true;
+    }
+    
+    // Vehicle photos
+    match /vehicles/{vehicleId}/{allPaths=**} {
+      // Allow authenticated users to upload vehicle photos
+      allow write: if isSignedIn();
+      // Allow anyone to read vehicle photos
+      allow read: if true;
+    }
+    
+    // Default: deny all other access
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -7,6 +7,7 @@ import { getCustomerBookings } from "@/lib/booking-service";
 import { BookingRequest } from "@/lib/types";
 import { Calendar, MapPin, Clock, Star, Loader2, Phone } from "lucide-react";
 import RatingModal from "@/components/RatingModal";
+import { Timestamp } from "firebase/firestore";
 
 export default function CustomerBookingsPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
@@ -27,11 +28,26 @@ export default function CustomerBookingsPage() {
   }, [user, authLoading, router]);
 
   const loadBookings = async () => {
-    // Get phone from userProfile or use a fallback
-    const phone = userProfile?.phone || "";
+    // Get phone from Firebase user's phoneNumber or prompt for it
+    const phone = user?.phoneNumber || "";
     
     if (!phone) {
-      alert("Phone number not found. Please update your profile.");
+      // If no phone number is available, prompt the user to enter it
+      const enteredPhone = prompt("Please enter your phone number to view your bookings:");
+      if (!enteredPhone) {
+        setLoading(false);
+        return;
+      }
+      
+      setLoading(true);
+      try {
+        const customerBookings = await getCustomerBookings(enteredPhone);
+        setBookings(customerBookings);
+      } catch (error) {
+        console.error("Error loading bookings:", error);
+      } finally {
+        setLoading(false);
+      }
       return;
     }
 
@@ -46,9 +62,10 @@ export default function CustomerBookingsPage() {
     }
   };
 
-  const formatDate = (timestamp: any) => {
+
+  const formatDate = (timestamp: Timestamp | Date | undefined) => {
     if (!timestamp) return "N/A";
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const date = timestamp instanceof Date ? timestamp : (timestamp as Timestamp).toDate();
     return date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
@@ -56,9 +73,9 @@ export default function CustomerBookingsPage() {
     });
   };
 
-  const formatTime = (timestamp: any) => {
+  const formatTime = (timestamp: Timestamp | Date | undefined) => {
     if (!timestamp) return "N/A";
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const date = timestamp instanceof Date ? timestamp : (timestamp as Timestamp).toDate();
     return date.toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",

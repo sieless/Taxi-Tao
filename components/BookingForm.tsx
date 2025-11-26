@@ -1,20 +1,40 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import { User, Phone, MapPin, Flag, Calendar, Clock, Loader2, CheckCircle } from "lucide-react";
 import { createBookingRequest } from "@/lib/booking-service";
+import { useSearchParams } from "next/navigation";
 
 export default function BookingForm() {
+  const searchParams = useSearchParams();
+  
+  // Read URL parameters
+  const preferredDriverId = searchParams.get('driverId') || undefined;
+  const urlFrom = searchParams.get('from') || '';
+  const urlTo = searchParams.get('to') || '';
+  const urlPrice = searchParams.get('price') || '';
+
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
-    pickup: "",
-    destination: "",
+    pickup: urlFrom,
+    destination: urlTo,
     date: "",
     time: "",
   });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  // Update form when URL params change
+  useEffect(() => {
+    if (urlFrom || urlTo) {
+      setFormData(prev => ({
+        ...prev,
+        pickup: urlFrom,
+        destination: urlTo
+      }));
+    }
+  }, [urlFrom, urlTo]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -38,6 +58,8 @@ export default function BookingForm() {
         destination: destination,
         pickupDate: date,
         pickupTime: time,
+        estimatedPrice: urlPrice ? parseFloat(urlPrice) : 0,
+        preferredDriverId: preferredDriverId, // Pass driver ID if booking from "Find Drivers"
       });
       setSuccess(true);
       setFormData({
@@ -65,7 +87,9 @@ export default function BookingForm() {
           <CheckCircle className="w-16 h-16 text-green-600 mb-4" />
           <h3 className="text-2xl font-bold text-gray-900 mb-2">Request Sent!</h3>
           <p className="text-gray-600">
-            We are notifying drivers in your area. You will be contacted shortly.
+            {preferredDriverId 
+              ? "Your selected driver has been notified and will contact you shortly."
+              : "We are notifying drivers in your area. You will be contacted shortly."}
           </p>
           <button 
             type="button" 

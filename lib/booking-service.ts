@@ -25,12 +25,17 @@ export async function createBookingRequest(data: {
   destination: string;
   pickupDate: string;
   pickupTime: string;
+  estimatedPrice?: number;
+  notes?: string;
+  vehicleType?: string;
+  preferredDriverId?: string; // NEW: Direct driver selection from "Find Drivers"
 }): Promise<string> {
   try {
     // 1. Create the booking request document
     const bookingData: Omit<BookingRequest, 'id'> = {
       ...data,
-      status: 'pending',
+      status: data.preferredDriverId ? 'assigned' : 'pending', // Direct assignment vs open request
+      acceptedBy: data.preferredDriverId, // Assign to preferred driver if provided
       createdAt: Timestamp.now(),
       expiresAt: Timestamp.fromMillis(Date.now() + 30 * 60 * 1000), // Expires in 30 mins
       notifiedDrivers: [],
@@ -39,51 +44,75 @@ export async function createBookingRequest(data: {
     const docRef = await addDoc(collection(db, COLLECTION_NAME), bookingData);
     const bookingId = docRef.id;
 
-    // 2. Find matching drivers based on location (simple string match for now)
-    // In a real app, this would use geospatial queries (GeoFire)
-    const driversRef = collection(db, "drivers");
-    // We'll fetch all active drivers and filter in memory for fuzzy matching if needed,
-    // or use a direct where clause if we enforce strict location names.
-    // For now, let's assume strict matching on 'currentLocation' field.
-    const q = query(
-      driversRef, 
-      where("status", "==", "available"),
-      where("subscriptionStatus", "==", "active"),
-      where("currentLocation", "==", data.pickupLocation) 
-    );
-
-    const querySnapshot = await getDocs(q);
-    const matchingDrivers: Driver[] = [];
-    
-    querySnapshot.forEach((doc) => {
-      matchingDrivers.push({ id: doc.id, ...doc.data() } as Driver);
-    });
-
-    // 3. Notify matching drivers
-    const notificationPromises = matchingDrivers.map(driver => {
-      return createNotification(
-        driver.id,
-        driver.email,
-        driver.phone,
-        driver.name,
-        'ride_request',
-        '🚖 New Ride Request!',
-        `Pickup: ${data.pickupLocation}\nDropoff: ${data.destination}\nClick to Call Customer!`,
-        'system', // Created by system
-        {
-          bookingId: bookingId,
-          pickupLocation: data.pickupLocation,
-          dropoffLocation: data.destination,
-          customerPhone: data.customerPhone,
-          action: 'call_customer'
+    // 2. Notify drivers
+    if (data.preferredDriverId) {
+      // Direct booking - notify only the chosen driver
+      try {
+        const driverDoc = await getDoc(doc(db, "drivers", data.preferredDriverId));
+        if (driverDoc.exists()) {
+          const driver = driverDoc.data() as Driver;
+          await createNotification(
+            driver.id,
+            driver.email,
+            driver.phone,
+            driver.name,
+            'ride_request',
+            '🎯 Direct Booking Request!',
+            `You've been selected!\nPickup: ${data.pickupLocation}\nDropoff: ${data.destination}\nPrice: KES ${data.estimatedPrice || 'TBD'}\nClick to call customer!`,
+            'system',
+            {
+              bookingId: bookingId,
+              pickupLocation: data.pickupLocation,
+              dropoffLocation: data.destination,
+              customerPhone: data.customerPhone,
+              fareEstimate: data.estimatedPrice,
+              action: 'call_customer'
+            }
+          );
         }
+      } catch (error) {
+        console.error('Error notifying preferred driver:', error);
+      }
+    } else {
+      // Open request - notify all available drivers in the area
+      const driversRef = collection(db, "drivers");
+      const q = query(
+        driversRef, 
+        where("status", "==", "available"),
+        where("subscriptionStatus", "==", "active"),
+        where("currentLocation", "==", data.pickupLocation) 
       );
-    });
 
-    await Promise.all(notificationPromises);
+      const querySnapshot = await getDocs(q);
+      const matchingDrivers: Driver[] = [];
+      
+      querySnapshot.forEach((docSnap) => {
+        matchingDrivers.push({ id: docSnap.id, ...docSnap.data() } as Driver);
+      });
 
-    // Update the booking with notified drivers
-    // (Optional: we could update the doc with the list of notified driver IDs)
+      // Notify matching drivers
+      const notificationPromises = matchingDrivers.map(driver => {
+        return createNotification(
+          driver.id,
+          driver.email,
+          driver.phone,
+          driver.name,
+          'ride_request',
+          '🚖 New Ride Request!',
+          `Pickup: ${data.pickupLocation}\nDropoff: ${data.destination}\nClick to Call Customer!`,
+          'system',
+          {
+            bookingId: bookingId,
+            pickupLocation: data.pickupLocation,
+            dropoffLocation: data.destination,
+            customerPhone: data.customerPhone,
+            action: 'call_customer'
+          }
+        );
+      });
+
+      await Promise.all(notificationPromises);
+    }
 
     return bookingId;
   } catch (error) {

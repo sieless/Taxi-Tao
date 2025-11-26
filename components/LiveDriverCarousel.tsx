@@ -185,7 +185,7 @@ export default function LiveDriverCarousel({ vehicleType }: LiveDriverCarouselPr
                   
                   {/* Quick Call Button */}
                   <a
-                    href={`tel:${driver.phoneNumber}`}
+                    href={`tel:${driver.phone}`}
                     className="mt-3 inline-flex items-center gap-2 bg-white text-green-700 px-4 py-2 rounded-lg font-bold text-sm hover:bg-green-50 transition shadow-md"
                     onClick={(e) => e.stopPropagation()}
                   >

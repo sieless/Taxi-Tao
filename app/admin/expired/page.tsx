@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Driver } from "@/lib/types";
 import { LogOut, AlertTriangle, Send, Copy, MessageCircle } from "lucide-react";
@@ -41,8 +41,8 @@ export default function ExpiredSubscriptionsPage() {
 
       // Sort by days overdue (most overdue first)
       const sorted = driversData.sort((a, b) => {
-        const aDue = a.nextPaymentDue?.toDate?.() || new Date(a.nextPaymentDue);
-        const bDue = b.nextPaymentDue?.toDate?.() || new Date(b.nextPaymentDue);
+        const aDue = a.nextPaymentDue ? (a.nextPaymentDue instanceof Date ? a.nextPaymentDue : (a.nextPaymentDue as Timestamp).toDate()) : new Date();
+        const bDue = b.nextPaymentDue ? (b.nextPaymentDue instanceof Date ? b.nextPaymentDue : (b.nextPaymentDue as Timestamp).toDate()) : new Date();
         return aDue.getTime() - bDue.getTime();
       });
 
@@ -54,8 +54,9 @@ export default function ExpiredSubscriptionsPage() {
     }
   }
 
-  function getDaysOverdue(nextPaymentDue: any): number {
-    const dueDate = nextPaymentDue?.toDate?.() || new Date(nextPaymentDue);
+  function getDaysOverdue(nextPaymentDue: Timestamp | Date | undefined): number {
+    if (!nextPaymentDue) return 0;
+    const dueDate = nextPaymentDue instanceof Date ? nextPaymentDue : (nextPaymentDue as Timestamp).toDate();
     const today = new Date();
     const diffTime = today.getTime() - dueDate.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -71,7 +72,7 @@ export default function ExpiredSubscriptionsPage() {
   async function sendInAppNotification(driver: Driver) {
     try {
       const daysOverdue = getDaysOverdue(driver.nextPaymentDue);
-      const message = `Your subscription expired ${daysOverdue} day${daysOverdue > 1 ? 's' : ''} ago.\\n\\nPlease pay 1,000 KSH to Till 7323090 to reactivate your account.\\n\\nContact: +254 708 674 665`;
+      const message = `Your subscription expired ${daysOverdue} day${daysOverdue > 1 ? 's' : ''} ago.\n\nPlease pay 1,000 KSH to Till 7323090 to reactivate your account.\n\nContact: +254 708 674 665`;
       
       await createNotification(
         driver.id,
@@ -86,15 +87,16 @@ export default function ExpiredSubscriptionsPage() {
 
       alert(`✅ Notification sent to ${driver.name}`);
       fetchExpiredDrivers();
-    } catch (error: any) {
-      alert(`❌ Failed to send notification: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`❌ Failed to send notification: ${errorMessage}`);
     }
   }
 
   function copyAllPhoneNumbers() {
-    const phoneNumbers = drivers.map(d => d.whatsapp || d.phone).join('\\n');
+    const phoneNumbers = drivers.map(d => d.whatsapp || d.phone).join('\n');
     navigator.clipboard.writeText(phoneNumbers);
-    alert(`✅ Copied ${drivers.length} phone numbers to clipboard!\\n\\nYou can now paste them into WhatsApp broadcast list.`);
+    alert(`✅ Copied ${drivers.length} phone numbers to clipboard!\n\nYou can now paste them into WhatsApp broadcast list.`);
   }
 
   function sendMassWhatsAppReminders() {
@@ -104,7 +106,7 @@ export default function ExpiredSubscriptionsPage() {
     }
 
     const confirmed = confirm(
-      `Send WhatsApp reminders to ${drivers.length} drivers?\\n\\nThis will open WhatsApp for each driver one by one.`
+      `Send WhatsApp reminders to ${drivers.length} drivers?\n\nThis will open WhatsApp for each driver one by one.`
     );
 
     if (!confirmed) return;
@@ -115,7 +117,7 @@ export default function ExpiredSubscriptionsPage() {
       }, index * 1000); // 1 second delay between each
     });
 
-    alert(`Opening WhatsApp for ${drivers.length} drivers...\\n\\nPlease send each message manually.`);
+    alert(`Opening WhatsApp for ${drivers.length} drivers...\n\nPlease send each message manually.`);
   }
 
   async function sendMassInAppNotifications() {
@@ -125,7 +127,7 @@ export default function ExpiredSubscriptionsPage() {
     }
 
     const confirmed = confirm(
-      `Send in-app notifications to ${drivers.length} drivers?\\n\\nThey will see these in their dashboard.`
+      `Send in-app notifications to ${drivers.length} drivers?\n\nThey will see these in their dashboard.`
     );
 
     if (!confirmed) return;
@@ -133,7 +135,7 @@ export default function ExpiredSubscriptionsPage() {
     try {
       const promises = drivers.map(driver => {
         const daysOverdue = getDaysOverdue(driver.nextPaymentDue);
-        const message = `Your subscription expired ${daysOverdue} day${daysOverdue > 1 ? 's' : ''} ago.\\n\\nPlease pay 1,000 KSH to Till 7323090 to reactivate your account.\\n\\nContact: +254 708 674 665`;
+        const message = `Your subscription expired ${daysOverdue} day${daysOverdue > 1 ? 's' : ''} ago.\n\nPlease pay 1,000 KSH to Till 7323090 to reactivate your account.\n\nContact: +254 708 674 665`;
         
         return createNotification(
           driver.id,
@@ -150,8 +152,9 @@ export default function ExpiredSubscriptionsPage() {
       await Promise.all(promises);
       alert(`✅ Sent ${drivers.length} notifications successfully!`);
       fetchExpiredDrivers();
-    } catch (error: any) {
-      alert(`❌ Failed to send notifications: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`❌ Failed to send notifications: ${errorMessage}`);
     }
   }
 
@@ -254,7 +257,7 @@ export default function ExpiredSubscriptionsPage() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {drivers.map((driver) => {
                   const daysOverdue = getDaysOverdue(driver.nextPaymentDue);
-                  const lastPayment = driver.lastPaymentDate?.toDate?.() || null;
+                  const lastPayment = driver.lastPaymentDate ? (driver.lastPaymentDate instanceof Date ? driver.lastPaymentDate : (driver.lastPaymentDate as Timestamp).toDate()) : null;
                   
                   return (
                     <tr key={driver.id} className="hover:bg-gray-50">
