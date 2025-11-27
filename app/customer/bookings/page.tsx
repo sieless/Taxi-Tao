@@ -324,7 +324,7 @@ export default function CustomerBookingsPage() {
         isOpen={isIssueModalOpen}
         onClose={() => setIsIssueModalOpen(false)}
         bookingId={selectedIssueBooking?.id}
-        driverId={selectedIssueBooking?.acceptedBy}
+        driverId={selectedIssueBooking?.acceptedBy ?? undefined}
       />
     </div>
   );

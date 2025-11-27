@@ -1,15 +1,16 @@
 "use client";
 
 import { useState, FormEvent, useEffect } from "react";
-import { User, Phone, MapPin, Flag, Calendar, Clock, Loader2, CheckCircle } from "lucide-react";
+import { User, Phone, MapPin, Flag, Calendar, Clock, Loader2, CheckCircle, Sparkles } from "lucide-react";
 import { createBookingRequest } from "@/lib/booking-service";
 import { useSearchParams } from "next/navigation";
+import SmartRecommendations from "./SmartRecommendations";
 
 export default function BookingForm() {
   const searchParams = useSearchParams();
   
   // Read URL parameters
-  const preferredDriverId = searchParams.get('driverId') || undefined;
+  const urlDriverId = searchParams.get('driverId') || undefined;
   const urlFrom = searchParams.get('from') || '';
   const urlTo = searchParams.get('to') || '';
   const urlPrice = searchParams.get('price') || '';
@@ -24,6 +25,8 @@ export default function BookingForm() {
   });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [preferredDriverId, setPreferredDriverId] = useState<string | undefined>(urlDriverId);
+  const [showRecommendations, setShowRecommendations] = useState(false);
 
   // Update form when URL params change
   useEffect(() => {
@@ -36,8 +39,22 @@ export default function BookingForm() {
     }
   }, [urlFrom, urlTo]);
 
+  // Update preferred driver if URL changes
+  useEffect(() => {
+    if (urlDriverId) {
+      setPreferredDriverId(urlDriverId);
+    }
+  }, [urlDriverId]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleDriverSelect = (driverId: string) => {
+    setPreferredDriverId(driverId);
+    setShowRecommendations(false);
+    // Optional: Auto-submit or just scroll to submit button?
+    // For now, let's just set it and maybe show a visual confirmation
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -59,7 +76,7 @@ export default function BookingForm() {
         pickupDate: date,
         pickupTime: time,
         estimatedPrice: urlPrice ? parseFloat(urlPrice) : 0,
-        preferredDriverId: preferredDriverId ?? undefined, // Pass driver ID if booking from "Find Drivers"
+        preferredDriverId: preferredDriverId ?? undefined,
       });
       setSuccess(true);
       setFormData({
@@ -70,6 +87,8 @@ export default function BookingForm() {
         date: "",
         time: "",
       });
+      setPreferredDriverId(undefined);
+      setShowRecommendations(false);
       // Reset success message after 5 seconds
       setTimeout(() => setSuccess(false), 5000);
     } catch (error) {
@@ -81,161 +100,203 @@ export default function BookingForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-6 md:grid-cols-2 relative">
-      {success && (
-        <div className="absolute inset-0 bg-white/90 z-10 flex flex-col items-center justify-center rounded-lg text-center p-6">
-          <CheckCircle className="w-16 h-16 text-green-600 mb-4" />
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">Request Sent!</h3>
-          <p className="text-gray-600">
-            {preferredDriverId 
-              ? "Your selected driver has been notified and will contact you shortly."
-              : "We are notifying drivers in your area. You will be contacted shortly."}
-          </p>
-          <button 
-            type="button" 
-            onClick={() => setSuccess(false)}
-            className="mt-6 text-green-600 font-medium hover:underline"
+    <div className="space-y-6">
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-6 md:grid-cols-2 relative">
+        {success && (
+          <div className="absolute inset-0 bg-white/90 z-10 flex flex-col items-center justify-center rounded-lg text-center p-6">
+            <CheckCircle className="w-16 h-16 text-green-600 mb-4" />
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">Request Sent!</h3>
+            <p className="text-gray-600">
+              {preferredDriverId 
+                ? "Your selected driver has been notified and will contact you shortly."
+                : "We are notifying drivers in your area. You will be contacted shortly."}
+            </p>
+            <button 
+              type="button" 
+              onClick={() => setSuccess(false)}
+              className="mt-6 text-green-600 font-medium hover:underline"
+            >
+              Make another booking
+            </button>
+          </div>
+        )}
+
+        <div>
+          <label className="block text-gray-700 mb-2 font-medium" htmlFor="name">
+            Your Name
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <User className="text-gray-400 w-5 h-5" />
+            </div>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              placeholder="Enter your full name"
+              required
+              value={formData.name}
+              onChange={handleChange}
+              className="w-full pl-10 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-gray-700 mb-2 font-medium" htmlFor="phone">
+            Phone Number
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Phone className="text-gray-400 w-5 h-5" />
+            </div>
+            <input
+              type="tel"
+              id="phone"
+              name="phone"
+              placeholder="Enter your phone number"
+              required
+              value={formData.phone}
+              onChange={handleChange}
+              className="w-full pl-10 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-gray-700 mb-2 font-medium" htmlFor="pickup">
+            Pickup Location
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <MapPin className="text-gray-400 w-5 h-5" />
+            </div>
+            <input
+              type="text"
+              id="pickup"
+              name="pickup"
+              placeholder="Enter pickup address (e.g. Westlands)"
+              required
+              value={formData.pickup}
+              onChange={handleChange}
+              className="w-full pl-10 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-gray-700 mb-2 font-medium" htmlFor="destination">
+            Destination
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Flag className="text-gray-400 w-5 h-5" />
+            </div>
+            <input
+              type="text"
+              id="destination"
+              name="destination"
+              placeholder="Enter destination"
+              required
+              value={formData.destination}
+              onChange={handleChange}
+              className="w-full pl-10 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-gray-700 mb-2 font-medium" htmlFor="date">
+            Pickup Date
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Calendar className="text-gray-400 w-5 h-5" />
+            </div>
+            <input
+              type="date"
+              id="date"
+              name="date"
+              required
+              min={new Date().toISOString().split("T")[0]}
+              value={formData.date}
+              onChange={handleChange}
+              className="w-full pl-10 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-gray-700 mb-2 font-medium" htmlFor="time">
+            Pickup Time
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Clock className="text-gray-400 w-5 h-5" />
+            </div>
+            <input
+              type="time"
+              id="time"
+              name="time"
+              required
+              value={formData.time}
+              onChange={handleChange}
+              className="w-full pl-10 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            />
+          </div>
+        </div>
+
+        {/* Smart Recommendations Toggle */}
+        <div className="md:col-span-2">
+          {!showRecommendations && !preferredDriverId && formData.pickup && formData.destination && (
+            <button
+              type="button"
+              onClick={() => setShowRecommendations(true)}
+              className="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-3 px-6 rounded-lg transition flex items-center justify-center gap-2 border border-blue-200 mb-4"
+            >
+              <Sparkles className="w-5 h-5" />
+              Find Recommended Drivers
+            </button>
+          )}
+
+          {preferredDriverId && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800 font-medium">Driver Selected</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreferredDriverId(undefined)}
+                className="text-sm text-red-600 hover:text-red-700 font-medium"
+              >
+                Change
+              </button>
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Make another booking
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Sending Request...
+              </>
+            ) : (
+              preferredDriverId ? "Book Selected Driver" : "Request Ride Now"
+            )}
           </button>
         </div>
-      )}
+      </form>
 
-      <div>
-        <label className="block text-gray-700 mb-2 font-medium" htmlFor="name">
-          Your Name
-        </label>
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <User className="text-gray-400 w-5 h-5" />
-          </div>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            placeholder="Enter your full name"
-            required
-            value={formData.name}
-            onChange={handleChange}
-            className="w-full pl-10 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+      {/* Recommendations Section */}
+      {showRecommendations && (
+        <div className="mt-8 border-t pt-8">
+          <SmartRecommendations
+            fromLocation={formData.pickup}
+            toLocation={formData.destination}
+            onSelectDriver={handleDriverSelect}
           />
         </div>
-      </div>
-      <div>
-        <label className="block text-gray-700 mb-2 font-medium" htmlFor="phone">
-          Phone Number
-        </label>
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Phone className="text-gray-400 w-5 h-5" />
-          </div>
-          <input
-            type="tel"
-            id="phone"
-            name="phone"
-            placeholder="Enter your phone number"
-            required
-            value={formData.phone}
-            onChange={handleChange}
-            className="w-full pl-10 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-          />
-        </div>
-      </div>
-      <div>
-        <label className="block text-gray-700 mb-2 font-medium" htmlFor="pickup">
-          Pickup Location
-        </label>
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <MapPin className="text-gray-400 w-5 h-5" />
-          </div>
-          <input
-            type="text"
-            id="pickup"
-            name="pickup"
-            placeholder="Enter pickup address (e.g. Westlands)"
-            required
-            value={formData.pickup}
-            onChange={handleChange}
-            className="w-full pl-10 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-          />
-        </div>
-      </div>
-      <div>
-        <label className="block text-gray-700 mb-2 font-medium" htmlFor="destination">
-          Destination
-        </label>
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Flag className="text-gray-400 w-5 h-5" />
-          </div>
-          <input
-            type="text"
-            id="destination"
-            name="destination"
-            placeholder="Enter destination"
-            required
-            value={formData.destination}
-            onChange={handleChange}
-            className="w-full pl-10 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-          />
-        </div>
-      </div>
-      <div>
-        <label className="block text-gray-700 mb-2 font-medium" htmlFor="date">
-          Pickup Date
-        </label>
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Calendar className="text-gray-400 w-5 h-5" />
-          </div>
-          <input
-            type="date"
-            id="date"
-            name="date"
-            required
-            min={new Date().toISOString().split("T")[0]}
-            value={formData.date}
-            onChange={handleChange}
-            className="w-full pl-10 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-          />
-        </div>
-      </div>
-      <div>
-        <label className="block text-gray-700 mb-2 font-medium" htmlFor="time">
-          Pickup Time
-        </label>
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Clock className="text-gray-400 w-5 h-5" />
-          </div>
-          <input
-            type="time"
-            id="time"
-            name="time"
-            required
-            value={formData.time}
-            onChange={handleChange}
-            className="w-full pl-10 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-          />
-        </div>
-      </div>
-      <div className="md:col-span-2">
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              Sending Request...
-            </>
-          ) : (
-            "Request Ride Now"
-          )}
-        </button>
-      </div>
-    </form>
+      )}
+    </div>
   );
 }
