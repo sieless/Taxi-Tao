@@ -59,7 +59,7 @@ export default function BookingForm() {
         pickupDate: date,
         pickupTime: time,
         estimatedPrice: urlPrice ? parseFloat(urlPrice) : 0,
-        preferredDriverId: preferredDriverId, // Pass driver ID if booking from "Find Drivers"
+        preferredDriverId: preferredDriverId ?? undefined, // Pass driver ID if booking from "Find Drivers"
       });
       setSuccess(true);
       setFormData({

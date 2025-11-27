@@ -35,7 +35,7 @@ export async function createBookingRequest(data: {
     const bookingData: Omit<BookingRequest, 'id'> = {
       ...data,
       status: data.preferredDriverId ? 'assigned' : 'pending', // Direct assignment vs open request
-      acceptedBy: data.preferredDriverId, // Assign to preferred driver if provided
+      acceptedBy: data.preferredDriverId ?? null, // Assign to preferred driver if provided
       createdAt: Timestamp.now(),
       expiresAt: Timestamp.fromMillis(Date.now() + 30 * 60 * 1000), // Expires in 30 mins
       notifiedDrivers: [],
@@ -74,44 +74,49 @@ export async function createBookingRequest(data: {
         console.error('Error notifying preferred driver:', error);
       }
     } else {
-      // Open request - notify all available drivers in the area
-      const driversRef = collection(db, "drivers");
-      const q = query(
-        driversRef, 
-        where("status", "==", "available"),
-        where("subscriptionStatus", "==", "active"),
-        where("currentLocation", "==", data.pickupLocation) 
-      );
-
-      const querySnapshot = await getDocs(q);
-      const matchingDrivers: Driver[] = [];
-      
-      querySnapshot.forEach((docSnap) => {
-        matchingDrivers.push({ id: docSnap.id, ...docSnap.data() } as Driver);
-      });
-
-      // Notify matching drivers
-      const notificationPromises = matchingDrivers.map(driver => {
-        return createNotification(
-          driver.id,
-          driver.email,
-          driver.phone,
-          driver.name,
-          'ride_request',
-          '🚖 New Ride Request!',
-          `Pickup: ${data.pickupLocation}\nDropoff: ${data.destination}\nClick to Call Customer!`,
-          'system',
-          {
-            bookingId: bookingId,
-            pickupLocation: data.pickupLocation,
-            dropoffLocation: data.destination,
-            customerPhone: data.customerPhone,
-            action: 'call_customer'
-          }
+      try {
+        // Open request - notify all available drivers in the area
+        const driversRef = collection(db, "drivers");
+        const q = query(
+          driversRef, 
+          where("status", "==", "available"),
+          where("subscriptionStatus", "==", "active"),
+          where("currentLocation", "==", data.pickupLocation) 
         );
-      });
 
-      await Promise.all(notificationPromises);
+        const querySnapshot = await getDocs(q);
+        const matchingDrivers: Driver[] = [];
+        
+        querySnapshot.forEach((docSnap) => {
+          matchingDrivers.push({ id: docSnap.id, ...docSnap.data() } as Driver);
+        });
+
+        // Notify matching drivers
+        const notificationPromises = matchingDrivers.map(driver => {
+          return createNotification(
+            driver.id,
+            driver.email,
+            driver.phone,
+            driver.name,
+            'ride_request',
+            '🚖 New Ride Request!',
+            `Pickup: ${data.pickupLocation}\nDropoff: ${data.destination}\nClick to Call Customer!`,
+            'system',
+            {
+              bookingId: bookingId,
+              pickupLocation: data.pickupLocation,
+              dropoffLocation: data.destination,
+              customerPhone: data.customerPhone,
+              action: 'call_customer'
+            }
+          );
+        });
+
+        await Promise.all(notificationPromises);
+      } catch (error) {
+        console.error("Error notifying drivers:", error);
+        // Continue execution even if notifications fail
+      }
     }
 
     return bookingId;

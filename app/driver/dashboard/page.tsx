@@ -645,21 +645,28 @@ export default function DriverDashboard() {
         <div className="bg-white rounded-xl shadow-md p-6 mb-8">
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left: Profile Photo & Personal Info */}
-            <div className="flex items-start gap-4 flex-shrink-0">
+            <div className="flex flex-col items-center lg:items-start gap-4 flex-shrink-0 w-full lg:w-auto">
               <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden border-4 border-green-500">
                 {driver.profilePhotoUrl ? (
                   <img src={driver.profilePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
-                  <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-                    <MapPin className="w-3.5 h-3.5" />
-                    <span>{driver.businessLocation}</span>
-                  </div>
+                  <span className="text-2xl font-bold text-gray-400">
+                    {driver.name.charAt(0)}
+                  </span>
                 )}
-                <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
+              </div>
+              
+              <div className="flex flex-col items-center lg:items-start gap-1">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <MapPin className="w-3.5 h-3.5" />
+                  <span>{driver.businessLocation || 'No location set'}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Star className="w-3.5 h-3.5 text-yellow-500 fill-current" />
-                  <span>{driver.averageRating ? driver.averageRating.toFixed(1) : 'No'} ({driver.totalRides || 0} rides)</span>
+                  <span>{driver.averageRating ? driver.averageRating.toFixed(1) : 'New'} ({driver.totalRides || 0} rides)</span>
                 </div>
               </div>
+
             </div>
 
             {/* Center: Vehicle & Account Info */}

@@ -83,7 +83,8 @@ export interface BookingRequest {
   pickupDate: string;
   pickupTime: string;
   status: 'pending' | 'accepted' | 'assigned' | 'expired' | 'cancelled' | 'completed';
-  acceptedBy?: string; // Driver ID
+  acceptedBy?: string | null; // Driver ID
+  driverPhone?: string; // Driver Phone Number
   acceptedAt?: any; // Firestore Timestamp
   createdAt: any; // Firestore Timestamp
   expiresAt: any; // Firestore Timestamp (e.g., 30 mins later)
@@ -148,6 +149,9 @@ export interface User {
   email: string;
   role: 'driver' | 'admin' | 'customer';
   driverId?: string; // If role is 'driver'
+  name?: string;
+  phone?: string;
+  savedDrivers?: string[]; // Array of Driver IDs
   createdAt: any;
 }
 

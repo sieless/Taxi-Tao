@@ -25,6 +25,7 @@ export default function AdminPanel() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'expired'>('pending');
   const [bookingRequests, setBookingRequests] = useState<any[]>([]);
+  const [clientIssues, setClientIssues] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'drivers' | 'dispatch' | 'docs'>('drivers');
   const [selectedDoc, setSelectedDoc] = useState<string>('readme');
 
@@ -46,6 +47,19 @@ export default function AdminPanel() {
       setBookingRequests(requests);
     } catch (error) {
       console.error("Error fetching booking requests:", error);
+    }
+    
+    // Also fetch client issues
+    try {
+      const q = query(collection(db, "client_issues"));
+      const querySnapshot = await getDocs(q);
+      const issues = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setClientIssues(issues);
+    } catch (error) {
+      console.error("Error fetching client issues:", error);
     }
   }
 
@@ -79,15 +93,74 @@ export default function AdminPanel() {
     router.push("/");
   };
 
-  function broadcastToWhatsApp(request: any) {
+  async function broadcastToWhatsApp(request: any) {
     const message = `🚖 *New Ride Request*\n\n` +
       `📍 Pickup: ${request.pickupLocation}\n` +
       `🏁 Dropoff: ${request.destination}\n` +
       `📅 Date: ${request.pickupDate} at ${request.pickupTime}\n\n` +
       `Click here to accept: https://taxitao.com/driver/dashboard`;
     
-    // Open WhatsApp with pre-filled message
+    // 1. Open WhatsApp
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+
+    // 2. Create System Notification for all drivers (conceptually, or just log it for now as we don't have a "broadcast" notification type yet that targets all)
+    // For now, we'll create a notification for the admin to confirm it was sent, or if we had a list of online drivers we'd loop them.
+    // Since we don't want to spam the DB with 100s of notifications in this loop, we'll assume a "system_broadcast" type might be handled by a cloud function later.
+    // But per request "make broadcast on system /drivers", we will add a notification record that could be fetched by drivers.
+    
+    try {
+      // Example: Create a "global" notification or just one for record keeping
+      await createNotification(
+        'system_broadcast', // Special ID or topic
+        'drivers@taxitao.com',
+        '0000000000',
+        'All Drivers',
+        'ride_request',
+        'New Ride Available',
+        `New ride from ${request.pickupLocation} to ${request.destination}`,
+        user?.uid || 'admin'
+      );
+    } catch (error) {
+      console.error("Error creating system broadcast:", error);
+    }
+  }
+
+  async function deleteRequest(requestId: string) {
+    if (!confirm("Are you sure you want to delete this request?")) return;
+    try {
+      await deleteDoc(doc(db, "bookingRequests", requestId));
+      setBookingRequests(prev => prev.filter(r => r.id !== requestId));
+    } catch (error) {
+      console.error("Error deleting request:", error);
+      alert("Failed to delete request");
+    }
+  }
+
+  async function resolveIssue(requestId: string) {
+    if (!confirm("Mark this issue as solved?")) return;
+    try {
+      await updateDoc(doc(db, "bookingRequests", requestId), {
+        status: 'solved' // or 'completed' depending on flow, but user asked for solved/pending in issues
+      });
+      // Refresh local state
+      setBookingRequests(prev => prev.map(r => r.id === requestId ? { ...r, status: 'solved' } : r));
+    } catch (error) {
+      console.error("Error resolving issue:", error);
+      alert("Failed to resolve issue");
+    }
+  }
+
+  async function resolveClientIssue(issueId: string) {
+    if (!confirm("Mark this client issue as solved?")) return;
+    try {
+      await updateDoc(doc(db, "client_issues", issueId), {
+        status: 'solved'
+      });
+      setClientIssues(prev => prev.map(i => i.id === issueId ? { ...i, status: 'solved' } : i));
+    } catch (error) {
+      console.error("Error resolving client issue:", error);
+      alert("Failed to resolve client issue");
+    }
   }
 
   async function verifyPayment(driverId: string, name: string, email: string, phone: string) {
@@ -335,8 +408,8 @@ export default function AdminPanel() {
             </div>
 
             {/* Drivers Table */}
-            <div className="bg-white rounded-xl shadow-md overflow-hidden">
-              <div className="overflow-x-auto">
+            <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col h-full max-h-[calc(100vh-250px)]">
+              <div className="overflow-x-auto overflow-y-auto flex-1 custom-scrollbar">
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
@@ -458,7 +531,7 @@ export default function AdminPanel() {
             {/* 3-Column Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Pending Column */}
-              <div className="bg-gray-100 rounded-xl p-4 h-fit">
+              <div className="bg-gray-100 rounded-xl p-4 h-fit max-h-[600px] overflow-y-auto custom-scrollbar">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-bold text-gray-700 flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
@@ -496,13 +569,22 @@ export default function AdminPanel() {
                           </div>
                         </div>
 
-                        <button
-                          onClick={() => broadcastToWhatsApp(request)}
-                          className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white text-xs font-bold py-2 rounded transition flex items-center justify-center gap-1.5"
-                        >
-                          <MessageSquare className="w-3 h-3" />
-                          Broadcast
-                        </button>
+                        <div className="flex gap-2 mt-2">
+                          <button
+                            onClick={() => broadcastToWhatsApp(request)}
+                            className="flex-1 bg-[#25D366] hover:bg-[#128C7E] text-white text-xs font-bold py-2 rounded transition flex items-center justify-center gap-1.5"
+                          >
+                            <MessageSquare className="w-3 h-3" />
+                            Broadcast
+                          </button>
+                          <button
+                            onClick={() => deleteRequest(request.id)}
+                            className="bg-red-100 hover:bg-red-200 text-red-600 p-2 rounded transition"
+                            title="Delete Request"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     ))
                   )}
@@ -510,7 +592,7 @@ export default function AdminPanel() {
               </div>
 
               {/* Completed Column */}
-              <div className="bg-gray-100 rounded-xl p-4 h-fit">
+              <div className="bg-gray-100 rounded-xl p-4 h-fit max-h-[600px] overflow-y-auto custom-scrollbar">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-bold text-gray-700 flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-green-500"></span>
@@ -535,26 +617,59 @@ export default function AdminPanel() {
               </div>
 
               {/* Issues Column */}
-              <div className="bg-gray-100 rounded-xl p-4 h-fit">
+              <div className="bg-gray-100 rounded-xl p-4 h-fit max-h-[600px] overflow-y-auto custom-scrollbar">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-bold text-gray-700 flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-red-500"></span>
                     Issues
                   </h3>
                   <span className="bg-white text-gray-600 text-xs font-bold px-2 py-1 rounded-full shadow-sm">
-                    {bookingRequests.filter(r => r.status === 'issue').length}
+                    {bookingRequests.filter(r => r.status === 'issue').length + clientIssues.filter(i => i.status !== 'solved').length}
                   </span>
                 </div>
                 <div className="space-y-3">
-                  {bookingRequests.filter(r => r.status === 'issue').length === 0 ? (
-                    <p className="text-center text-gray-400 text-sm py-8">No reported issues</p>
-                  ) : (
-                    bookingRequests.filter(r => r.status === 'issue').map((request) => (
-                      <div key={request.id} className="bg-white rounded-lg shadow-sm p-3 border border-red-200">
-                        <p className="text-sm font-medium text-gray-800">{request.customerName}</p>
-                        <p className="text-xs text-red-500">Issue Reported</p>
+                  {/* Booking Issues */}
+                  {bookingRequests.filter(r => r.status === 'issue').map((request) => (
+                    <div key={request.id} className="bg-white rounded-lg shadow-sm p-3 border border-red-200">
+                      <p className="text-sm font-medium text-gray-800">{request.customerName}</p>
+                      <p className="text-xs text-red-500 mb-2">Ride Issue Reported</p>
+                      <button
+                        onClick={() => resolveIssue(request.id)}
+                        className="w-full bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-1.5 rounded transition flex items-center justify-center gap-1"
+                      >
+                        <CheckCircle className="w-3 h-3" />
+                        Mark Solved
+                      </button>
+                    </div>
+                  ))}
+
+                  {/* Client Reported Issues */}
+                  {clientIssues.filter(i => i.status !== 'solved').map((issue) => (
+                    <div key={issue.id} className="bg-white rounded-lg shadow-sm p-3 border border-orange-200">
+                      <div className="flex justify-between items-start">
+                        <p className="text-sm font-medium text-gray-800">Client Report</p>
+                        <span className="text-[10px] bg-orange-100 text-orange-800 px-1.5 py-0.5 rounded uppercase font-bold">
+                          {issue.issueType}
+                        </span>
                       </div>
-                    ))
+                      <p className="text-xs text-gray-600 mt-1 mb-2 line-clamp-2" title={issue.description}>
+                        {issue.description}
+                      </p>
+                      {issue.driverId && (
+                        <p className="text-xs text-gray-500 mb-2">Driver ID: {issue.driverId}</p>
+                      )}
+                      <button
+                        onClick={() => resolveClientIssue(issue.id)}
+                        className="w-full bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-1.5 rounded transition flex items-center justify-center gap-1"
+                      >
+                        <CheckCircle className="w-3 h-3" />
+                        Mark Solved
+                      </button>
+                    </div>
+                  ))}
+
+                  {bookingRequests.filter(r => r.status === 'issue').length === 0 && clientIssues.filter(i => i.status !== 'solved').length === 0 && (
+                    <p className="text-center text-gray-400 text-sm py-8">No reported issues</p>
                   )}
                 </div>
               </div>

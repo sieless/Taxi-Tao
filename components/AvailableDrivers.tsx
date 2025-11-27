@@ -1,15 +1,26 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { collection, query, where, onSnapshot, doc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Driver } from "@/lib/types";
-import { Star, Car, MapPin, Briefcase, Loader2 } from "lucide-react";
+import { Star, Car, MapPin, Briefcase, Loader2, Phone, Heart } from "lucide-react";
 import Link from "next/link";
+import { useAuth } from "@/lib/auth-context";
+import { useRouter } from "next/navigation";
 
 export default function AvailableDrivers() {
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user, userProfile } = useAuth();
+  const router = useRouter();
+  const [savedDriverIds, setSavedDriverIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (userProfile?.savedDrivers) {
+      setSavedDriverIds(userProfile.savedDrivers);
+    }
+  }, [userProfile]);
 
   useEffect(() => {
     // Real-time listener for available drivers
@@ -34,6 +45,32 @@ export default function AvailableDrivers() {
 
     return () => unsubscribe();
   }, []);
+
+  const toggleSaveDriver = async (driverId: string) => {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
+    const isSaved = savedDriverIds.includes(driverId);
+    const userRef = doc(db, "users", user.uid);
+
+    try {
+      if (isSaved) {
+        await setDoc(userRef, {
+          savedDrivers: arrayRemove(driverId)
+        }, { merge: true });
+        setSavedDriverIds(prev => prev.filter(id => id !== driverId));
+      } else {
+        await setDoc(userRef, {
+          savedDrivers: arrayUnion(driverId)
+        }, { merge: true });
+        setSavedDriverIds(prev => [...prev, driverId]);
+      }
+    } catch (error) {
+      console.error("Error toggling saved driver:", error);
+    }
+  };
 
   if (loading) {
     return (
@@ -133,9 +170,19 @@ export default function AvailableDrivers() {
 
               {/* Driver Details - Maximized Space, No Extra Padding */}
               <div className="p-4">
-                <h3 className="text-lg font-bold text-gray-800 mb-1">
-                  {driver.name}
-                </h3>
+                <div className="flex justify-between items-start mb-1">
+                  <h3 className="text-lg font-bold text-gray-800">
+                    {driver.name}
+                  </h3>
+                  <button
+                    onClick={() => toggleSaveDriver(driver.id)}
+                    className="text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    <Heart 
+                      className={`w-5 h-5 ${savedDriverIds.includes(driver.id) ? "fill-red-500 text-red-500" : ""}`} 
+                    />
+                  </button>
+                </div>
 
                 {/* Rating - Compact */}
                 <div className="flex items-center gap-2 mb-3">
@@ -186,13 +233,22 @@ export default function AvailableDrivers() {
                   )}
                 </div>
 
-                {/* Book Now Button - Compact */}
-                <Link
-                  href="/#book-taxi"
-                  className="block w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-bold py-2.5 rounded-lg text-center transition-all shadow-md hover:shadow-lg text-sm"
-                >
-                  Book Now
-                </Link>
+                {/* Action Buttons */}
+                <div className="space-y-2">
+                  <a
+                    href={`tel:${driver.phone}`}
+                    className="block w-full bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold py-2.5 rounded-lg text-center transition-all border border-blue-200 flex items-center justify-center gap-2 text-sm"
+                  >
+                    <Phone className="w-4 h-4" />
+                    Call Driver
+                  </a>
+                  <Link
+                    href={`/booking?driverId=${driver.id}`}
+                    className="block w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-bold py-2.5 rounded-lg text-center transition-all shadow-md hover:shadow-lg text-sm"
+                  >
+                    Book Now
+                  </Link>
+                </div>
               </div>
             </div>
           ))}

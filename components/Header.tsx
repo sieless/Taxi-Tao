@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import ProfileIcon from "./ProfileIcon";
+import Logo from "./Logo";
 
 export default function Header() {
   const { user } = useAuth();
@@ -11,12 +12,9 @@ export default function Header() {
     <header className="bg-white shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-700 rounded-full flex items-center justify-center">
-            <span className="text-white font-bold text-xl">T</span>
-          </div>
-          <span className="text-2xl font-bold text-gray-800">TaxiTao</span>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Logo variant="full" size="md" clickable={true} />
+        </div>
 
         {/* Navigation */}
         <nav className="hidden md:flex items-center gap-6">

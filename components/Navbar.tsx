@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Menu, Phone, X, Home, Briefcase, Users, Mail, User } from "lucide-react";
+import { Menu, Phone, X, Home, Briefcase, Users, Mail, User, History } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import ProfileIcon from "./ProfileIcon";
+import Logo from "./Logo";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -55,23 +56,9 @@ export default function Navbar() {
           }`}
         >
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="relative">
-              <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-700 rounded-lg flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6 text-white"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M5 11h14l-1.68-5.04A2 2 0 0 0 15.38 4H8.62a2 2 0 0 0-1.94 1.46L5 11zm14 2H5a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-1h10v1a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-5a1 1 0 0 0-1-1zm-11 4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm8 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z" />
-                </svg>
-              </div>
-            </div>
-            <span className="text-2xl font-bold text-gray-900 group-hover:text-green-600 transition-colors">
-              TaxiTao
-            </span>
-          </Link>
+          <div className="flex items-center gap-3 group">
+            <Logo variant="full" size="md" clickable={true} />
+          </div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
@@ -146,6 +133,7 @@ export default function Navbar() {
         className={`fixed top-0 right-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out md:hidden ${
           isMenuOpen ? "translate-x-0" : "translate-x-full"
         }`}
+        style={{ visibility: isMenuOpen ? 'visible' : 'hidden', transitionProperty: 'transform, visibility', transitionDuration: '300ms, 0s', transitionDelay: '0s, 300ms' }}
       >
         <div className="flex flex-col h-full">
           {/* Mobile Menu Header */}
@@ -178,7 +166,7 @@ export default function Navbar() {
                     ? "/admin/panel"
                     : userProfile.role === "driver"
                     ? "/driver/dashboard"
-                    : "/"
+                    : "/customer/profile"
                 }
                 onClick={() => setIsMenuOpen(false)}
                 className="mt-3 block text-center bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg font-medium transition-colors"
@@ -211,9 +199,46 @@ export default function Navbar() {
                   </Link>
                 );
               })}
-            </div>
-
-            {/* Mobile Auth Links (when not logged in) */}
+              </div>
+              
+              {/* Customer Links */}
+              {user && userProfile?.role === 'customer' && (
+                <div className="px-4 py-2 border-t border-gray-100">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">My Account</p>
+                  <Link
+                    href="/customer/profile"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors group"
+                  >
+                    <User className="w-5 h-5 text-gray-500 group-hover:text-green-600 transition-colors" />
+                    <span className="font-medium text-gray-700 group-hover:text-green-600 transition-colors">
+                      My Profile
+                    </span>
+                  </Link>
+                  <Link
+                    href="/customer/bookings"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors group"
+                  >
+                    <Briefcase className="w-5 h-5 text-gray-500 group-hover:text-green-600 transition-colors" />
+                    <span className="font-medium text-gray-700 group-hover:text-green-600 transition-colors">
+                      My Bookings
+                    </span>
+                  </Link>
+                  <Link
+                    href="/customer/history"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors group"
+                  >
+                    <History className="w-5 h-5 text-gray-500 group-hover:text-green-600 transition-colors" />
+                    <span className="font-medium text-gray-700 group-hover:text-green-600 transition-colors">
+                      Driver History
+                    </span>
+                  </Link>
+                </div>
+              )}
+              
+              {/* Mobile Auth Links (when not logged in) */}
             {!user && (
               <div className="mt-4 px-4 pt-4 border-t border-gray-200 space-y-2">
                 <Link

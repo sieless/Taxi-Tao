@@ -262,7 +262,6 @@ export default function Home() {
                 </p>
                 <div className="flex justify-between items-center mt-auto">
                   <span className="font-bold text-green-600">From KES 450</span>
-                  <span className="font-bold text-green-600">From KES 450</span>
                   <button 
                     onClick={() => handleBookClick('standard')}
                     className="text-green-600 hover:text-green-700 font-semibold flex items-center"
@@ -293,7 +292,6 @@ export default function Home() {
                 </p>
                 <div className="flex justify-between items-center mt-auto">
                   <span className="font-bold text-green-600">From KES 800</span>
-                  <span className="font-bold text-green-600">From KES 800</span>
                   <button 
                     onClick={() => handleBookClick('executive')}
                     className="text-green-600 hover:text-green-700 font-semibold flex items-center"
@@ -323,7 +321,6 @@ export default function Home() {
                   Minibuses and vans for larger groups, events, school trips, or corporate outings.
                 </p>
                 <div className="flex justify-between items-center mt-auto">
-                  <span className="font-bold text-green-600">From KES 1,500</span>
                   <span className="font-bold text-green-600">From KES 1,500</span>
                   <button 
                     onClick={() => handleBookClick('group')}

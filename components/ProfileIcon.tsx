@@ -38,7 +38,7 @@ export default function ProfileIcon() {
     } else if (userProfile?.role === "driver") {
       router.push("/driver/dashboard");
     } else {
-      router.push("/");
+      router.push("/customer/profile");
     }
   };
 
