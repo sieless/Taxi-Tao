@@ -4,6 +4,7 @@ import Link from 'next/link';
 interface LogoProps {
   variant?: 'full' | 'icon-only' | 'text-only';
   size?: 'sm' | 'md' | 'lg' | 'xl';
+  layout?: 'horizontal' | 'vertical';
   className?: string;
   clickable?: boolean;
 }
@@ -18,13 +19,14 @@ const sizeMap = {
 export default function Logo({ 
   variant = 'full', 
   size = 'md', 
+  layout = 'horizontal',
   className = '',
   clickable = true 
 }: LogoProps) {
   const { height, width, textSize } = sizeMap[size];
   
   const logoContent = (
-    <div className={`flex items-center gap-3 ${className}`}>
+    <div className={`flex ${layout === 'vertical' ? 'flex-col' : 'flex-row'} items-center gap-3 ${className}`}>
       {/* Icon */}
       {variant !== 'text-only' && (
         <div className="relative" style={{ width, height }}>

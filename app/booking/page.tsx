@@ -8,6 +8,7 @@ import { Phone, Loader2 } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { useEffect, Suspense } from "react";
+import Logo from "@/components/Logo";
 
 function BookingContent() {
   const { user, loading } = useAuth();

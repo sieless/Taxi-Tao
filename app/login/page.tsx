@@ -74,7 +74,7 @@ export default function DriverLoginPage() {
         <div className="bg-white rounded-xl shadow-lg p-8">
           <div className="text-center mb-8">
             <div className="mb-4 flex justify-center">
-              <Logo variant="full" size="lg" clickable={false} />
+              <Logo variant="full" size="md" layout="vertical" clickable={false} />
             </div>
             <h1 className="text-3xl font-bold text-gray-800 mb-2">
               {resetMode ? "Reset Password" : "Sign In"}

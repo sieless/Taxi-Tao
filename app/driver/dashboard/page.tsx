@@ -451,6 +451,24 @@ export default function DriverDashboard() {
   if (!driver) {
     return null;
   }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Top Navbar */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Logo variant="icon-only" size="md" clickable={true} />
+            <h1 className="text-2xl font-bold text-gray-800">Driver Dashboard</h1>
+          </div>
+
+          {/* Desktop Menu */}
+          <div className="hidden md:flex items-center gap-4">
+            <button
+              onClick={() => router.push('/driver/history')}
+              className="flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors"
+            >
+              <History className="w-5 h-5" />
               <span>History</span>
             </button>
             <button
@@ -632,16 +650,6 @@ export default function DriverDashboard() {
                 {driver.profilePhotoUrl ? (
                   <img src={driver.profilePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
-                  <User className="w-10 h-10 text-gray-400" />
-                )}
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-gray-800">{driver.name}</h2>
-                <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-                  <Phone className="w-3.5 h-3.5" />
-                  <span>{driver.phone}</span>
-                </div>
-                {driver.businessLocation && (
                   <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
                     <MapPin className="w-3.5 h-3.5" />
                     <span>{driver.businessLocation}</span>
@@ -1531,3 +1539,4 @@ export default function DriverDashboard() {
   </div>
   );
 }
+

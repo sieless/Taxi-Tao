@@ -12,10 +12,12 @@ const firebaseConfig = {
   appId: "1:442419181015:web:096ac4a76991daa5b48792"
 };
 
-// Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
-const db = getFirestore(app);
-const storage = getStorage(app);
+// Initialize Firebase - Only on client side to prevent SSR errors
+const app = typeof window !== 'undefined' && !getApps().length 
+  ? initializeApp(firebaseConfig) 
+  : getApps()[0] || null as any;
+const auth = typeof window !== 'undefined' && app ? getAuth(app) : null as any;
+const db = typeof window !== 'undefined' && app ? getFirestore(app) : null as any;
+const storage = typeof window !== 'undefined' && app ? getStorage(app) : null as any;
 
 export { app, auth, db, storage };

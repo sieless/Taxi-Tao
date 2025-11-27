@@ -9,6 +9,7 @@ import { createRideRequest } from '@/lib/ride-request-service';
 import { KENYA_COUNTIES, COMMON_LOCATIONS } from '@/lib/kenya-locations';
 import Link from 'next/link';
 import NegotiationModal from '@/components/NegotiationModal';
+import Logo from "@/components/Logo";
 
 // Simple Ride Request Form Component
 function RideRequestForm({ from, to }: { from: string; to: string }) {

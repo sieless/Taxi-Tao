@@ -10,6 +10,7 @@ import { Driver, BookingRequest } from "@/lib/types";
 import { LogOut, CheckCircle, XCircle, AlertTriangle, Users, FileText, MessageSquare, Car, RefreshCw, MapPin, Flag, Calendar, Trash2 } from "lucide-react";
 import { getNextPaymentDueDate } from "@/lib/subscription-utils";
 import { createNotification } from "@/lib/notifications";
+import Logo from "@/components/Logo";
 
 const docs = [
   { id: 'readme', title: 'Project Overview', file: 'README.md' },
@@ -36,7 +37,7 @@ export default function AdminPanel() {
 
   async function fetchBookingRequests() {
     try {
-      const q = query(collection(db, "bookingRequests"), where("status", "==", "pending"));
+      const q = query(collection(db, "bookingRequests"));
       const querySnapshot = await getDocs(q);
       const requests = querySnapshot.docs.map(doc => ({
         id: doc.id,
@@ -184,8 +185,11 @@ export default function AdminPanel() {
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Admin Panel</h1>
-            <p className="text-sm text-gray-600 mt-1">Manage drivers and subscriptions</p>
+            <div className="flex items-center gap-3">
+              <Logo variant="icon-only" size="md" clickable={true} />
+              <h1 className="text-2xl font-bold text-gray-800">Admin Panel</h1>
+            </div>
+            <p className="text-sm text-gray-600 mt-1 ml-14">Manage drivers and subscriptions</p>
           </div>
           <div className="flex items-center gap-4">
             <button
@@ -451,61 +455,110 @@ export default function AdminPanel() {
               </button>
             </div>
 
-            {bookingRequests.length === 0 ? (
-              <div className="bg-white rounded-xl shadow-md p-12 text-center">
-                <Car className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-bold text-gray-800 mb-2">No Active Requests</h3>
-                <p className="text-gray-500">There are no pending ride requests at the moment.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {bookingRequests.map((request) => (
-                  <div key={request.id} className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="font-bold text-gray-800">{request.customerName}</h3>
-                        <p className="text-sm text-gray-500">{request.customerPhone}</p>
-                      </div>
-                      <span className="bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-1 rounded-full uppercase">
-                        Pending
-                      </span>
-                    </div>
+            {/* 3-Column Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Pending Column */}
+              <div className="bg-gray-100 rounded-xl p-4 h-fit">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold text-gray-700 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
+                    Pending
+                  </h3>
+                  <span className="bg-white text-gray-600 text-xs font-bold px-2 py-1 rounded-full shadow-sm">
+                    {bookingRequests.filter(r => r.status === 'pending').length}
+                  </span>
+                </div>
+                
+                <div className="space-y-3">
+                  {bookingRequests.filter(r => r.status === 'pending').length === 0 ? (
+                    <p className="text-center text-gray-400 text-sm py-8">No pending requests</p>
+                  ) : (
+                    bookingRequests.filter(r => r.status === 'pending').map((request) => (
+                      <div key={request.id} className="bg-white rounded-lg shadow-sm p-3 border border-gray-200 hover:shadow-md transition">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <p className="font-bold text-gray-800 text-sm">{request.customerName}</p>
+                            <p className="text-xs text-gray-500">{request.customerPhone}</p>
+                          </div>
+                          <span className="text-[10px] font-bold bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded">
+                            {request.pickupTime}
+                          </span>
+                        </div>
 
-                    <div className="space-y-3 mb-6">
-                      <div className="flex items-start gap-3">
-                        <MapPin className="w-5 h-5 text-green-600 mt-0.5" />
-                        <div>
-                          <p className="text-xs text-gray-500 uppercase font-bold">Pickup</p>
-                          <p className="font-medium text-gray-800">{request.pickupLocation}</p>
+                        <div className="space-y-1.5 mb-3">
+                          <div className="flex items-start gap-2">
+                            <MapPin className="w-3 h-3 text-green-600 mt-0.5 flex-shrink-0" />
+                            <p className="text-xs text-gray-600 line-clamp-1" title={request.pickupLocation}>{request.pickupLocation}</p>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <Flag className="w-3 h-3 text-red-600 mt-0.5 flex-shrink-0" />
+                            <p className="text-xs text-gray-600 line-clamp-1" title={request.destination}>{request.destination}</p>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <Flag className="w-5 h-5 text-red-600 mt-0.5" />
-                        <div>
-                          <p className="text-xs text-gray-500 uppercase font-bold">Destination</p>
-                          <p className="font-medium text-gray-800">{request.destination}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <Calendar className="w-5 h-5 text-blue-600 mt-0.5" />
-                        <div>
-                          <p className="text-xs text-gray-500 uppercase font-bold">Time</p>
-                          <p className="font-medium text-gray-800">{request.pickupDate} at {request.pickupTime}</p>
-                        </div>
-                      </div>
-                    </div>
 
-                    <button
-                      onClick={() => broadcastToWhatsApp(request)}
-                      className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white font-bold py-3 rounded-lg transition flex items-center justify-center gap-2"
-                    >
-                      <MessageSquare className="w-5 h-5" />
-                      Broadcast to WhatsApp
-                    </button>
-                  </div>
-                ))}
+                        <button
+                          onClick={() => broadcastToWhatsApp(request)}
+                          className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white text-xs font-bold py-2 rounded transition flex items-center justify-center gap-1.5"
+                        >
+                          <MessageSquare className="w-3 h-3" />
+                          Broadcast
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
-            )}
+
+              {/* Completed Column */}
+              <div className="bg-gray-100 rounded-xl p-4 h-fit">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold text-gray-700 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                    Completed
+                  </h3>
+                  <span className="bg-white text-gray-600 text-xs font-bold px-2 py-1 rounded-full shadow-sm">
+                    {bookingRequests.filter(r => r.status === 'completed').length}
+                  </span>
+                </div>
+                <div className="space-y-3">
+                  {bookingRequests.filter(r => r.status === 'completed').length === 0 ? (
+                    <p className="text-center text-gray-400 text-sm py-8">No completed requests</p>
+                  ) : (
+                    bookingRequests.filter(r => r.status === 'completed').map((request) => (
+                      <div key={request.id} className="bg-white rounded-lg shadow-sm p-3 border border-gray-200 opacity-75">
+                        <p className="text-sm font-medium text-gray-800">{request.customerName}</p>
+                        <p className="text-xs text-gray-500">Completed</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Issues Column */}
+              <div className="bg-gray-100 rounded-xl p-4 h-fit">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold text-gray-700 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                    Issues
+                  </h3>
+                  <span className="bg-white text-gray-600 text-xs font-bold px-2 py-1 rounded-full shadow-sm">
+                    {bookingRequests.filter(r => r.status === 'issue').length}
+                  </span>
+                </div>
+                <div className="space-y-3">
+                  {bookingRequests.filter(r => r.status === 'issue').length === 0 ? (
+                    <p className="text-center text-gray-400 text-sm py-8">No reported issues</p>
+                  ) : (
+                    bookingRequests.filter(r => r.status === 'issue').map((request) => (
+                      <div key={request.id} className="bg-white rounded-lg shadow-sm p-3 border border-red-200">
+                        <p className="text-sm font-medium text-gray-800">{request.customerName}</p>
+                        <p className="text-xs text-red-500">Issue Reported</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

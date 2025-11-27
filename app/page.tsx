@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Phone, Calendar, Clock, Car, Shield, Wallet, Headset, MapPin, Mail } from "lucide-react";
@@ -7,7 +8,7 @@ import BookingForm from "@/components/BookingForm";
 import DriverCard from "@/components/DriverCard";
 import FindDriversButton from "@/components/FindDriversButton";
 import AvailableDrivers from "@/components/AvailableDrivers";
-import Logo from "@/components/Logo";
+
 import { useAuth } from "@/lib/auth-context";
 import { getAllDriversWithVehicles } from "@/lib/firestore";
 import { Driver, Vehicle } from "@/lib/types";
@@ -159,9 +160,6 @@ export default function Home() {
           />
         </div>
         <div className="relative z-20 max-w-7xl mx-auto px-4 text-center">
-          <div className="mb-6 animate-fade-in flex justify-center">
-            <Logo variant="full" size="xl" clickable={false} />
-          </div>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 animate-fade-in delay-200">
             Quick & Reliable Taxi Services
           </h1>
@@ -210,7 +208,9 @@ export default function Home() {
             <div className="p-6 md:p-8">
               <h2 className="text-3xl font-bold text-green-700 mb-2">Book Your Taxi Now</h2>
               <p className="text-gray-600 mb-6">Fill in the details below to request a taxi</p>
-              <BookingForm />
+              <Suspense fallback={<div className="p-4 text-center text-gray-500">Loading booking form...</div>}>
+                <BookingForm />
+              </Suspense>
             </div>
             <div className="bg-green-100 border-t border-green-200 p-4 text-center">
               <p className="text-green-700">
