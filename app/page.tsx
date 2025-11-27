@@ -7,6 +7,7 @@ import BookingForm from "@/components/BookingForm";
 import DriverCard from "@/components/DriverCard";
 import FindDriversButton from "@/components/FindDriversButton";
 import AvailableDrivers from "@/components/AvailableDrivers";
+import Logo from "@/components/Logo";
 import { useAuth } from "@/lib/auth-context";
 import { getAllDriversWithVehicles } from "@/lib/firestore";
 import { Driver, Vehicle } from "@/lib/types";
@@ -158,7 +159,10 @@ export default function Home() {
           />
         </div>
         <div className="relative z-20 max-w-7xl mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 animate-fade-in">
+          <div className="mb-6 animate-fade-in flex justify-center">
+            <Logo variant="full" size="xl" clickable={false} />
+          </div>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 animate-fade-in delay-200">
             Quick & Reliable Taxi Services
           </h1>
           <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto animate-fade-in delay-200">

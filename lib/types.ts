@@ -38,7 +38,10 @@ export interface Driver {
   // Private Details
   nationalId?: string;
   licenseNumber?: string;
-  
+  insuranceExpiry?: any; // Firestore Timestamp
+  licenseExpiry?: any; // Firestore Timestamp
+  vehicleInspectionDue?: any; // Firestore Timestamp
+    
   // Existing fields
   currentLocation?: string; // e.g., "Westlands", "CBD" - for dispatching
 }
@@ -102,6 +105,7 @@ export interface RideRequest {
   date: string; // Pickup date
   time: string; // Pickup time
   passengers: number; // Number of passengers
+  customerPhone: string;
   status: 'pending' | 'accepted' | 'cancelled';
   driverId?: string; // Driver ID who accepted
   driverName?: string;
@@ -169,4 +173,36 @@ export interface Notification {
     customerPhone?: string;
     action?: string;
   };
+}
+
+export interface NegotiationMessage {
+  sender: 'customer' | 'driver' | 'system';
+  type: 'offer' | 'counter' | 'accept' | 'decline';
+  price?: number;
+  message: string;
+  timestamp: any; // Firestore Timestamp
+}
+
+export interface Negotiation {
+  id: string;
+  bookingRequestId: string;
+  customerId: string | null;
+  customerName: string;
+  customerPhone: string;
+  driverId: string;
+  initialPrice: number;
+  proposedPrice: number;
+  currentOffer: number;
+  status: 'pending' | 'counter_offered' | 'accepted' | 'declined' | 'expired';
+  messages: NegotiationMessage[];
+  createdAt: any; // Firestore Timestamp
+  expiresAt: any; // Firestore Timestamp
+  resolvedAt?: any; // Firestore Timestamp
+}
+
+export interface ComplianceAlert {
+  type: 'insurance' | 'license' | 'inspection';
+  expiryDate: any; // Firestore Timestamp or Date
+  daysUntilExpiry: number;
+  severity: 'critical' | 'warning' | 'info';
 }

@@ -6,6 +6,7 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc, Timestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import Link from "next/link";
+import Logo from "@/components/Logo";
 import { UserPlus, AlertCircle, CheckCircle, Eye, EyeOff } from "lucide-react";
 
 export default function SignUpPage() {
@@ -122,8 +123,8 @@ export default function SignUpPage() {
 
         <div className="bg-white rounded-xl shadow-lg p-8">
           <div className="text-center mb-8">
-            <div className="inline-block bg-green-100 p-4 rounded-full mb-4">
-              <UserPlus className="w-8 h-8 text-green-600" />
+            <div className="mb-4 flex justify-center">
+              <Logo variant="full" size="lg" clickable={false} />
             </div>
             <h1 className="text-3xl font-bold text-gray-800 mb-2">Create Account</h1>
             <p className="text-gray-600">Join TaxiTao today</p>

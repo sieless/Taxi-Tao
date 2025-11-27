@@ -36,6 +36,7 @@ import NotificationsFeed from "@/components/NotificationsFeed";
 import ComplianceAlerts from "@/components/ComplianceAlerts";
 import DriverPricingSummary from "@/components/DriverPricingSummary";
 import DriverNegotiations from "@/components/DriverNegotiations";
+import Logo from "@/components/Logo";
 
 import DriverPricingManager from "@/components/DriverPricingManager";
 import ServicePackagesConfig from "@/components/ServicePackagesConfig";
@@ -450,21 +451,6 @@ export default function DriverDashboard() {
   if (!driver) {
     return null;
   }
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-800">Driver Dashboard</h1>
-          
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center gap-4">
-            <button
-              onClick={() => router.push('/driver/history')}
-              className="flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors"
-            >
-              <History className="w-5 h-5" />
               <span>History</span>
             </button>
             <button

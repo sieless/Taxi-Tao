@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import Link from "next/link";
+import Logo from "@/components/Logo";
 import { LogIn, AlertCircle, Eye, EyeOff, CheckCircle } from "lucide-react";
 
 export default function DriverLoginPage() {
@@ -72,8 +73,8 @@ export default function DriverLoginPage() {
 
         <div className="bg-white rounded-xl shadow-lg p-8">
           <div className="text-center mb-8">
-            <div className="inline-block bg-green-100 p-4 rounded-full mb-4">
-              <LogIn className="w-8 h-8 text-green-600" />
+            <div className="mb-4 flex justify-center">
+              <Logo variant="full" size="lg" clickable={false} />
             </div>
             <h1 className="text-3xl font-bold text-gray-800 mb-2">
               {resetMode ? "Reset Password" : "Sign In"}

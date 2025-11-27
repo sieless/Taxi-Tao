@@ -64,7 +64,7 @@ export default function BookingRequestForm({
       if (priceNegotiated) {
         const negotiationId = await createNegotiation(
           bookingId,
-          undefined, // No customer ID for guest bookings
+          null, // No customer ID for guest bookings
           formData.customerName,
           formData.customerPhone,
           driverId,
