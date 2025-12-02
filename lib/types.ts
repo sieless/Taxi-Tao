@@ -1,49 +1,53 @@
+// lib/types.ts
+import type { Timestamp } from "firebase/firestore";
+
+export type FirestoreTimestamp = Timestamp | null;
+
 export interface Driver {
   id: string;
   name: string;
-  slug: string;
-  bio: string;
-  phone: string;
-  whatsapp: string;
-  email: string;
+  slug?: string;
+  bio?: string;
+  phone?: string;
+  whatsapp?: string;
+  email?: string;
   active: boolean;
-  rating: number;
-  totalRides: number;
-  averageRating: number;
-  totalRatings: number;
+  rating?: number;
+  totalRides?: number;
+  averageRating?: number;
+  totalRatings?: number;
   profilePhotoUrl?: string;
-  vehicles: string[]; // Array of Vehicle IDs
-  createdAt: any; // Firestore Timestamp
-  
-  // Subscription fields
-  subscriptionStatus: 'active' | 'pending' | 'expired' | 'suspended';
-  lastPaymentDate?: any; // Firestore Timestamp
-  nextPaymentDue?: any; // Firestore Timestamp (5th of next month)
-  paymentHistory: string[]; // Array of Payment IDs
-  isVisibleToPublic: boolean; // Derived from subscription status
-  // Enhanced Profile Fields
+  vehicles?: string[]; // Vehicle IDs
+  createdAt?: FirestoreTimestamp;
+  subscriptionStatus?: 'active' | 'pending' | 'expired' | 'suspended';
+  lastPaymentDate?: FirestoreTimestamp;
+  nextPaymentDue?: FirestoreTimestamp;
+  paymentHistory?: string[];
+  isVisibleToPublic?: boolean;
   vehicle?: {
-    make: string;
-    model: string;
-    year: string;
-    plate: string;
-    color: string;
-    type: 'sedan' | 'suv' | 'van' | 'bike' | 'tuk-tuk';
+    make?: string;
+    model?: string;
+    year?: number;
+    plate?: string;
+    color?: string;
+    type?: 'sedan' | 'suv' | 'van' | 'bike' | 'tuk-tuk';
     carPhotoUrl?: string;
   };
   experienceYears?: number;
-  businessLocation?: string; // Base of operations
-  status: 'available' | 'booked' | 'offline';
-  
-  // Private Details
+  businessLocation?: string;
+  status?: 'available' | 'booked' | 'offline';
   nationalId?: string;
   licenseNumber?: string;
-  insuranceExpiry?: any; // Firestore Timestamp
-  licenseExpiry?: any; // Firestore Timestamp
-  vehicleInspectionDue?: any; // Firestore Timestamp
-    
-  // Existing fields
-  currentLocation?: string; // e.g., "Westlands", "CBD" - for dispatching
+  insuranceExpiry?: FirestoreTimestamp;
+  licenseExpiry?: FirestoreTimestamp;
+  vehicleInspectionDue?: FirestoreTimestamp;
+  currentLocation?: string;
+  mpesaDetails?: {
+    type?: 'till' | 'paybill';
+    tillNumber?: string;
+    paybillNumber?: string;
+    accountNumber?: string;
+  };
 }
 
 export interface Vehicle {
@@ -76,6 +80,7 @@ export interface Booking {
 
 export interface BookingRequest {
   id: string;
+  customerId?: string; // Firebase UID of the customer
   customerName: string;
   customerPhone: string;
   pickupLocation: string;
@@ -89,6 +94,29 @@ export interface BookingRequest {
   createdAt: any; // Firestore Timestamp
   expiresAt: any; // Firestore Timestamp (e.g., 30 mins later)
   notifiedDrivers: string[]; // Array of Driver IDs who received the notification
+  
+  // Live Tracking - Phase 3
+  rideStatus?: 'pending' | 'confirmed' | 'en_route' | 'arrived' | 'in_progress' | 'completed' | 'cancelled';
+  
+  // Driver Location Tracking
+  driverLocation?: {
+    lat: number;
+    lng: number;
+    lastUpdated: any; // Firestore Timestamp
+  };
+  
+  // ETA & Distance
+  eta?: {
+    minutes: number;
+    distance: string; // e.g., "2.5 km"
+    lastCalculated: any; // Firestore Timestamp
+  };
+  
+  // Trip Timestamps
+  confirmedAt?: any;  // Firestore Timestamp - Driver confirms ride
+  enRouteAt?: any;    // Firestore Timestamp - Driver starts journey
+  arrivedAt?: any;    // Firestore Timestamp - Driver reaches pickup
+  startedAt?: any;    // Firestore Timestamp - Trip starts
   
   // Ride completion fields
   completedAt?: any; // Firestore Timestamp
@@ -134,7 +162,7 @@ export interface Payment {
 export interface Subscription {
   id: string;
   driverId: string;
-  monthlyFee: number; // Default 1000 KSH, can be adjusted
+  monthlyFee: number; // Default 2000 KSH, can be adjusted
   status: 'active' | 'pending' | 'expired' | 'suspended';
   startDate: any; // Firestore Timestamp
   lastPaymentDate?: any;
@@ -148,11 +176,11 @@ export interface User {
   id: string;
   email: string;
   role: 'driver' | 'admin' | 'customer';
-  driverId?: string; // If role is 'driver'
+  driverId?: string;
   name?: string;
   phone?: string;
-  savedDrivers?: string[]; // Array of Driver IDs
-  createdAt: any;
+  savedDrivers?: string[];
+  createdAt?: FirestoreTimestamp;
 }
 
 export interface Notification {
@@ -161,12 +189,12 @@ export interface Notification {
   recipientEmail: string;
   recipientPhone: string;
   recipientName: string;
-  type: 'payment_verified' | 'payment_rejected' | 'admin_message' | 'subscription_expiring' | 'ride_request';
+  type: 'payment_verified' | 'payment_rejected' | 'admin_message' | 'subscription_expiring' | 'ride_request' | 'ride_confirmed' | 'driver_enroute' | 'driver_arrived' | 'trip_started' | 'trip_completed';
   title: string;
   message: string;
   read: boolean;
   createdAt: any; // Firestore Timestamp
-  createdBy: string;          // Admin user ID
+  createdBy?: string;          // Admin user ID
   metadata?: {
     rejectionReason?: string;
     nextPaymentDue?: any; // Firestore Timestamp

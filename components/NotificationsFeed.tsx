@@ -20,21 +20,36 @@ export default function NotificationsFeed({ driverId }: NotificationsFeedProps) 
 
   async function fetchNotifications() {
     try {
-      const q = query(
+      // Fetch personal notifications
+      const q1 = query(
         collection(db, 'notifications'),
         where('recipientId', '==', driverId),
+        orderBy('createdAt', 'desc'),
+        limit(10)
+      );
+
+      // Fetch system broadcasts
+      const q2 = query(
+        collection(db, 'notifications'),
+        where('recipientId', '==', 'system_broadcast'),
         orderBy('createdAt', 'desc'),
         limit(5)
       );
 
-      const snapshot = await getDocs(q);
+      const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+      
       const notifs: Notification[] = [];
+      snap1.forEach((doc) => notifs.push({ id: doc.id, ...doc.data() } as Notification));
+      snap2.forEach((doc) => notifs.push({ id: doc.id, ...doc.data() } as Notification));
 
-      snapshot.forEach((doc) => {
-        notifs.push({ id: doc.id, ...doc.data() } as Notification);
+      // Sort by date desc and take top 10
+      notifs.sort((a, b) => {
+        const t1 = a.createdAt?.toMillis() || 0;
+        const t2 = b.createdAt?.toMillis() || 0;
+        return t2 - t1;
       });
 
-      setNotifications(notifs);
+      setNotifications(notifs.slice(0, 10));
     } catch (error) {
       console.error('Error fetching notifications:', error);
     } finally {

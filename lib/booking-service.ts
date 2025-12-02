@@ -1,3 +1,5 @@
+// booking-service.ts
+
 import { 
   collection, 
   addDoc, 
@@ -11,7 +13,8 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { BookingRequest, Driver } from "@/lib/types";
-import { createNotification } from "@/lib/notifications";
+import { createNotification } from "@/lib/notification-service";
+import { createDriverNotification, notifyDriversOfNewBooking } from "@/lib/driver-notification-service";
 
 const COLLECTION_NAME = "bookingRequests";
 
@@ -19,6 +22,7 @@ const COLLECTION_NAME = "bookingRequests";
  * Creates a new booking request and notifies matching drivers.
  */
 export async function createBookingRequest(data: {
+  customerId?: string;
   customerName: string;
   customerPhone: string;
   pickupLocation: string;
@@ -28,95 +32,103 @@ export async function createBookingRequest(data: {
   estimatedPrice?: number;
   notes?: string;
   vehicleType?: string;
-  preferredDriverId?: string; // NEW: Direct driver selection from "Find Drivers"
+  preferredDriverId?: string;
 }): Promise<string> {
   try {
-    // 1. Create the booking request document
-    const bookingData: Omit<BookingRequest, 'id'> = {
-      ...data,
-      status: data.preferredDriverId ? 'assigned' : 'pending', // Direct assignment vs open request
-      acceptedBy: data.preferredDriverId ?? null, // Assign to preferred driver if provided
+    const bookingData = {
+      customerId: data.customerId || null,
+      customerName: data.customerName,
+      customerPhone: data.customerPhone,
+      pickupLocation: data.pickupLocation,
+      destination: data.destination,
+      pickupDate: data.pickupDate,
+      pickupTime: data.pickupTime,
+      estimatedPrice: data.estimatedPrice ?? 0,
+      notes: data.notes || null,
+      vehicleType: data.vehicleType || null,
+      preferredDriverId: data.preferredDriverId || null,
+      status: data.preferredDriverId ? "assigned" : "pending",
+      acceptedBy: data.preferredDriverId ?? null,
       createdAt: Timestamp.now(),
-      expiresAt: Timestamp.fromMillis(Date.now() + 30 * 60 * 1000), // Expires in 30 mins
+      expiresAt: Timestamp.fromMillis(Date.now() + 30 * 60 * 1000),
       notifiedDrivers: [],
     };
 
     const docRef = await addDoc(collection(db, COLLECTION_NAME), bookingData);
     const bookingId = docRef.id;
 
-    // 2. Notify drivers
+    /** Notify customer */
+    if (data.customerId) {
+      try {
+        await createNotification(
+          data.customerId,
+          bookingId,
+          "booking_created",
+          "Booking received! We are looking for a driver near you.",
+          { action: "view_booking" }
+        );
+      } catch (error) {
+        console.error("Customer notification error:", error);
+      }
+    }
+
+    /** Preferred driver flow */
     if (data.preferredDriverId) {
-      // Direct booking - notify only the chosen driver
       try {
         const driverDoc = await getDoc(doc(db, "drivers", data.preferredDriverId));
+
         if (driverDoc.exists()) {
-          const driver = driverDoc.data() as Driver;
-          await createNotification(
-            driver.id,
-            driver.email,
-            driver.phone,
-            driver.name,
-            'ride_request',
-            '🎯 Direct Booking Request!',
-            `You've been selected!\nPickup: ${data.pickupLocation}\nDropoff: ${data.destination}\nPrice: KES ${data.estimatedPrice || 'TBD'}\nClick to call customer!`,
-            'system',
-            {
-              bookingId: bookingId,
-              pickupLocation: data.pickupLocation,
-              dropoffLocation: data.destination,
-              customerPhone: data.customerPhone,
-              fareEstimate: data.estimatedPrice,
-              action: 'call_customer'
-            }
-          );
+          const driver = { id: driverDoc.id, ...driverDoc.data() } as Driver;
+
+          await createDriverNotification({
+            driverId: driver.id,
+            type: "new_booking",
+            title: "🎯 Direct Booking Request!",
+            message: `Pickup: ${data.pickupLocation}\nDropoff: ${data.destination}`,
+            bookingId,
+            pickupLocation: data.pickupLocation,
+            destination: data.destination,
+            pickupDate: data.pickupDate,
+            pickupTime: data.pickupTime,
+          });
         }
       } catch (error) {
-        console.error('Error notifying preferred driver:', error);
+        console.error("Preferred driver notification error:", error);
       }
-    } else {
-      try {
-        // Open request - notify all available drivers in the area
-        const driversRef = collection(db, "drivers");
-        const q = query(
-          driversRef, 
-          where("status", "==", "available"),
-          where("subscriptionStatus", "==", "active"),
-          where("currentLocation", "==", data.pickupLocation) 
+
+      return bookingId;
+    }
+
+    /** Open request — notify drivers in area */
+    try {
+      const driversRef = collection(db, "drivers");
+      const q = query(
+        driversRef,
+        where("status", "==", "available"),
+        where("subscriptionStatus", "==", "active"),
+        where("currentLocation", "==", data.pickupLocation) // NOTE: consider replacing with geolocation
+      );
+
+      const querySnapshot = await getDocs(q);
+      const matchingDrivers: Driver[] = querySnapshot.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+      })) as Driver[];
+
+      const driverIds = matchingDrivers.map((d) => d.id);
+
+      if (driverIds.length > 0) {
+        await notifyDriversOfNewBooking(
+          driverIds,
+          bookingId,
+          data.pickupLocation,
+          data.destination,
+          data.pickupDate,
+          data.pickupTime
         );
-
-        const querySnapshot = await getDocs(q);
-        const matchingDrivers: Driver[] = [];
-        
-        querySnapshot.forEach((docSnap) => {
-          matchingDrivers.push({ id: docSnap.id, ...docSnap.data() } as Driver);
-        });
-
-        // Notify matching drivers
-        const notificationPromises = matchingDrivers.map(driver => {
-          return createNotification(
-            driver.id,
-            driver.email,
-            driver.phone,
-            driver.name,
-            'ride_request',
-            '🚖 New Ride Request!',
-            `Pickup: ${data.pickupLocation}\nDropoff: ${data.destination}\nClick to Call Customer!`,
-            'system',
-            {
-              bookingId: bookingId,
-              pickupLocation: data.pickupLocation,
-              dropoffLocation: data.destination,
-              customerPhone: data.customerPhone,
-              action: 'call_customer'
-            }
-          );
-        });
-
-        await Promise.all(notificationPromises);
-      } catch (error) {
-        console.error("Error notifying drivers:", error);
-        // Continue execution even if notifications fail
       }
+    } catch (error) {
+      console.error("Driver notification error:", error);
     }
 
     return bookingId;
@@ -127,12 +139,14 @@ export async function createBookingRequest(data: {
 }
 
 /**
- * Attempts to accept a booking.
- * Uses a transaction to ensure only one driver can accept it (race condition handling).
+ * Driver attempts to accept a booking.
  */
-export async function acceptBooking(bookingId: string, driverId: string): Promise<{ success: boolean; message: string }> {
+export async function acceptBooking(
+  bookingId: string,
+  driverId: string
+): Promise<{ success: boolean; message: string }> {
   try {
-    return await runTransaction(db, async (transaction) => {
+    const result = await runTransaction(db, async (transaction) => {
       const bookingRef = doc(db, COLLECTION_NAME, bookingId);
       const bookingDoc = await transaction.get(bookingRef);
 
@@ -142,25 +156,54 @@ export async function acceptBooking(bookingId: string, driverId: string): Promis
 
       const booking = bookingDoc.data() as BookingRequest;
 
-      if (booking.status !== 'pending') {
+      if (booking.status !== "pending") {
         return { success: false, message: "This ride has already been taken." };
       }
 
-      // Check expiry
-      const now = Timestamp.now();
-      if (booking.expiresAt.toMillis() < now.toMillis()) {
-         return { success: false, message: "This request has expired." };
+      if (booking.expiresAt.toMillis() < Timestamp.now().toMillis()) {
+        return { success: false, message: "This request has expired." };
       }
 
-      // Update booking status
       transaction.update(bookingRef, {
-        status: 'accepted',
+        status: "accepted",
         acceptedBy: driverId,
-        acceptedAt: now,
+        acceptedAt: Timestamp.now(),
       });
 
-      return { success: true, message: "Ride accepted successfully!" };
+      return { success: true, message: "Ride accepted!", bookingData: booking };
     });
+
+    if (result.success && result.bookingData) {
+      /** Notify customer */
+      try {
+        const driverDoc = await getDoc(doc(db, "drivers", driverId));
+        const driverName = driverDoc.exists()
+          ? (driverDoc.data() as Driver).name
+          : "Your driver";
+
+        const booking = result.bookingData;
+        const customerId = booking.customerId;
+
+        if (customerId) {
+          await createNotification(
+            customerId,
+            bookingId,
+            "ride_confirmed",
+            `${driverName} has accepted your ride.`,
+            {
+              driverId,
+              driverName,
+              bookingId,
+              action: "view_booking",
+            }
+          );
+        }
+      } catch (err) {
+        console.error("Customer acceptance notification error:", err);
+      }
+    }
+
+    return { success: result.success, message: result.message };
   } catch (error) {
     console.error("Error accepting booking:", error);
     throw error;
@@ -168,30 +211,26 @@ export async function acceptBooking(bookingId: string, driverId: string): Promis
 }
 
 /**
- * Fetches available booking requests for a driver based on their location.
+ * Fetch all available bookings near a driver.
  */
-export async function getAvailableBookings(driverLocation: string): Promise<BookingRequest[]> {
+export async function getAvailableBookings(
+  driverLocation: string
+): Promise<BookingRequest[]> {
   try {
     const q = query(
       collection(db, COLLECTION_NAME),
       where("status", "==", "pending"),
       where("pickupLocation", "==", driverLocation)
     );
-    
+
     const querySnapshot = await getDocs(q);
-    const bookings: BookingRequest[] = [];
-    
     const now = Date.now();
 
-    querySnapshot.forEach((doc) => {
-      const data = doc.data() as BookingRequest;
-      // Filter out expired ones client-side or add a where clause for time
-      if (data.expiresAt.toMillis() > now) {
-        bookings.push({ ...data, id: doc.id });
-      }
-    });
+    const results = querySnapshot.docs
+      .map((d) => ({ id: d.id, ...d.data() } as BookingRequest))
+      .filter((b) => b.expiresAt.toMillis() > now);
 
-    return bookings;
+    return results;
   } catch (error) {
     console.error("Error fetching available bookings:", error);
     return [];
@@ -199,51 +238,47 @@ export async function getAvailableBookings(driverLocation: string): Promise<Book
 }
 
 /**
- * Marks a booking as completed and increments driver's total rides.
+ * Mark a ride as completed & increment driver's ride count.
  */
 export async function completeRide(
-  bookingId: string, 
-  driverId: string, 
+  bookingId: string,
+  driverId: string,
   fare: number
-): Promise<{ success: boolean; message: string }> {
+) {
   try {
     return await runTransaction(db, async (transaction) => {
-      const bookingRef = doc(db, COLLECTION_NAME, bookingId);
-      const bookingDoc = await transaction.get(bookingRef);
+      const ref = doc(db, COLLECTION_NAME, bookingId);
+      const snap = await transaction.get(ref);
 
-      if (!bookingDoc.exists()) {
+      if (!snap.exists()) {
         return { success: false, message: "Booking not found." };
       }
 
-      const booking = bookingDoc.data() as BookingRequest;
+      const booking = snap.data() as BookingRequest;
 
-      if (booking.status !== 'accepted') {
-        return { success: false, message: "Only accepted bookings can be completed." };
+      if (booking.status !== "accepted") {
+        return { success: false, message: "Only accepted rides can be completed." };
       }
 
       if (booking.acceptedBy !== driverId) {
-        return { success: false, message: "Only the driver who accepted can complete this ride." };
+        return { success: false, message: "Unauthorized completion." };
       }
 
-      // Update booking to completed
-      transaction.update(bookingRef, {
-        status: 'completed',
+      transaction.update(ref, {
+        status: "completed",
         completedAt: Timestamp.now(),
-        fare: fare,
+        fare,
       });
 
-      // Increment driver's totalRides
       const driverRef = doc(db, "drivers", driverId);
-      const driverDoc = await transaction.get(driverRef);
-      
-      if (driverDoc.exists()) {
-        const currentTotal = driverDoc.data().totalRides || 0;
-        transaction.update(driverRef, {
-          totalRides: currentTotal + 1,
-        });
+      const driverSnap = await transaction.get(driverRef);
+
+      if (driverSnap.exists()) {
+        const currentTotal = driverSnap.data().totalRides || 0;
+        transaction.update(driverRef, { totalRides: currentTotal + 1 });
       }
 
-      return { success: true, message: "Ride completed successfully!" };
+      return { success: true, message: "Ride completed!" };
     });
   } catch (error) {
     console.error("Error completing ride:", error);
@@ -252,69 +287,57 @@ export async function completeRide(
 }
 
 /**
- * Allows customers to rate a completed ride.
- * Updates the ride rating and recalculates driver's average rating.
+ * Customer rating flow.
  */
-export async function rateRide(
-  bookingId: string,
-  rating: number,
-  review?: string
-): Promise<{ success: boolean; message: string }> {
+export async function rateRide(bookingId: string, rating: number, review?: string) {
   try {
-    // Validate rating
     if (rating < 1 || rating > 5) {
-      return { success: false, message: "Rating must be between 1 and 5." };
+      return { success: false, message: "Rating must be 1–5" };
     }
 
     return await runTransaction(db, async (transaction) => {
-      const bookingRef = doc(db, COLLECTION_NAME, bookingId);
-      const bookingDoc = await transaction.get(bookingRef);
+      const ref = doc(db, COLLECTION_NAME, bookingId);
+      const snap = await transaction.get(ref);
 
-      if (!bookingDoc.exists()) {
-        return { success: false, message: "Booking not found." };
-      }
+      if (!snap.exists()) return { success: false, message: "Booking not found" };
 
-      const booking = bookingDoc.data() as BookingRequest;
+      const booking = snap.data() as BookingRequest;
 
-      if (booking.status !== 'completed') {
-        return { success: false, message: "Only completed rides can be rated." };
+      if (booking.status !== "completed") {
+        return { success: false, message: "Only completed rides can be rated" };
       }
 
       if (booking.rating) {
-        return { success: false, message: "This ride has already been rated." };
+        return { success: false, message: "This ride is already rated" };
       }
 
-      if (!booking.acceptedBy) {
-        return { success: false, message: "No driver assigned to this booking." };
+      const driverId = booking.acceptedBy;
+      if (!driverId) {
+        return { success: false, message: "No driver assigned" };
       }
 
-      // Update booking with rating
-      transaction.update(bookingRef, {
-        rating: rating,
-        review: review || null,
-      });
+      transaction.update(ref, { rating, review: review || null });
 
-      // Update driver's average rating
-      const driverRef = doc(db, "drivers", booking.acceptedBy);
-      const driverDoc = await transaction.get(driverRef);
-      
-      if (driverDoc.exists()) {
-        const driverData = driverDoc.data();
-        const currentTotal = driverData.totalRatings || 0;
-        const currentAverage = driverData.averageRating || 0;
-        
-        // Calculate new average
-        const newTotal = currentTotal + 1;
-        const newAverage = ((currentAverage * currentTotal) + rating) / newTotal;
-        
+      const driverRef = doc(db, "drivers", driverId);
+      const driverSnap = await transaction.get(driverRef);
+
+      if (driverSnap.exists()) {
+        const d = driverSnap.data();
+        const total = d.totalRatings || 0;
+        const avg = d.averageRating || 0;
+
+        const newTotal = total + 1;
+        const newAvg = ((avg * total) + rating) / newTotal;
+        const value = Math.round(newAvg * 10) / 10;
+
         transaction.update(driverRef, {
           totalRatings: newTotal,
-          averageRating: Math.round(newAverage * 10) / 10, // Round to 1 decimal
-          rating: Math.round(newAverage * 10) / 10, // Update the main rating field too
+          averageRating: value,
+          rating: value,
         });
       }
 
-      return { success: true, message: "Rating submitted successfully!" };
+      return { success: true, message: "Rating submitted!" };
     });
   } catch (error) {
     console.error("Error rating ride:", error);
@@ -323,57 +346,45 @@ export async function rateRide(
 }
 
 /**
- * Fetches completed rides for a specific driver.
+ * Driver ride history.
  */
-export async function getDriverRideHistory(driverId: string): Promise<BookingRequest[]> {
+export async function getDriverRideHistory(driverId: string) {
   try {
     const q = query(
       collection(db, COLLECTION_NAME),
       where("acceptedBy", "==", driverId),
       where("status", "==", "completed")
     );
-    
-    const querySnapshot = await getDocs(q);
-    const rides: BookingRequest[] = [];
-    
-    querySnapshot.forEach((doc) => {
-      rides.push({ id: doc.id, ...doc.data() } as BookingRequest);
-    });
 
-    return rides;
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() } as BookingRequest));
   } catch (error) {
-    console.error("Error fetching driver ride history:", error);
+    console.error("History fetch error:", error);
     return [];
   }
 }
 
 /**
- * Fetches booking history for a customer by phone number.
+ * Customer ride history.
  */
-export async function getCustomerBookings(customerPhone: string): Promise<BookingRequest[]> {
+export async function getCustomerBookings(customerPhone: string) {
   try {
     const q = query(
       collection(db, COLLECTION_NAME),
       where("customerPhone", "==", customerPhone)
     );
-    
-    const querySnapshot = await getDocs(q);
-    const bookings: BookingRequest[] = [];
-    
-    querySnapshot.forEach((doc) => {
-      bookings.push({ id: doc.id, ...doc.data() } as BookingRequest);
-    });
 
-    // Sort by creation date, newest first
-    bookings.sort((a, b) => {
-      const aTime = a.createdAt?.toMillis?.() || 0;
-      const bTime = b.createdAt?.toMillis?.() || 0;
-      return bTime - aTime;
-    });
+    const snap = await getDocs(q);
 
-    return bookings;
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() } as BookingRequest));
+
+    return list.sort((a, b) => {
+      const aT = a.createdAt?.toMillis?.() || 0;
+      const bT = b.createdAt?.toMillis?.() || 0;
+      return bT - aT;
+    });
   } catch (error) {
-    console.error("Error fetching customer bookings:", error);
+    console.error("Customer booking history error:", error);
     return [];
   }
 }

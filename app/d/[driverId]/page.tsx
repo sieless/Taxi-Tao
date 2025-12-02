@@ -19,10 +19,10 @@ const MOCK_DRIVER: Driver = {
   averageRating: 4.8,
   totalRatings: 120,
   vehicles: ["mock-vehicle"],
-  createdAt: new Date(),
+  createdAt: null,
   subscriptionStatus: "active",
-  lastPaymentDate: new Date(),
-  nextPaymentDue: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 5),
+  lastPaymentDate: null,
+  nextPaymentDue: null,
   paymentHistory: [],
   isVisibleToPublic: true,
   status: "available",
@@ -92,7 +92,7 @@ export default async function DriverPage({ params }: { params: Promise<{ driverI
                     <Star
                       key={i}
                       className={`w-5 h-5 ${
-                        i < Math.round(driver.rating) ? "fill-current" : "text-gray-300"
+                        i < Math.round(driver.rating || 0) ? "fill-current" : "text-gray-300"
                       }`}
                     />
                   ))}

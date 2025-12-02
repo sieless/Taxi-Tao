@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Driver } from "@/lib/types";
-import { ArrowLeft, User, Bell, Clock, CreditCard, Shield, Globe, Save, Loader2 } from "lucide-react";
+import { ArrowLeft, User, Bell, Clock, CreditCard, Shield, Globe, Save, Loader2, Phone } from "lucide-react";
 
 export default function DriverSettings() {
   const { user, userProfile, loading: authLoading } = useAuth();
@@ -14,7 +14,7 @@ export default function DriverSettings() {
   const [driver, setDriver] = useState<Driver | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'availability' | 'payment' | 'privacy'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'availability' | 'payment' | 'privacy' | 'help'>('profile');
 
   // Form states
   const [profileForm, setProfileForm] = useState({
@@ -23,6 +23,7 @@ export default function DriverSettings() {
     email: "",
     businessLocation: "",
     experienceYears: 0,
+    bio: "",
   });
 
   const [notificationPrefs, setNotificationPrefs] = useState({
@@ -38,6 +39,13 @@ export default function DriverSettings() {
     workingHoursEnabled: false,
     workingHoursStart: "08:00",
     workingHoursEnd: "20:00",
+  });
+
+  const [mpesaForm, setMpesaForm] = useState({
+    type: "till" as "till" | "paybill",
+    tillNumber: "",
+    paybillNumber: "",
+    accountNumber: "",
   });
 
   useEffect(() => {
@@ -62,11 +70,21 @@ export default function DriverSettings() {
             // Populate forms
             setProfileForm({
               name: driverData.name,
-              phone: driverData.phone,
-              email: driverData.email,
+              phone: driverData.phone || "",
+              email: driverData.email || "",
               businessLocation: driverData.businessLocation || "",
               experienceYears: driverData.experienceYears || 0,
+              bio: driverData.bio || "",
             });
+
+            if (driverData.mpesaDetails) {
+              setMpesaForm({
+                type: driverData.mpesaDetails.type || "till",
+                tillNumber: driverData.mpesaDetails.tillNumber || "",
+                paybillNumber: driverData.mpesaDetails.paybillNumber || "",
+                accountNumber: driverData.mpesaDetails.accountNumber || "",
+              });
+            }
           }
         } catch (error) {
           console.error("Error fetching driver data:", error);
@@ -92,6 +110,7 @@ export default function DriverSettings() {
         email: profileForm.email,
         businessLocation: profileForm.businessLocation,
         experienceYears: profileForm.experienceYears,
+        bio: profileForm.bio,
       });
 
       setDriver(prev => prev ? { ...prev, ...profileForm } : null);
@@ -99,6 +118,39 @@ export default function DriverSettings() {
     } catch (error) {
       console.error("Error updating profile:", error);
       alert("Failed to update profile.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleSaveMpesa() {
+    if (!driver) return;
+    setSaving(true);
+
+    try {
+      const driverRef = doc(db, "drivers", driver.id);
+      await updateDoc(driverRef, {
+        mpesaDetails: {
+          type: mpesaForm.type,
+          tillNumber: mpesaForm.tillNumber,
+          paybillNumber: mpesaForm.paybillNumber,
+          accountNumber: mpesaForm.accountNumber,
+        }
+      });
+
+      setDriver(prev => prev ? { 
+        ...prev, 
+        mpesaDetails: {
+          type: mpesaForm.type,
+          tillNumber: mpesaForm.tillNumber,
+          paybillNumber: mpesaForm.paybillNumber,
+          accountNumber: mpesaForm.accountNumber,
+        }
+      } : null);
+      alert("M-Pesa details updated successfully!");
+    } catch (error) {
+      console.error("Error updating M-Pesa details:", error);
+      alert("Failed to update M-Pesa details.");
     } finally {
       setSaving(false);
     }
@@ -181,6 +233,15 @@ export default function DriverSettings() {
                 <Shield className="w-5 h-5" />
                 Privacy
               </button>
+              <button
+                onClick={() => setActiveTab('help')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
+                  activeTab === 'help' ? 'bg-green-50 text-green-700 font-semibold' : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <Globe className="w-5 h-5" />
+                Help & Support
+              </button>
             </div>
           </div>
 
@@ -238,6 +299,17 @@ export default function DriverSettings() {
                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         min="0"
                       />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+                      <textarea
+                        value={profileForm.bio}
+                        onChange={(e) => setProfileForm({ ...profileForm, bio: e.target.value })}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        rows={4}
+                        placeholder="Tell customers a little about yourself..."
+                      />
+                      <p className="text-xs text-gray-500 mt-1">This will be visible on your public profile.</p>
                     </div>
                     <button
                       onClick={handleSaveProfile}
@@ -381,10 +453,66 @@ export default function DriverSettings() {
                   <div className="space-y-4">
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                       <p className="text-blue-800 font-semibold mb-2">M-Pesa Integration</p>
-                      <p className="text-sm text-blue-700">Connect your M-Pesa account to receive payments directly</p>
-                      <button className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                        Connect M-Pesa
-                      </button>
+                      <p className="text-sm text-blue-700 mb-4">Connect your M-Pesa account to receive payments directly</p>
+                      
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Account Type</label>
+                          <select
+                            value={mpesaForm.type}
+                            onChange={(e) => setMpesaForm({ ...mpesaForm, type: e.target.value as "till" | "paybill" })}
+                            className="w-full p-2 border border-gray-300 rounded-lg"
+                          >
+                            <option value="till">Buy Goods (Till Number)</option>
+                            <option value="paybill">Paybill</option>
+                          </select>
+                        </div>
+
+                        {mpesaForm.type === "till" ? (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Till Number</label>
+                            <input
+                              type="text"
+                              value={mpesaForm.tillNumber}
+                              onChange={(e) => setMpesaForm({ ...mpesaForm, tillNumber: e.target.value })}
+                              className="w-full p-2 border border-gray-300 rounded-lg"
+                              placeholder="e.g. 123456"
+                            />
+                          </div>
+                        ) : (
+                          <>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Paybill Number</label>
+                              <input
+                                type="text"
+                                value={mpesaForm.paybillNumber}
+                                onChange={(e) => setMpesaForm({ ...mpesaForm, paybillNumber: e.target.value })}
+                                className="w-full p-2 border border-gray-300 rounded-lg"
+                                placeholder="e.g. 247247"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Account Number</label>
+                              <input
+                                type="text"
+                                value={mpesaForm.accountNumber}
+                                onChange={(e) => setMpesaForm({ ...mpesaForm, accountNumber: e.target.value })}
+                                className="w-full p-2 border border-gray-300 rounded-lg"
+                                placeholder="Your Phone / Account"
+                              />
+                            </div>
+                          </>
+                        )}
+
+                        <button 
+                          onClick={handleSaveMpesa}
+                          disabled={saving}
+                          className="w-full mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2 disabled:opacity-50"
+                        >
+                          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                          Save M-Pesa Details
+                        </button>
+                      </div>
                     </div>
                     <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                       <p className="text-gray-800 font-semibold mb-2">Bank Account</p>
@@ -412,6 +540,69 @@ export default function DriverSettings() {
                     <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                       <p className="text-gray-800 font-semibold mb-2">Data Privacy</p>
                       <p className="text-sm text-gray-600">Your data is encrypted and secure. We never share your personal information with third parties.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Help & Support */}
+              {activeTab === 'help' && (
+                <div>
+                  <h2 className="text-xl font-bold text-gray-800 mb-6">Help & Support</h2>
+                  
+                  <div className="space-y-6">
+                    {/* Contact Info */}
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+                      <h3 className="font-semibold text-green-800 mb-4">Contact Us</h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3 text-green-700">
+                          <div className="p-2 bg-white rounded-full">
+                            <Phone className="w-4 h-4" />
+                          </div>
+                          <span>0708674665</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-green-700">
+                          <div className="p-2 bg-white rounded-full">
+                            <Globe className="w-4 h-4" />
+                          </div>
+                          <span>support@taxitao.com</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* FAQs */}
+                    <div>
+                      <h3 className="font-bold text-gray-800 mb-4">Frequently Asked Questions</h3>
+                      <div className="space-y-4">
+                        <div className="border border-gray-200 rounded-lg p-4">
+                          <h4 className="font-semibold text-gray-800 mb-2">How do I get paid?</h4>
+                          <p className="text-sm text-gray-600">
+                            Payments are processed daily for M-Pesa transactions. Cash trips are yours to keep immediately. 
+                            Weekly settlements are done every Monday for any pending balances.
+                          </p>
+                        </div>
+                        <div className="border border-gray-200 rounded-lg p-4">
+                          <h4 className="font-semibold text-gray-800 mb-2">How is the fare calculated?</h4>
+                          <p className="text-sm text-gray-600">
+                            Fares are calculated based on distance, duration, and your set pricing. 
+                            You can manage your standard rates in the "Route Pricing" section.
+                          </p>
+                        </div>
+                        <div className="border border-gray-200 rounded-lg p-4">
+                          <h4 className="font-semibold text-gray-800 mb-2">What happens if a customer cancels?</h4>
+                          <p className="text-sm text-gray-600">
+                            If a customer cancels after you've arrived or been en route for more than 5 minutes, 
+                            a cancellation fee may be applied and credited to your account.
+                          </p>
+                        </div>
+                        <div className="border border-gray-200 rounded-lg p-4">
+                          <h4 className="font-semibold text-gray-800 mb-2">How do I improve my rating?</h4>
+                          <p className="text-sm text-gray-600">
+                            Keep your vehicle clean, be punctual, and drive safely. 
+                            Politeness and good communication with customers also go a long way!
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

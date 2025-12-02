@@ -4,9 +4,11 @@ import { useState, FormEvent, useEffect } from "react";
 import { User, Phone, MapPin, Flag, Calendar, Clock, Loader2, CheckCircle, Sparkles } from "lucide-react";
 import { createBookingRequest } from "@/lib/booking-service";
 import { useSearchParams } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
 import SmartRecommendations from "./SmartRecommendations";
 
 export default function BookingForm() {
+  const { user } = useAuth();
   const searchParams = useSearchParams();
   
   // Read URL parameters
@@ -69,6 +71,7 @@ export default function BookingForm() {
     setLoading(true);
     try {
       await createBookingRequest({
+        customerId: user?.uid, // Pass Firebase UID for notifications
         customerName: name,
         customerPhone: phone,
         pickupLocation: pickup,
@@ -76,7 +79,7 @@ export default function BookingForm() {
         pickupDate: date,
         pickupTime: time,
         estimatedPrice: urlPrice ? parseFloat(urlPrice) : 0,
-        preferredDriverId: preferredDriverId ?? undefined,
+        preferredDriverId: preferredDriverId || undefined,
       });
       setSuccess(true);
       setFormData({

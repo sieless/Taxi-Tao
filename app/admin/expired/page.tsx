@@ -54,7 +54,7 @@ export default function ExpiredSubscriptionsPage() {
     }
   }
 
-  function getDaysOverdue(nextPaymentDue: Timestamp | Date | undefined): number {
+  function getDaysOverdue(nextPaymentDue: Timestamp | Date | undefined | null): number {
     if (!nextPaymentDue) return 0;
     const dueDate = nextPaymentDue instanceof Date ? nextPaymentDue : (nextPaymentDue as Timestamp).toDate();
     const today = new Date();
@@ -64,9 +64,14 @@ export default function ExpiredSubscriptionsPage() {
   }
 
   function sendIndividualReminder(driver: Driver) {
+    const phone = driver.whatsapp || driver.phone;
+    if (!phone) {
+      alert(`No phone number found for ${driver.name}`);
+      return;
+    }
     const daysOverdue = getDaysOverdue(driver.nextPaymentDue);
     const message = generateReminderMessage(driver.name, daysOverdue);
-    sendWhatsAppMessage(driver.whatsapp || driver.phone, message);
+    sendWhatsAppMessage(phone, message);
   }
 
   async function sendInAppNotification(driver: Driver) {
@@ -76,8 +81,8 @@ export default function ExpiredSubscriptionsPage() {
       
       await createNotification(
         driver.id,
-        driver.email,
-        driver.phone,
+        driver.email || '',
+        driver.phone || '',
         driver.name,
         'subscription_expiring',
         '⚠️ Subscription Expired',
@@ -139,8 +144,8 @@ export default function ExpiredSubscriptionsPage() {
         
         return createNotification(
           driver.id,
-          driver.email,
-          driver.phone,
+          driver.email || '',
+          driver.phone || '',
           driver.name,
           'subscription_expiring',
           '⚠️ Subscription Expired',

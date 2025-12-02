@@ -442,7 +442,7 @@ export default function AdminPanel() {
                               driver.subscriptionStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                               'bg-red-100 text-red-800'
                             }`}>
-                              {driver.subscriptionStatus.toUpperCase()}
+                              {(driver.subscriptionStatus || 'unknown').toUpperCase()}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -460,7 +460,7 @@ export default function AdminPanel() {
                               {driver.subscriptionStatus !== 'active' && (
                                 <>
                                   <button
-                                    onClick={() => verifyPayment(driver.id, driver.name, driver.email, driver.phone)}
+                                    onClick={() => verifyPayment(driver.id, driver.name, driver.email || '', driver.phone || '')}
                                     className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded transition"
                                     title="Verify payment and activate subscription"
                                   >
@@ -468,7 +468,7 @@ export default function AdminPanel() {
                                     Verify
                                   </button>
                                   <button
-                                    onClick={() => rejectPayment(driver.id, driver.name, driver.email, driver.phone)}
+                                    onClick={() => rejectPayment(driver.id, driver.name, driver.email || '', driver.phone || '')}
                                     className="flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded transition"
                                     title="Reject payment"
                                   >

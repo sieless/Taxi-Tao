@@ -27,6 +27,7 @@ import {
   CheckCircle
 } from "lucide-react";
 import { getAvailableBookings, acceptBooking } from "@/lib/booking-service";
+import MobileMenu from "@/components/MobileMenu";
 import { getTodayEarnings, getMonthlyEarnings, getEarningsHistory, getNewRequestsCount, getActiveTripsCount } from "@/lib/earnings-service";
 import NotificationBell from "@/components/NotificationBell";
 import EarningsChart from "@/components/EarningsChart";
@@ -62,11 +63,24 @@ export default function DriverDashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isPricingOpen, setIsPricingOpen] = useState(false);
   
+  // Header position - LOCKED at your chosen position
   const [editForm, setEditForm] = useState({
     name: "",
     phone: "",
     businessLocation: "",
   });
+
+  // Mobile Detection
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check for mobile device
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
 
   const [vehicleForm, setVehicleForm] = useState({
     make: "",
@@ -454,9 +468,16 @@ export default function DriverDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Top Navbar */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      {/* Top Navbar - LOCKED (Mobile & Desktop) */}
+      <div 
+        className="bg-white border border-gray-200 fixed z-40 shadow-lg h-16 rounded-xl max-w-7xl w-[calc(100%-2rem)] left-1/2 -translate-x-1/2 top-4 md:left-[118px] md:top-[88px] md:translate-x-0"
+        style={isMobile ? {
+          left: '242px',
+          top: '73px',
+          transform: 'none',
+        } : {}}
+      >
+        <div className="px-4 h-full flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Logo variant="icon-only" size="md" clickable={true} />
             <h1 className="text-2xl font-bold text-gray-800">Driver Dashboard</h1>
@@ -546,101 +567,27 @@ export default function DriverDashboard() {
             <NotificationBell driverId={user?.uid || ''} />
             <div className="relative">
               <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                onClick={() => setMobileMenuOpen(true)}
                 className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
               >
                 <Menu className="w-6 h-6 text-gray-600" />
               </button>
               
-              {/* Mobile Dropdown Menu */}
-              {mobileMenuOpen && (
-                <>
-                  {/* Backdrop */}
-                  <div 
-                    className="fixed inset-0 bg-black/20 z-40"
-                    onClick={() => setMobileMenuOpen(false)}
-                  />
-                  
-                  {/* Menu Panel */}
-                  <div className="fixed right-4 top-16 bg-white rounded-lg shadow-xl border border-gray-200 z-50 w-64 overflow-hidden">
-                    {/* User Info */}
-                    <div className="p-4 border-b border-gray-100 bg-green-50">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center border-2 border-green-500 overflow-hidden">
-                          {driver.profilePhotoUrl ? (
-                            <img 
-                              src={driver.profilePhotoUrl} 
-                              alt={driver.name} 
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <User className="w-6 h-6 text-green-700" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-gray-800 truncate">{driver.name}</p>
-                          <p className="text-xs text-gray-600 truncate">{driver.phone}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Menu Items */}
-                    <div className="py-2">
-                      <button
-                        onClick={() => {
-                          setMobileMenuOpen(false);
-                          router.push('/driver/history');
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
-                      >
-                        <History className="w-5 h-5 text-gray-500" />
-                        <span className="text-sm font-medium">History</span>
-                      </button>
-                      
-                      <button
-                        onClick={() => {
-                          setMobileMenuOpen(false);
-                          router.push('/driver/settings');
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
-                      >
-                        <Settings className="w-5 h-5 text-gray-500" />
-                        <span className="text-sm font-medium">Settings</span>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setMobileMenuOpen(false);
-                          setIsEditing(true);
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
-                      >
-                        <User className="w-5 h-5 text-gray-500" />
-                        <span className="text-sm font-medium">Edit Profile</span>
-                      </button>
-
-                      <div className="border-t border-gray-100 my-2"></div>
-
-                      <button
-                        onClick={() => {
-                          setMobileMenuOpen(false);
-                          handleLogout();
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors"
-                      >
-                        <LogOut className="w-5 h-5" />
-                        <span className="text-sm font-medium">Logout</span>
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
+              {/* New Mobile Menu Component */}
+              <MobileMenu 
+                isOpen={mobileMenuOpen}
+                onClose={() => setMobileMenuOpen(false)}
+                driver={driver}
+                onLogout={handleLogout}
+                onToggleStatus={toggleStatus}
+                onEditProfile={() => setIsEditing(true)}
+              />
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 pt-20 pb-8">
         {/* Combined Profile & Vehicle Card */}
         <div className="bg-white rounded-xl shadow-md p-6 mb-8">
           <div className="flex flex-col lg:flex-row gap-6">

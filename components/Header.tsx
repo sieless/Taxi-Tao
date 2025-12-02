@@ -13,7 +13,7 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
         {/* Logo */}
         <div className="flex items-center gap-2">
-          <Logo variant="full" size="md" clickable={true} />
+          <Logo variant="icon-only" size="md" clickable={true} />
         </div>
 
         {/* Navigation */}

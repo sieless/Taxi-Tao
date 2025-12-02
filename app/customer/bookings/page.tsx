@@ -5,10 +5,12 @@ import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { getCustomerBookings } from "@/lib/booking-service";
 import { BookingRequest } from "@/lib/types";
-import { Calendar, MapPin, Clock, Star, Loader2, Phone, AlertTriangle } from "lucide-react";
+import { Calendar, MapPin, Clock, Star, Loader2, Phone, AlertTriangle, CreditCard } from "lucide-react";
 import RatingModal from "@/components/RatingModal";
 import ClientIssueModal from "@/components/ClientIssueModal";
-import { Timestamp } from "firebase/firestore";
+import { Timestamp, doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { Driver } from "@/lib/types";
 
 export default function CustomerBookingsPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
@@ -18,6 +20,7 @@ export default function CustomerBookingsPage() {
   const [selectedBooking, setSelectedBooking] = useState<BookingRequest | null>(null);
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
   const [selectedIssueBooking, setSelectedIssueBooking] = useState<BookingRequest | null>(null);
+  const [driverDetails, setDriverDetails] = useState<Map<string, Driver>>(new Map());
 
   useEffect(() => {
     if (authLoading) return;
@@ -44,27 +47,60 @@ export default function CustomerBookingsPage() {
     }
   }, [bookings]);
 
-  const loadBookings = async () => {
-    // Get phone from Firebase user's phoneNumber or prompt for it
-    const phone = user?.phoneNumber || "";
-    
-    if (!phone) {
-      // If no phone number is available, prompt the user to enter it
-      const enteredPhone = prompt("Please enter your phone number to view your bookings:");
-      if (!enteredPhone) {
-        setLoading(false);
-        return;
+  // Fetch driver details for accepted bookings
+  useEffect(() => {
+    const fetchDriverDetails = async () => {
+      const acceptedBookings = bookings.filter(b => b.acceptedBy && (b.status === 'accepted' || b.status === 'completed'));
+      const driverMap = new Map<string, Driver>();
+      
+      for (const booking of acceptedBookings) {
+        if (booking.acceptedBy && !driverDetails.has(booking.acceptedBy)) {
+          try {
+            const driverRef = doc(db, 'drivers', booking.acceptedBy);
+            const driverSnap = await getDoc(driverRef);
+            if (driverSnap.exists()) {
+              driverMap.set(booking.acceptedBy, { id: driverSnap.id, ...driverSnap.data() } as Driver);
+            }
+          } catch (error) {
+            console.error('Error fetching driver details:', error);
+          }
+        }
       }
       
-      setLoading(true);
-      try {
-        const customerBookings = await getCustomerBookings(enteredPhone);
-        setBookings(customerBookings);
-      } catch (error) {
-        console.error("Error loading bookings:", error);
-      } finally {
-        setLoading(false);
+      if (driverMap.size > 0) {
+        setDriverDetails(prev => new Map([...prev, ...driverMap]));
       }
+    };
+    
+    if (bookings.length > 0) {
+      fetchDriverDetails();
+    }
+  }, [bookings]);
+
+  // Auto-redirect to tracking page when driver is en route or has arrived (3E)
+  useEffect(() => {
+    if (bookings.length > 0) {
+      const activeRide = bookings.find(b => 
+        b.rideStatus && ['en_route', 'arrived', 'in_progress'].includes(b.rideStatus)
+      );
+      if (activeRide) {
+        router.push(`/customer/track/${activeRide.id}`);
+      }
+    }
+  }, [bookings, router]);
+
+  const loadBookings = async () => {
+    // Use phone from user profile or auth
+    const phone = userProfile?.phone || user?.phoneNumber;
+    
+    if (!phone) {
+      // If we still don't have a phone number, we can't fetch bookings by phone.
+      // However, we can also fetch by customerId which is safer.
+      // Let's try fetching by customerId if phone is missing, or just show empty.
+      // Ideally getCustomerBookings should support customerId.
+      // For now, let's assume we need phone.
+      console.log("No phone number found for user");
+      setLoading(false);
       return;
     }
 
@@ -212,6 +248,45 @@ export default function CustomerBookingsPage() {
                         </div>
                       )}
                     </div>
+
+                    {/* M-Pesa Payment Details */}
+                    {(booking.status === 'accepted' || booking.status === 'completed') && booking.acceptedBy && (() => {
+                      const driver = driverDetails.get(booking.acceptedBy);
+                      const mpesa = driver?.mpesaDetails;
+                      
+                      if (!mpesa) return null;
+                      
+                      return (
+                        <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                          <div className="flex items-center gap-2 mb-2">
+                            <CreditCard className="w-4 h-4 text-green-700" />
+                            <h4 className="font-bold text-green-900 text-sm">Payment Details</h4>
+                          </div>
+                          {mpesa.type === 'till' && mpesa.tillNumber && (
+                            <div className="space-y-1">
+                              <p className="text-xs text-green-700 font-medium">Till Number</p>
+                              <p className="text-lg font-bold text-green-900">{mpesa.tillNumber}</p>
+                              <p className="text-xs text-green-600 italic">Send payment: Amount → Pay</p>
+                            </div>
+                          )}
+                          {mpesa.type === 'paybill' && mpesa.paybillNumber && mpesa.accountNumber && (
+                            <div className="space-y-1">
+                              <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                  <p className="text-xs text-green-700 font-medium">Paybill</p>
+                                  <p className="text-base font-bold text-green-900">{mpesa.paybillNumber}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs text-green-700 font-medium">Account</p>
+                                  <p className="text-base font-bold text-green-900">{mpesa.accountNumber}</p>
+                                </div>
+                              </div>
+                              <p className="text-xs text-green-600 italic mt-2">Send payment: Paybill → Account → Amount → Pay</p>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* Actions */}

@@ -29,13 +29,39 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && getUserData().role == 'admin';
+    }
+    
+    function isDriver() {
+      return isSignedIn() && getUserData().role == 'driver';
+    }
+
+    /**
+     * @description Manages access to private user data. Users can read their own profile.
+     * Admins can read all user profiles. Authenticated users can read for driver matching.
+     */
     /**
      * @description Manages access to private user data. Users can read their own profile.
      * Admins can read all user profiles. Authenticated users can read for driver matching.
      */
     match /users/{userId} {
-      allow read: if isSignedIn();  // Allow all authenticated users to read (needed for driver matching)
-      allow write: if isSignedIn() && isOwner(userId);
+      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null;
+      allow list: if isAdmin();
     }
     
     /**
@@ -45,8 +71,10 @@ service cloud.firestore {
     match /drivers/{driverId} {
       allow get: if true;
       allow list: if true;
-      allow create, delete: if isSignedIn() && (isOwner(driverId) || isAdmin());
+      allow create: if isSignedIn() && (isOwner(driverId) || isAdmin());
+      // Allow drivers to update their own status (e.g. logout/offline) and other fields
       allow update: if isSignedIn() && (isOwner(driverId) || isAdmin());
+      allow delete: if isSignedIn() && isAdmin();
     }
 
     /**
@@ -76,23 +104,47 @@ service cloud.firestore {
      * @description Manages access to booking requests. 
      * - Anyone can create booking requests (customers without accounts can book)
      * - Drivers can read booking requests in their area
+     * - Customers can read their own bookings by customerId
      * - Drivers can accept pending bookings OR update their own accepted bookings
+     * - Drivers can update location during active rides
+     * - Customers can submit ratings for completed rides
      * - Admins can read and update all booking requests
      */
     match /bookingRequests/{bookingId} {
       allow create: if true; // Allow anyone to create booking requests
-      allow read: if isSignedIn() && (
+      
+      // Allow reading individual booking documents
+      allow get: if isSignedIn() && (
         isDriver() || 
         isAdmin() ||
-        // Allow customers to read their own bookings by phone
+        // Allow drivers to read bookings they accepted (for earnings)
+        resource.data.acceptedBy == request.auth.uid ||
+        // Allow customers to read their own bookings by customerId
+        resource.data.customerId == request.auth.uid ||
+        // Fallback: Allow customers to read by phone (for legacy bookings)
         request.auth.token.phone_number == resource.data.customerPhone
       );
+      
+      // Allow listing/querying bookings
+      allow list: if isSignedIn() && (
+        isDriver() || 
+        isAdmin() ||
+        // Allow customers to query their bookings - Firestore will filter client-side
+        // Note: Client must query with where('customerId', '==', request.auth.uid) 
+        // or where('customerPhone', '==', request.auth.token.phone_number)
+        true  // Allow list but Firestore filters by query constraints
+      );
+      
       allow update: if isSignedIn() && (
         // Driver can accept a pending booking
         (isDriver() && resource.data.status == 'pending') ||
-        // Driver can update their own accepted booking
+        // Driver can update their own accepted booking (status, location, etc.)
         (isDriver() && resource.data.acceptedBy == request.auth.uid) || 
         // Customer can rate their completed booking
+        (resource.data.customerId == request.auth.uid && 
+         resource.data.rideStatus == 'completed' &&
+         !resource.data.rating) ||
+        // Fallback: Customer can rate by phone
         (resource.data.status == 'completed' && 
          request.auth.token.phone_number == resource.data.customerPhone &&
          !resource.data.rating) ||
@@ -113,6 +165,16 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.driverId == driverId ||
         isAdmin()
       );
+    }
+
+    /**
+     * @description Manages access to standard pricing configuration.
+     * - Anyone can read standard pricing.
+     * - Only admins can manage standard pricing.
+     */
+    match /pricing/{priceId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     /**
@@ -169,32 +231,30 @@ service cloud.firestore {
      * @description Manages access to notifications. Recipients can read and update their own notifications.
      * Admins can create and delete notifications.
      */
+    /**
+     * @description Manages access to notifications. Recipients can read, update, and delete their own notifications.
+     * Admins can manage all notifications.
+     */
     match /notifications/{notificationId} {
       allow read: if isSignedIn() && 
-                     (request.auth.uid == resource.data.recipientId || isAdmin());
+                     (request.auth.uid == resource.data.recipientId || 
+                      resource.data.recipientId == 'system_broadcast' || 
+                      isAdmin());
       allow create: if true; // Allow system/anyone to create notifications (needed for booking flow)
       allow update: if isSignedIn() && request.auth.uid == resource.data.recipientId;
-      allow delete: if isSignedIn() && isAdmin();
+      allow delete: if isSignedIn() && (request.auth.uid == resource.data.recipientId || isAdmin());
     }
 
-    // --- Helper functions ---
-
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isOwner(ownerId) {
-      return request.auth.uid == ownerId;
-    }
-
-    function isAdmin() {
-      return isSignedIn() && 
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
-
-    function isDriver() {
-      return isSignedIn() && 
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'driver';
+    /**
+     * @description Manages access to driver notifications.
+     * - Anyone can create notifications (customers create them when booking).
+     * - Only the recipient driver can read/update/delete their notifications.
+     */
+    match /driverNotifications/{notificationId} {
+      allow create: if true; // Allow customers to create notifications for drivers
+      allow read: if isSignedIn() && (request.auth.uid == resource.data.driverId || isAdmin());
+      allow update: if isSignedIn() && (request.auth.uid == resource.data.driverId || isAdmin());
+      allow delete: if isSignedIn() && (request.auth.uid == resource.data.driverId || isAdmin());
     }
   }
 }

@@ -44,7 +44,7 @@ export default function Logo({
       {/* Text */}
       {variant !== 'icon-only' && (
         <span 
-          className={`font-bold text-green-600 ${textSize}`}
+          className={`font-bold text-green-400 ${textSize}`}
           style={{ letterSpacing: '-0.02em' }}
         >
           TaxiTao

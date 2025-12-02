@@ -2,15 +2,20 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Menu, Phone, X, Home, Briefcase, Users, Mail, User, History } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Menu, Phone, X, Home, Briefcase, Users, Mail, User, History, Bell } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import ProfileIcon from "./ProfileIcon";
 import Logo from "./Logo";
+import CustomerNotifications from "./CustomerNotifications";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const { user, userProfile } = useAuth();
+  const pathname = usePathname();
 
   // Handle scroll for navbar shadow and compact mode
   useEffect(() => {
@@ -52,12 +57,12 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div
           className={`flex justify-between items-center transition-all duration-300 ${
-            isScrolled ? "py-4" : "py-5"
+            isScrolled ? "py-2" : "py-3"
           }`}
         >
           {/* Logo */}
           <div className="flex items-center gap-3 group">
-            <Logo variant="full" size="md" clickable={true} />
+            <Logo variant="icon-only" size="md" clickable={true} />
           </div>
 
           {/* Desktop Navigation */}
@@ -86,7 +91,31 @@ export default function Navbar() {
 
             {/* Auth Section */}
             {user ? (
-              <ProfileIcon />
+              <div className="flex items-center gap-3">
+                {/* Notification Bell - Customers Only */}
+                {userProfile?.role === 'customer' && (
+                  <div className="relative">
+                    <button
+                      onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                      className="relative p-2 hover:bg-gray-100 rounded-full transition-colors"
+                      aria-label="Notifications"
+                    >
+                      <Bell className="w-5 h-5 text-gray-700" />
+                      {unreadCount > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                          {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                      )}
+                    </button>
+                    <CustomerNotifications
+                      isOpen={isNotificationsOpen}
+                      onClose={() => setIsNotificationsOpen(false)}
+                      onUnreadCountChange={setUnreadCount}
+                    />
+                  </div>
+                )}
+                <ProfileIcon />
+              </div>
             ) : (
               <div className="flex items-center gap-4">
                 <Link

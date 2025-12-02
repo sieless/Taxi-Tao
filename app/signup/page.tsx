@@ -52,13 +52,17 @@ export default function SignUpPage() {
     }
 
     setLoading(true);
+    console.log("Starting signup process...");
 
     try {
       // Create Firebase Auth user
+      console.log("Creating auth user...");
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+      console.log("Auth user created:", user.uid);
 
       // Create user document in Firestore
+      console.log("Creating user document...");
       await setDoc(doc(db, "users", user.uid), {
         id: user.uid,
         email: email,
@@ -66,9 +70,11 @@ export default function SignUpPage() {
         driverId: userType === "driver" ? user.uid : null,
         createdAt: Timestamp.now(),
       });
+      console.log("User document created");
 
       // If driver, create driver document
       if (userType === "driver") {
+        console.log("Creating driver document...");
         const slug = name.toLowerCase().replace(/\s+/g, "-");
         await setDoc(doc(db, "drivers", user.uid), {
           id: user.uid,
@@ -90,6 +96,7 @@ export default function SignUpPage() {
           paymentHistory: [],
           isVisibleToPublic: false, // Hidden until first payment
         });
+        console.log("Driver document created");
       }
 
       setSuccess("Account created successfully! Redirecting...");
@@ -102,12 +109,13 @@ export default function SignUpPage() {
         }
       }, 2000);
     } catch (err: any) {
+      console.error("Signup error details:", err);
       if (err.code === "auth/email-already-in-use") {
         setError("This email is already registered. Please sign in instead.");
       } else if (err.code === "auth/invalid-email") {
         setError("Invalid email address.");
       } else {
-        setError(err.message || "Failed to create account. Please try again.");
+        setError(`Error: ${err.message || "Failed to create account"}`);
       }
     } finally {
       setLoading(false);
