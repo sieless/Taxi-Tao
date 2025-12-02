@@ -409,7 +409,7 @@ export default function DriverDashboard() {
         vehicle: {
           make: vehicleForm.make,
           model: vehicleForm.model,
-          year: vehicleForm.year,
+          year: vehicleForm.year ? Number(vehicleForm.year) : 0,
           plate: vehicleForm.plate,
           color: vehicleForm.color,
           type: vehicleForm.type,
