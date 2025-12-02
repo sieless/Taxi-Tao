@@ -69,10 +69,8 @@ service cloud.firestore {
      * Admins can update driver documents for payment verification and subscription management.
      */
     match /drivers/{driverId} {
-      allow get: if true;
-      allow list: if true;
+      allow read: if true; // Allow read (get and list) for everyone
       allow create: if isSignedIn() && (isOwner(driverId) || isAdmin());
-      // Allow drivers to update their own status (e.g. logout/offline) and other fields
       allow update: if isSignedIn() && (isOwner(driverId) || isAdmin());
       allow delete: if isSignedIn() && isAdmin();
     }
@@ -255,6 +253,17 @@ service cloud.firestore {
       allow read: if isSignedIn() && (request.auth.uid == resource.data.driverId || isAdmin());
       allow update: if isSignedIn() && (request.auth.uid == resource.data.driverId || isAdmin());
       allow delete: if isSignedIn() && (request.auth.uid == resource.data.driverId || isAdmin());
+    }
+
+    /**
+     * @description Manages access to client issues.
+     * - Authenticated users can create issues.
+     * - Admins can read and manage issues.
+     */
+    match /client_issues/{issueId} {
+      allow create: if isSignedIn();
+      allow get, list: if isAdmin(); // Explicitly allow both get and list
+      allow update, delete: if isAdmin();
     }
   }
 }

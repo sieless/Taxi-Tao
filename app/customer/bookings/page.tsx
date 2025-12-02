@@ -77,7 +77,8 @@ export default function CustomerBookingsPage() {
     }
   }, [bookings]);
 
-  // Auto-redirect to tracking page when driver is en route or has arrived (3E)
+  // Auto-redirect removed to prevent loop. User can manually click "Track" from the list.
+  /*
   useEffect(() => {
     if (bookings.length > 0) {
       const activeRide = bookings.find(b => 
@@ -88,6 +89,7 @@ export default function CustomerBookingsPage() {
       }
     }
   }, [bookings, router]);
+  */
 
   const loadBookings = async () => {
     // Use phone from user profile or auth
@@ -355,6 +357,17 @@ export default function CustomerBookingsPage() {
                           Call Driver
                         </a>
                       </div>
+                    )}
+
+                    {/* Track Ride Button for Active Rides */}
+                    {['accepted', 'en_route', 'arrived', 'in_progress'].includes(booking.rideStatus || booking.status) && (
+                      <button
+                        onClick={() => router.push(`/customer/track/${booking.id}`)}
+                        className="px-4 py-2 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition flex items-center justify-center gap-2 text-sm w-full md:w-auto"
+                      >
+                        <MapPin className="w-4 h-4" />
+                        Track Ride
+                      </button>
                     )}
                     
                     <button

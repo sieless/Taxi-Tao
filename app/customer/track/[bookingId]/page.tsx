@@ -156,10 +156,27 @@ export default function TrackRidePage() {
 
             {/* Status Badge */}
             <div className="pt-4 border-t border-gray-200">
-              <p className="text-xs text-gray-500 font-medium mb-2">BOOKING STATUS</p>
-              <span className="inline-block px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-800 capitalize">
-                {booking.status}
-              </span>
+              <p className="text-xs text-gray-500 font-medium mb-2">RIDE STATUS</p>
+              <div className="flex items-center gap-2">
+                <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold capitalize ${
+                  booking.rideStatus === 'completed' ? 'bg-green-100 text-green-800' :
+                  booking.rideStatus === 'in_progress' ? 'bg-blue-100 text-blue-800' :
+                  booking.rideStatus === 'arrived' ? 'bg-purple-100 text-purple-800' :
+                  booking.rideStatus === 'en_route' ? 'bg-yellow-100 text-yellow-800' :
+                  booking.status === 'accepted' ? 'bg-cyan-100 text-cyan-800' :
+                  'bg-gray-100 text-gray-800'
+                }`}>
+                  {booking.rideStatus?.replace(/_/g, ' ') || booking.status}
+                </span>
+                {booking.rideStatus && (
+                  <span className="text-xs text-gray-500">
+                    {booking.rideStatus === 'en_route' && '🚗 Driver is on the way'}
+                    {booking.rideStatus === 'arrived' && '📍 Driver has arrived'}
+                    {booking.rideStatus === 'in_progress' && '🛣️ Trip in progress'}
+                    {booking.rideStatus === 'completed' && '✅ Trip completed'}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>
