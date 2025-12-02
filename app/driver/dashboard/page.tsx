@@ -123,7 +123,7 @@ export default function DriverDashboard() {
             setDriver(driverData);
             setEditForm({
               name: driverData.name,
-              phone: driverData.phone,
+              phone: driverData.phone || "",
               businessLocation: driverData.businessLocation || "",
             });
             if (driverData.vehicle) {
