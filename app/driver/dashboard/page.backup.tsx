@@ -1029,7 +1029,7 @@ export default function DriverDashboard() {
             <div className="bg-gray-50 rounded-lg p-4">
               <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Status</p>
               <p className={`text-xl font-bold ${driver.subscriptionStatus === 'active' ? 'text-green-600' : 'text-red-600'}`}>
-                {driver.subscriptionStatus.charAt(0).toUpperCase() + driver.subscriptionStatus.slice(1)}
+                {driver.subscriptionStatus ? driver.subscriptionStatus.charAt(0).toUpperCase() + driver.subscriptionStatus.slice(1) : 'Inactive'}
               </p>
             </div>
 
