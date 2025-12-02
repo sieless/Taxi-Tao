@@ -130,7 +130,7 @@ export default function DriverDashboard() {
               setVehicleForm({
                 make: driverData.vehicle.make || "",
                 model: driverData.vehicle.model || "",
-                year: driverData.vehicle.year || "",
+                year: driverData.vehicle.year ? String(driverData.vehicle.year) : "",
                 plate: driverData.vehicle.plate || "",
                 color: driverData.vehicle.color || "",
                 type: driverData.vehicle.type || "sedan",
