@@ -8,7 +8,10 @@ interface CustomerBookingCardProps {
   onCallDriver?: (phone: string) => void;
 }
 
-export default function CustomerBookingCard({ booking, onCallDriver }: CustomerBookingCardProps) {
+export default function CustomerBookingCard({
+  booking,
+  onCallDriver,
+}: CustomerBookingCardProps) {
   const handleCall = () => {
     if (onCallDriver && booking.driverPhone) {
       onCallDriver(booking.driverPhone);
@@ -17,12 +20,18 @@ export default function CustomerBookingCard({ booking, onCallDriver }: CustomerB
 
   const getStatusLabel = () => {
     switch (booking.rideStatus) {
-      case "confirmed": return "Confirmed";
-      case "en_route": return "Driver En Route";
-      case "arrived": return "Driver Arrived";
-      case "in_progress": return "Trip Started";
-      case "completed": return "Completed";
-      default: return "Pending";
+      case "confirmed":
+        return "Confirmed";
+      case "en_route":
+        return "Driver En Route";
+      case "arrived":
+        return "Driver Arrived";
+      case "in_progress":
+        return "Trip Started";
+      case "completed":
+        return "Completed";
+      default:
+        return "Pending";
     }
   };
 
@@ -59,14 +68,7 @@ export default function CustomerBookingCard({ booking, onCallDriver }: CustomerB
         <div className="pt-2 border-t border-gray-200 flex justify-between items-center text-gray-700 text-sm">
           <div>
             <p className="font-semibold">{booking.driverName}</p>
-            <p className="text-xs">{booking.driverPhone}</p>
           </div>
-          <button
-            onClick={handleCall}
-            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-xs flex items-center gap-1"
-          >
-            <Phone className="w-4 h-4" /> Call
-          </button>
         </div>
       )}
     </div>

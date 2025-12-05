@@ -5,19 +5,7 @@ import { collection, query, orderBy, getDocs, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Users, ShieldCheck, XCircle, CheckCircle } from "lucide-react";
 
-interface Driver {
-  id: string;
-  name: string;
-  phone: string;
-  email: string;
-  status: string;
-  vehicle?: {
-    make?: string;
-    model?: string;
-    plate?: string;
-  };
-  createdAt: any;
-}
+import { Driver } from "@/lib/types";
 
 export default function AdminDriversPage() {
   const [drivers, setDrivers] = useState<Driver[]>([]);
@@ -121,8 +109,8 @@ export default function AdminDriversPage() {
                     <div className="space-y-1 text-sm text-gray-600">
                       <p>📧 {driver.email}</p>
                       <p>📱 {driver.phone}</p>
-                      {driver.vehicle && (
-                        <p>🚗 {driver.vehicle.make} {driver.vehicle.model} ({driver.vehicle.plate})</p>
+                      {driver.vehicles?.[0] && (
+                        <p>🚗 {driver.vehicles[0].make} {driver.vehicles[0].model} ({driver.vehicles[0].plate})</p>
                       )}
                     </div>
                   </div>

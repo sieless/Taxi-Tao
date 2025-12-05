@@ -103,12 +103,13 @@ export default function RideProgress({ booking, driver }: RideProgressProps) {
                 )}
 
                 {/* Vehicle Info */}
-                {driver.vehicle && (
+                {driver.vehicles?.[0] && (
                   <p className="text-sm text-gray-600 mt-1">
-                    {driver.vehicle.color} {driver.vehicle.make} {driver.vehicle.model}
-                    {driver.vehicle.plate && (
+                    {/* Color is not in Vehicle interface currently, so we omit it */}
+                    {driver.vehicles[0].make} {driver.vehicles[0].model}
+                    {driver.vehicles[0].plate && (
                       <span className="ml-2 font-mono text-xs bg-gray-100 px-2 py-0.5 rounded">
-                        {driver.vehicle.plate}
+                        {driver.vehicles[0].plate}
                       </span>
                     )}
                   </p>

@@ -15,17 +15,7 @@ import EmergencyButton from "./EmergencyButton";
 import ReportIssueModal from "./ReportIssueModal";
 import { submitRating } from "@/lib/rating-service";
 
-interface BookingRequest {
-  id: string;
-  pickupDate: string;
-  pickupTime: string;
-  pickupLocation: string;
-  destination: string;
-  rideStatus?: "confirmed" | "en_route" | "arrived" | "in_progress" | "completed";
-  driverName?: string;
-  driverPhone?: string;
-  fare?: number;
-}
+import { BookingRequest } from "@/lib/types";
 
 export default function CustomerUpcomingBookings() {
   const { user } = useAuth();
@@ -40,7 +30,7 @@ export default function CustomerUpcomingBookings() {
   const [bookingToModify, setBookingToModify] = useState<BookingRequest | null>(null);
   const [showModifyModal, setShowModifyModal] = useState(false);
   const [negotiationId, setNegotiationId] = useState<string | null>(null);
-  const [negotiationId, setNegotiationId] = useState<string | null>(null);
+
   const [showNegotiationModal, setShowNegotiationModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [bookingToReport, setBookingToReport] = useState<BookingRequest | null>(null);

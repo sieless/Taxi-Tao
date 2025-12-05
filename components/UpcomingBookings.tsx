@@ -153,8 +153,6 @@ function BookingCard({ booking }: { booking: BookingRequest }) {
           <span className="text-gray-600 font-medium">Fare:</span>
           <span className="text-green-600 font-bold text-lg">
             {booking.fare ? `KSH ${booking.fare.toLocaleString()}` : 
-             booking.price ? `KSH ${booking.price.toLocaleString()}` :
-             booking.offer ? `KSH ${booking.offer.toLocaleString()}` :
              booking.fareEstimate ? `~KSH ${booking.fareEstimate.toLocaleString()}` :
              "Agreed Price"}
           </span>
@@ -234,10 +232,12 @@ export default function UpcomingBookings({ driverId, driverProfile, maxItems = 5
   const currentBooking = bookings[currentIndex];
 
   // helper to build vehicle string
+  // helper to build vehicle string
   const vehicleString = useMemo(() => {
-    const v = driverProfile?.vehicle;
+    const v = driverProfile?.vehicles?.[0];
     if (!v) return "";
-    const parts = [v.color, v.make, v.model].filter(Boolean);
+    // Color is not in Vehicle interface currently, so we omit it
+    const parts = [v.make, v.model].filter(Boolean);
     let s = parts.join(" ");
     if (v.plate) s += ` (${v.plate})`;
     return s;

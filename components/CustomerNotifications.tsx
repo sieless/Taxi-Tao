@@ -13,15 +13,17 @@ interface Notification {
   bookingId: string;
   read: boolean;
   createdAt: Timestamp;
+  metadata?: any;
 }
 
 interface CustomerNotificationsProps {
   isOpen: boolean;
   onClose: () => void;
   onUnreadCountChange?: (count: number) => void;
+  onNotificationClick?: (notification: Notification) => void;
 }
 
-export default function CustomerNotifications({ isOpen, onClose, onUnreadCountChange }: CustomerNotificationsProps) {
+export default function CustomerNotifications({ isOpen, onClose, onUnreadCountChange, onNotificationClick }: CustomerNotificationsProps) {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -146,7 +148,10 @@ export default function CustomerNotifications({ isOpen, onClose, onUnreadCountCh
               <div
                 key={n.id}
                 className={`p-4 hover:bg-gray-50 cursor-pointer flex gap-3 ${!n.read ? "bg-blue-50" : ""}`}
-                onClick={() => markAsRead(n.id)}
+                onClick={() => {
+                  markAsRead(n.id);
+                  if (onNotificationClick) onNotificationClick(n);
+                }}
               >
                 <div className="flex-shrink-0 mt-1">{getIcon(n.type)}</div>
                 <div className="flex-1 min-w-0">

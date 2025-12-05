@@ -75,7 +75,7 @@ export default function MobileMenu({
                 {driver.status === 'available' ? 'Online' : 'Offline'}
               </span>
               <span className="text-xs text-gray-400">•</span>
-              <span className="text-xs text-gray-500 capitalize">{driver.vehicle.make} {driver.vehicle.model}</span>
+              <span className="text-xs text-gray-500 capitalize">{driver.vehicles?.[0]?.make} {driver.vehicles?.[0]?.model}</span>
             </div>
           </div>
         </div>

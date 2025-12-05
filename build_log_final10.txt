@@ -1,0 +1,48 @@
+﻿
+> temp_app@0.1.0 build
+> next build
+
+node.exe : [baseline-browser-mapping] The data in this module is over 
+two months old.  To ensure accurate Baseline data, please update: `npm i 
+baseline-browser-mapping@latest -D`
+At C:\Program Files\nodejs\npm.ps1:29 char:3
++   & $NODE_EXE $NPM_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([baseline-brows...ping@late 
+   st -D`:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   Γû▓ Next.js 16.0.3 (Turbopack)
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+[baseline-browser-mapping] The data in this module is over two months 
+old.  To ensure accurate Baseline data, please update: `npm i 
+baseline-browser-mapping@latest -D`
+ Γ£ô Compiled successfully in 12.3s
+   Running TypeScript ...
+Failed to compile.
+
+./components/MobileMenu.tsx:78:74
+Type error: Property 'vehicle' does not exist on type 'Driver'. Did you 
+mean 'vehicles'?
+
+[0m [90m 76 |[39m               
+[33m<[39m[33m/[39m[33mspan[39m[33m>[39m
+ [90m 77 |[39m               [33m<[39m[33mspan[39m 
+className[33m=[39m[32m"text-xs text-gray-400"[39m[33m>[39mΓÇó[33m<
+[39m[33m/[39m[33mspan[39m[33m>[39m
+[31m[1m>[22m[39m[90m 78 |[39m               
+[33m<[39m[33mspan[39m className[33m=[39m[32m"text-xs 
+text-gray-500 
+capitalize"[39m[33m>[39m{driver[33m.[39mvehicle[33m.[39mmake} {dri
+ver[33m.[39mvehicle[33m.[39mmodel}[33m<[39m[33m/[39m[33mspan[39
+m[33m>[39m
+ [90m    |[39m                                                         
+                 [31m[1m^[22m[39m
+ [90m 79 |[39m             
+[33m<[39m[33m/[39m[33mdiv[39m[33m>[39m
+ [90m 80 |[39m           [33m<[39m[33m/[39m[33mdiv[39m[33m>[39m
+ [90m 81 |[39m         
+[33m<[39m[33m/[39m[33mdiv[39m[33m>[39m[0m
+Next.js build worker exited with code: 1 and signal: null

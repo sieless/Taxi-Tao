@@ -134,7 +134,7 @@ export default function AllDriversPage() {
       // Vehicle type filter
       if (selectedType !== "all") {
         filtered = filtered.filter(
-          (driver) => driver.vehicle?.type === selectedType
+          (driver) => driver.vehicles?.[0]?.type === selectedType
         );
       }
 
@@ -319,10 +319,10 @@ export default function AllDriversPage() {
 
                 {/* Car Photo Header */}
                 <div className="relative h-32 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden rounded-t-2xl mt-6">
-                  {driver.vehicle?.carPhotoUrl ? (
+                  {driver.vehicles?.[0]?.images?.[0] ? (
                     <img
-                      src={driver.vehicle.carPhotoUrl}
-                      alt={`${driver.vehicle.make} ${driver.vehicle.model}`}
+                      src={driver.vehicles[0].images[0]}
+                      alt={`${driver.vehicles[0].make} ${driver.vehicles[0].model}`}
                       className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-500"
                     />
                   ) : (
@@ -336,9 +336,9 @@ export default function AllDriversPage() {
                       ONLINE
                     </div>
                   )}
-                  {driver.vehicle?.plate && (
+                  {driver.vehicles?.[0]?.plate && (
                     <div className="absolute bottom-2 right-2 bg-white/95 backdrop-blur-sm text-gray-800 px-2 py-1 rounded text-xs font-bold shadow-md border border-gray-200">
-                      🚗 {driver.vehicle.plate}
+                      🚗 {driver.vehicles[0].plate}
                     </div>
                   )}
                 </div>
@@ -387,14 +387,14 @@ export default function AllDriversPage() {
                   </div>
 
                   {/* Vehicle Info */}
-                  {driver.vehicle && (
+                  {driver.vehicles?.[0] && (
                     <div className="flex items-center gap-2 text-xs text-gray-700 mb-2 bg-gray-50 px-2 py-1.5 rounded">
                       <Car className="w-3.5 h-3.5 text-green-600" />
                       <span className="font-semibold">
-                        {driver.vehicle.make} {driver.vehicle.model}
+                        {driver.vehicles[0].make} {driver.vehicles[0].model}
                       </span>
                       <span className="ml-auto text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full capitalize font-medium">
-                        {driver.vehicle.type}
+                        {driver.vehicles[0].type}
                       </span>
                     </div>
                   )}

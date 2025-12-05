@@ -28,9 +28,9 @@ export default function LiveDriverCarousel({ vehicleType }: LiveDriverCarouselPr
       snapshot.forEach((doc) => {
         const driverData = { id: doc.id, ...doc.data() } as Driver;
         // Only include drivers with car photos
-        if (driverData.vehicle?.carPhotoUrl) {
+        if (driverData.vehicles?.[0]?.images?.[0]) {
           // Filter by vehicle type if provided
-          if (vehicleType && driverData.vehicle.type !== vehicleType) {
+          if (vehicleType && driverData.vehicles[0].type !== vehicleType) {
             return;
           }
           availableDrivers.push(driverData);
@@ -134,10 +134,10 @@ export default function LiveDriverCarousel({ vehicleType }: LiveDriverCarouselPr
               pointerEvents: index === currentIndex ? 'auto' : 'none',
             }}
           >
-            {driver.vehicle?.carPhotoUrl && (
+            {driver.vehicles?.[0]?.images?.[0] && (
               <img
-                src={driver.vehicle.carPhotoUrl}
-                alt={`${driver.vehicle.make} ${driver.vehicle.model}`}
+                src={driver.vehicles[0].images[0]}
+                alt={`${driver.vehicles[0].make} ${driver.vehicles[0].model}`}
                 className="w-full h-full object-cover"
               />
             )}
@@ -169,7 +169,7 @@ export default function LiveDriverCarousel({ vehicleType }: LiveDriverCarouselPr
                 <div className="flex-1">
                   <h4 className="text-2xl font-bold mb-1">{driver.name}</h4>
                   <p className="text-white/90 font-semibold mb-1">
-                    {driver.vehicle?.make} {driver.vehicle?.model} • {driver.vehicle?.plate}
+                    {driver.vehicles?.[0]?.make} {driver.vehicles?.[0]?.model} • {driver.vehicles?.[0]?.plate}
                   </p>
                   <div className="flex items-center gap-4 text-sm">
                     <span className="bg-green-500 px-3 py-1 rounded-full font-bold">

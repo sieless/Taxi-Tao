@@ -23,7 +23,7 @@ async function getBookingOrFail(
     throw new Error("Booking not found");
   }
 
-  return { id: snap.id, ...(snap.data() as BookingRequest) };
+  return { ...(snap.data() as BookingRequest), id: snap.id };
 }
 
 /* -----------------------------------------------------

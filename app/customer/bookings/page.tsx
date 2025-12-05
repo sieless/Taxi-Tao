@@ -5,7 +5,16 @@ import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { getCustomerBookings } from "@/lib/booking-service";
 import { BookingRequest } from "@/lib/types";
-import { Calendar, MapPin, Clock, Star, Loader2, Phone, AlertTriangle, CreditCard } from "lucide-react";
+import {
+  Calendar,
+  MapPin,
+  Clock,
+  Star,
+  Loader2,
+  Phone,
+  AlertTriangle,
+  CreditCard,
+} from "lucide-react";
 import RatingModal from "@/components/RatingModal";
 import ClientIssueModal from "@/components/ClientIssueModal";
 import { Timestamp, doc, getDoc } from "firebase/firestore";
@@ -17,10 +26,15 @@ export default function CustomerBookingsPage() {
   const router = useRouter();
   const [bookings, setBookings] = useState<BookingRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedBooking, setSelectedBooking] = useState<BookingRequest | null>(null);
+  const [selectedBooking, setSelectedBooking] = useState<BookingRequest | null>(
+    null
+  );
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
-  const [selectedIssueBooking, setSelectedIssueBooking] = useState<BookingRequest | null>(null);
-  const [driverDetails, setDriverDetails] = useState<Map<string, Driver>>(new Map());
+  const [selectedIssueBooking, setSelectedIssueBooking] =
+    useState<BookingRequest | null>(null);
+  const [driverDetails, setDriverDetails] = useState<Map<string, Driver>>(
+    new Map()
+  );
 
   useEffect(() => {
     if (authLoading) return;
@@ -36,7 +50,9 @@ export default function CustomerBookingsPage() {
   // Auto-prompt for rating on unrated completed rides
   useEffect(() => {
     if (bookings.length > 0) {
-      const unratedRide = bookings.find(b => b.status === 'completed' && !b.rating);
+      const unratedRide = bookings.find(
+        (b) => b.status === "completed" && !b.rating
+      );
       if (unratedRide) {
         // Small delay to ensure UI is ready
         const timer = setTimeout(() => {
@@ -50,28 +66,34 @@ export default function CustomerBookingsPage() {
   // Fetch driver details for accepted bookings
   useEffect(() => {
     const fetchDriverDetails = async () => {
-      const acceptedBookings = bookings.filter(b => b.acceptedBy && (b.status === 'accepted' || b.status === 'completed'));
+      const acceptedBookings = bookings.filter(
+        (b) =>
+          b.acceptedBy && (b.status === "accepted" || b.status === "completed")
+      );
       const driverMap = new Map<string, Driver>();
-      
+
       for (const booking of acceptedBookings) {
         if (booking.acceptedBy && !driverDetails.has(booking.acceptedBy)) {
           try {
-            const driverRef = doc(db, 'drivers', booking.acceptedBy);
+            const driverRef = doc(db, "drivers", booking.acceptedBy);
             const driverSnap = await getDoc(driverRef);
             if (driverSnap.exists()) {
-              driverMap.set(booking.acceptedBy, { id: driverSnap.id, ...driverSnap.data() } as Driver);
+              driverMap.set(booking.acceptedBy, {
+                id: driverSnap.id,
+                ...driverSnap.data(),
+              } as Driver);
             }
           } catch (error) {
-            console.error('Error fetching driver details:', error);
+            console.error("Error fetching driver details:", error);
           }
         }
       }
-      
+
       if (driverMap.size > 0) {
-        setDriverDetails(prev => new Map([...prev, ...driverMap]));
+        setDriverDetails((prev) => new Map([...prev, ...driverMap]));
       }
     };
-    
+
     if (bookings.length > 0) {
       fetchDriverDetails();
     }
@@ -94,7 +116,7 @@ export default function CustomerBookingsPage() {
   const loadBookings = async () => {
     // Use phone from user profile or auth
     const phone = userProfile?.phone || user?.phoneNumber;
-    
+
     if (!phone) {
       // If we still don't have a phone number, we can't fetch bookings by phone.
       // However, we can also fetch by customerId which is safer.
@@ -117,10 +139,10 @@ export default function CustomerBookingsPage() {
     }
   };
 
-
   const formatDate = (timestamp: Timestamp | Date | undefined) => {
     if (!timestamp) return "N/A";
-    const date = timestamp instanceof Date ? timestamp : (timestamp as Timestamp).toDate();
+    const date =
+      timestamp instanceof Date ? timestamp : (timestamp as Timestamp).toDate();
     return date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
@@ -130,7 +152,8 @@ export default function CustomerBookingsPage() {
 
   const formatTime = (timestamp: Timestamp | Date | undefined) => {
     if (!timestamp) return "N/A";
-    const date = timestamp instanceof Date ? timestamp : (timestamp as Timestamp).toDate();
+    const date =
+      timestamp instanceof Date ? timestamp : (timestamp as Timestamp).toDate();
     return date.toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
@@ -169,15 +192,21 @@ export default function CustomerBookingsPage() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-2">My Bookings</h1>
-          <p className="text-gray-600">View your ride history and rate completed trips</p>
+          <p className="text-gray-600">
+            View your ride history and rate completed trips
+          </p>
         </div>
 
         {/* Bookings List */}
         {bookings.length === 0 ? (
           <div className="bg-white rounded-xl shadow-md p-12 text-center">
             <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-gray-800 mb-2">No Bookings Yet</h3>
-            <p className="text-gray-600 mb-6">You haven't made any bookings yet.</p>
+            <h3 className="text-xl font-bold text-gray-800 mb-2">
+              No Bookings Yet
+            </h3>
+            <p className="text-gray-600 mb-6">
+              You haven't made any bookings yet.
+            </p>
             <button
               onClick={() => router.push("/booking")}
               className="px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition"
@@ -252,43 +281,71 @@ export default function CustomerBookingsPage() {
                     </div>
 
                     {/* M-Pesa Payment Details */}
-                    {(booking.status === 'accepted' || booking.status === 'completed') && booking.acceptedBy && (() => {
-                      const driver = driverDetails.get(booking.acceptedBy);
-                      const mpesa = driver?.mpesaDetails;
-                      
-                      if (!mpesa) return null;
-                      
-                      return (
-                        <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                          <div className="flex items-center gap-2 mb-2">
-                            <CreditCard className="w-4 h-4 text-green-700" />
-                            <h4 className="font-bold text-green-900 text-sm">Payment Details</h4>
-                          </div>
-                          {mpesa.type === 'till' && mpesa.tillNumber && (
-                            <div className="space-y-1">
-                              <p className="text-xs text-green-700 font-medium">Till Number</p>
-                              <p className="text-lg font-bold text-green-900">{mpesa.tillNumber}</p>
-                              <p className="text-xs text-green-600 italic">Send payment: Amount → Pay</p>
+                    {(booking.status === "accepted" ||
+                      booking.status === "completed") &&
+                      booking.acceptedBy &&
+                      (() => {
+                        const driver = driverDetails.get(booking.acceptedBy);
+                        const mpesa = driver?.mpesaDetails;
+
+                        if (!mpesa) return null;
+
+                        return (
+                          <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                            <div className="flex items-center gap-2 mb-2">
+                              <CreditCard className="w-4 h-4 text-green-700" />
+                              <h4 className="font-bold text-green-900 text-sm">
+                                Payment Details
+                              </h4>
                             </div>
-                          )}
-                          {mpesa.type === 'paybill' && mpesa.paybillNumber && mpesa.accountNumber && (
-                            <div className="space-y-1">
-                              <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                  <p className="text-xs text-green-700 font-medium">Paybill</p>
-                                  <p className="text-base font-bold text-green-900">{mpesa.paybillNumber}</p>
-                                </div>
-                                <div>
-                                  <p className="text-xs text-green-700 font-medium">Account</p>
-                                  <p className="text-base font-bold text-green-900">{mpesa.accountNumber}</p>
-                                </div>
+                            {mpesa.type === "till" && mpesa.tillNumber && (
+                              <div className="space-y-1">
+                                <p className="text-xs text-green-700 font-medium">
+                                  Till Number
+                                </p>
+                                <p className="text-lg font-bold text-green-900">
+                                  {mpesa.tillNumber}
+                                </p>
+                                <p className="text-xs text-green-600 italic">
+                                  Send payment: Amount → Pay
+                                </p>
                               </div>
-                              <p className="text-xs text-green-600 italic mt-2">Send payment: Paybill → Account → Amount → Pay</p>
+                            )}
+                            {mpesa.type === "paybill" &&
+                              mpesa.paybillNumber &&
+                              mpesa.accountNumber && (
+                                <div className="space-y-1">
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                      <p className="text-xs text-green-700 font-medium">
+                                        Paybill
+                                      </p>
+                                      <p className="text-base font-bold text-green-900">
+                                        {mpesa.paybillNumber}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs text-green-700 font-medium">
+                                        Account
+                                      </p>
+                                      <p className="text-base font-bold text-green-900">
+                                        {mpesa.accountNumber}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <p className="text-xs text-green-600 italic mt-2">
+                                    Send payment: Paybill → Account → Amount →
+                                    Pay
+                                  </p>
+                                </div>
+                              )}
+                            <div>
+                              <p>Mpesa Account Name: {mpesa.accountName}</p>
+                              <p>Mpesa Phone Number: {mpesa.phoneNumber}</p>
                             </div>
-                          )}
-                        </div>
-                      );
-                    })()}
+                          </div>
+                        );
+                      })()}
                   </div>
 
                   {/* Actions */}
@@ -318,7 +375,9 @@ export default function CustomerBookingsPage() {
                                 />
                               ))}
                             </div>
-                            <p className="text-xs text-gray-600">You rated this ride</p>
+                            <p className="text-xs text-gray-600">
+                              You rated this ride
+                            </p>
                             {booking.review && (
                               <p className="text-xs text-gray-700 italic mt-1">
                                 "{booking.review}"
@@ -340,7 +399,7 @@ export default function CustomerBookingsPage() {
                     {booking.status === "accepted" && booking.acceptedBy && (
                       <div className="flex flex-col gap-2 w-full">
                         <a
-                          href={`tel:${booking.driverPhone || ''}`} // Assuming driverPhone might be available, otherwise we need to fetch it. But wait, booking request usually has customerPhone. Driver phone might not be on booking request object unless we joined it.
+                          href={`tel:${booking.driverPhone || ""}`} // Assuming driverPhone might be available, otherwise we need to fetch it. But wait, booking request usually has customerPhone. Driver phone might not be on booking request object unless we joined it.
                           // If driverPhone is not on booking, we might need to rely on the user knowing it or fetch it.
                           // However, the request said "add call button to make direct call to diver".
                           // Let's assume for now we might not have it directly on the booking object if it's not joined.
@@ -360,16 +419,23 @@ export default function CustomerBookingsPage() {
                     )}
 
                     {/* Track Ride Button for Active Rides */}
-                    {['accepted', 'en_route', 'arrived', 'in_progress'].includes(booking.rideStatus || booking.status) && (
+                    {[
+                      "accepted",
+                      "en_route",
+                      "arrived",
+                      "in_progress",
+                    ].includes(booking.rideStatus || booking.status) && (
                       <button
-                        onClick={() => router.push(`/customer/track/${booking.id}`)}
+                        onClick={() =>
+                          router.push(`/customer/track/${booking.id}`)
+                        }
                         className="px-4 py-2 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition flex items-center justify-center gap-2 text-sm w-full md:w-auto"
                       >
                         <MapPin className="w-4 h-4" />
                         Track Ride
                       </button>
                     )}
-                    
+
                     <button
                       onClick={() => {
                         setSelectedIssueBooking(booking);

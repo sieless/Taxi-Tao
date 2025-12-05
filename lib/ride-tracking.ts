@@ -26,7 +26,8 @@ export type RideStatus =
   'en_route' | 
   'arrived' | 
   'in_progress' | 
-  'completed';
+  'completed' |
+  'cancelled';
 
 /**
  * Update ride status in Firestore
@@ -51,6 +52,7 @@ export async function updateRideStatus(
       arrived: 'arrivedAt',
       in_progress: 'startedAt',
       completed: 'completedAt',
+      cancelled: 'cancelledAt',
     };
 
     updateData[statusTimestamps[newStatus]] = timestamp;

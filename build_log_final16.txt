@@ -1,0 +1,50 @@
+﻿
+> temp_app@0.1.0 build
+> next build
+
+node.exe : [baseline-browser-mapping] The 
+data in this module is over two months old.  
+To ensure accurate Baseline data, please 
+update: `npm i 
+baseline-browser-mapping@latest -D`
+At C:\Program Files\nodejs\npm.ps1:29 char:3
++   & $NODE_EXE $NPM_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ( 
+   [baseline-brows...ping@latest -D`:String)  
+   [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandEr 
+   ror
+ 
+   Γû▓ Next.js 16.0.3 (Turbopack)
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+[baseline-browser-mapping] The data in this 
+module is over two months old.  To ensure 
+accurate Baseline data, please update: `npm i 
+baseline-browser-mapping@latest -D`
+ Γ£ô Compiled successfully in 13.6s
+   Running TypeScript ...
+Failed to compile.
+
+./lib/cancellation-service.ts:26:12
+Type error: 'id' is specified more than once, 
+so this usage will be overwritten.
+
+[0m [90m 24 |[39m   }
+ [90m 25 |[39m
+[31m[1m>[22m[39m[90m 26 |[39m   
+[36mreturn[39m { id[33m:[39m 
+snap[33m.[39mid[33m,[39m 
+[33m...[39m(snap[33m.[39mdata() 
+[36mas[39m [33mBookingRequest[39m) 
+}[33m;[39m
+ [90m    |[39m            
+[31m[1m^[22m[39m
+ [90m 27 |[39m }
+ [90m 28 |[39m
+ [90m 29 |[39m [90m/* ---------------------
+--------------------------------[39m[0m
+Next.js build worker exited with code: 1 and 
+signal: null

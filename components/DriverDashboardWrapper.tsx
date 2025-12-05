@@ -49,11 +49,9 @@ export default function DriverDashboardWrapper() {
             phone: driverProfile.phone || user.phoneNumber || '',
             profilePhotoUrl: driverProfile.profilePhotoUrl || user.photoURL || undefined,
             vehicle: {
-              make: driverProfile.vehicle?.make || '',
-              model: driverProfile.vehicle?.model || '',
-              plate: driverProfile.vehicle?.plate || '',
-              color: driverProfile.vehicle?.color,
-              year: driverProfile.vehicle?.year,
+              make: driverProfile.vehicles?.[0]?.make || '',
+              model: driverProfile.vehicles?.[0]?.model || '',
+              plate: driverProfile.vehicles?.[0]?.plate || '',
             },
           }}
         />

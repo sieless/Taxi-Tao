@@ -3,48 +3,55 @@ import { Driver, Vehicle } from "@/lib/types";
 import { Phone, Star, Shield, Car, MapPin } from "lucide-react";
 import Link from "next/link";
 import BookingForm from "@/components/BookingForm";
+import { Timestamp } from "firebase/firestore";
 
 // Mock data for fallback
+const MOCK_VEHICLE: Vehicle = {
+  id: "mock-vehicle",
+  driverId: "mock-driver",
+  make: "Toyota",
+  model: "Corolla",
+  year: 2020,
+  plate: "KAA 123B",
+  images: [],
+  seats: 4,
+  type: "sedan",
+  active: true,
+  baseFare: 500,
+};
+
 const MOCK_DRIVER: Driver = {
   id: "mock-driver",
-  name: "John Doe",
-  slug: "john-doe",
-  bio: "Professional driver with 5 years of experience. I know all the shortcuts in Machakos and always prioritize safety.",
+  name: "Mock Driver",
+  slug: "mock-driver",
+  bio: "This is a mock driver for testing purposes.",
   phone: "+254712345678",
   whatsapp: "254712345678",
-  email: "john@taxitao.co.ke",
+  email: "mock@taxitao.co.ke",
   active: true,
   rating: 4.8,
   totalRides: 150,
   averageRating: 4.8,
   totalRatings: 120,
-  vehicles: ["mock-vehicle"],
-  createdAt: null,
+  vehicles: [MOCK_VEHICLE],
+  createdAt: Timestamp.fromDate(new Date()),
   subscriptionStatus: "active",
-  lastPaymentDate: null,
-  nextPaymentDue: null,
+  lastPaymentDate: Timestamp.fromDate(new Date()),
+  nextPaymentDue: Timestamp.fromDate(
+    new Date(new Date().getFullYear(), new Date().getMonth() + 1, 5)
+  ),
   paymentHistory: [],
   isVisibleToPublic: true,
   status: "available",
 };
 
-const MOCK_VEHICLE: Vehicle = {
-  id: "mock-vehicle",
-  driverId: "mock-driver",
-  make: "Toyota",
-  model: "Fielder",
-  year: 2018,
-  plate: "KCD 123X",
-  images: [],
-  seats: 4,
-  type: "standard",
-  active: true,
-  baseFare: 450,
-};
-
-export default async function DriverPage({ params }: { params: Promise<{ driverId: string }> }) {
+export default async function DriverPage({
+  params,
+}: {
+  params: Promise<{ driverId: string }>;
+}) {
   const { driverId } = await params;
-  
+
   // Try to fetch real data
   let driver = await getDriver(driverId);
   let vehicles = await getDriverVehicles(driverId);
@@ -59,9 +66,16 @@ export default async function DriverPage({ params }: { params: Promise<{ driverI
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">Driver Not Found</h1>
-          <p className="text-gray-600 mb-6">The driver you are looking for does not exist or is unavailable.</p>
-          <Link href="/" className="text-green-600 hover:underline font-semibold">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">
+            Driver Not Found
+          </h1>
+          <p className="text-gray-600 mb-6">
+            The driver you are looking for does not exist or is unavailable.
+          </p>
+          <Link
+            href="/"
+            className="text-green-600 hover:underline font-semibold"
+          >
             &larr; Back to Home
           </Link>
         </div>
@@ -74,7 +88,10 @@ export default async function DriverPage({ params }: { params: Promise<{ driverI
   return (
     <div className="bg-gray-50 min-h-screen py-12">
       <div className="max-w-5xl mx-auto px-4">
-        <Link href="/" className="text-green-600 hover:underline font-semibold mb-6 inline-block">
+        <Link
+          href="/"
+          className="text-green-600 hover:underline font-semibold mb-6 inline-block"
+        >
           &larr; Back to Home
         </Link>
 
@@ -86,17 +103,23 @@ export default async function DriverPage({ params }: { params: Promise<{ driverI
                 <div className="w-32 h-32 bg-gray-200 rounded-full mb-4 flex items-center justify-center text-gray-500 text-4xl font-bold">
                   {driver.name.charAt(0)}
                 </div>
-                <h1 className="text-2xl font-bold text-gray-800 mb-2">{driver.name}</h1>
+                <h1 className="text-2xl font-bold text-gray-800 mb-2">
+                  {driver.name}
+                </h1>
                 <div className="flex items-center mb-4 text-yellow-500">
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
                       className={`w-5 h-5 ${
-                        i < Math.round(driver.rating || 0) ? "fill-current" : "text-gray-300"
+                        i < Math.round(driver.rating || 0)
+                          ? "fill-current"
+                          : "text-gray-300"
                       }`}
                     />
                   ))}
-                  <span className="ml-2 text-gray-600 font-medium">({driver.rating})</span>
+                  <span className="ml-2 text-gray-600 font-medium">
+                    ({driver.rating})
+                  </span>
                 </div>
                 <span
                   className={`px-3 py-1 rounded-full text-sm font-semibold mb-6 ${
@@ -120,11 +143,15 @@ export default async function DriverPage({ params }: { params: Promise<{ driverI
 
               <div className="mt-8 border-t pt-6">
                 <h3 className="font-semibold text-gray-800 mb-3">About</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">{driver.bio}</p>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  {driver.bio}
+                </p>
               </div>
 
               <div className="mt-6 border-t pt-6">
-                <h3 className="font-semibold text-gray-800 mb-3">Vehicle Details</h3>
+                <h3 className="font-semibold text-gray-800 mb-3">
+                  Vehicle Details
+                </h3>
                 {mainVehicle ? (
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <div className="flex items-center mb-2">
@@ -135,11 +162,15 @@ export default async function DriverPage({ params }: { params: Promise<{ driverI
                     </div>
                     <div className="flex items-center mb-2">
                       <Shield className="w-4 h-4 text-gray-500 mr-2" />
-                      <span className="text-sm text-gray-600">{mainVehicle.plate}</span>
+                      <span className="text-sm text-gray-600">
+                        {mainVehicle.plate}
+                      </span>
                     </div>
                     <div className="flex items-center">
                       <MapPin className="w-4 h-4 text-gray-500 mr-2" />
-                      <span className="text-sm text-gray-600">Based in Machakos</span>
+                      <span className="text-sm text-gray-600">
+                        Based in Machakos
+                      </span>
                     </div>
                   </div>
                 ) : (
@@ -152,9 +183,12 @@ export default async function DriverPage({ params }: { params: Promise<{ driverI
           {/* Right Column: Booking Form */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-xl shadow-md overflow-hidden p-6 md:p-8">
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">Book a Ride with {driver.name}</h2>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                Book a Ride with {driver.name}
+              </h2>
               <p className="text-gray-600 mb-8">
-                Fill in the details below to send a booking request directly to {driver.name}'s WhatsApp.
+                Fill in the details below to send a booking request directly to{" "}
+                {driver.name}'s WhatsApp.
               </p>
               <BookingForm />
             </div>

@@ -1,0 +1,46 @@
+﻿
+> temp_app@0.1.0 build
+> next build
+
+node.exe : [baseline-browser-mapping] The data in this module is over 
+two months old.  To ensure accurate Baseline data, please update: `npm i 
+baseline-browser-mapping@latest -D`
+At C:\Program Files\nodejs\npm.ps1:29 char:3
++   & $NODE_EXE $NPM_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([baseline-brows...ping@late 
+   st -D`:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   Γû▓ Next.js 16.0.3 (Turbopack)
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+[baseline-browser-mapping] The data in this module is over two months 
+old.  To ensure accurate Baseline data, please update: `npm i 
+baseline-browser-mapping@latest -D`
+ Γ£ô Compiled successfully in 10.2s
+   Running TypeScript ...
+Failed to compile.
+
+./components/DriverDashboardWrapper.tsx:52:35
+Type error: Property 'vehicle' does not exist on type 'Driver'. Did you 
+mean 'vehicles'?
+
+[0m [90m 50 |[39m             profilePhotoUrl[33m:[39m 
+driverProfile[33m.[39mprofilePhotoUrl [33m||[39m 
+user[33m.[39mphotoURL [33m||[39m undefined[33m,[39m
+ [90m 51 |[39m             vehicle[33m:[39m {
+[31m[1m>[22m[39m[90m 52 |[39m               make[33m:[39m 
+driverProfile[33m.[39mvehicle[33m?[39m[33m.[39mmake [33m||[39m 
+[32m''[39m[33m,[39m
+ [90m    |[39m                                   [31m[1m^[22m[39m
+ [90m 53 |[39m               model[33m:[39m 
+driverProfile[33m.[39mvehicle[33m?[39m[33m.[39mmodel [33m||[39m 
+[32m''[39m[33m,[39m
+ [90m 54 |[39m               plate[33m:[39m 
+driverProfile[33m.[39mvehicle[33m?[39m[33m.[39mplate [33m||[39m 
+[32m''[39m[33m,[39m
+ [90m 55 |[39m               color[33m:[39m 
+driverProfile[33m.[39mvehicle[33m?[39m[33m.[39mcolor[33m,[39m[0m
+Next.js build worker exited with code: 1 and signal: null

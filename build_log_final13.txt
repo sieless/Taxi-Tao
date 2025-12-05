@@ -1,0 +1,56 @@
+﻿
+> temp_app@0.1.0 build
+> next build
+
+node.exe : [baseline-browser-mapping] The 
+data in this module is over two months old.  
+To ensure accurate Baseline data, please 
+update: `npm i 
+baseline-browser-mapping@latest -D`
+At C:\Program Files\nodejs\npm.ps1:29 char:3
++   & $NODE_EXE $NPM_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ( 
+   [baseline-brows...ping@latest -D`:String)  
+   [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandEr 
+   ror
+ 
+   Γû▓ Next.js 16.0.3 (Turbopack)
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+[baseline-browser-mapping] The data in this 
+module is over two months old.  To ensure 
+accurate Baseline data, please update: `npm i 
+baseline-browser-mapping@latest -D`
+ Γ£ô Compiled successfully in 10.4s
+   Running TypeScript ...
+Failed to compile.
+
+./components/UpcomingBookings.tsx:156:22
+Type error: Property 'fareEstimate' does not 
+exist on type 'BookingRequest'.
+
+[0m [90m 154 |[39m           
+[33m<[39m[33mspan[39m 
+className[33m=[39m[32m"text-green-600 
+font-bold text-lg"[39m[33m>[39m
+ [90m 155 |[39m             
+{booking[33m.[39mfare [33m?[39m [32m`KSH 
+${booking.fare.toLocaleString()}`[39m 
+[33m:[39m 
+[31m[1m>[22m[39m[90m 156 |[39m          
+    booking[33m.[39mfareEstimate 
+[33m?[39m [32m`~KSH ${booking.fareEstimate.
+toLocaleString()}`[39m [33m:[39m
+ [90m     |[39m                      
+[31m[1m^[22m[39m
+ [90m 157 |[39m              [32m"Agreed 
+Price"[39m}
+ [90m 158 |[39m           [33m<[39m[33m/
+[39m[33mspan[39m[33m>[39m
+ [90m 159 |[39m         [33m<[39m[33m/[3
+9m[33mdiv[39m[33m>[39m[0m
+Next.js build worker exited with code: 1 and 
+signal: null

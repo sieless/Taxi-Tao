@@ -1,0 +1,52 @@
+﻿
+> temp_app@0.1.0 build
+> next build
+
+node.exe : [baseline-browser-mapping] The data in 
+this module is over two months old.  To ensure 
+accurate Baseline data, please update: `npm i 
+baseline-browser-mapping@latest -D`
+At C:\Program Files\nodejs\npm.ps1:29 char:3
++   & $NODE_EXE $NPM_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([bas 
+   eline-brows...ping@latest -D`:String) [], Rem  
+  oteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   Γû▓ Next.js 16.0.3 (Turbopack)
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+[baseline-browser-mapping] The data in this 
+module is over two months old.  To ensure 
+accurate Baseline data, please update: `npm i 
+baseline-browser-mapping@latest -D`
+ Γ£ô Compiled successfully in 11.0s
+   Running TypeScript ...
+Failed to compile.
+
+./app/driver/settings/page.tsx:76:43
+Type error: Property 'experienceYears' does not 
+exist on type 'Driver'.
+
+[0m [90m 74 |[39m               
+email[33m:[39m driverData[33m.[39memail 
+[33m||[39m [32m""[39m[33m,[39m
+ [90m 75 |[39m               
+businessLocation[33m:[39m 
+driverData[33m.[39mbusinessLocation 
+[33m||[39m [32m""[39m[33m,[39m
+[31m[1m>[22m[39m[90m 76 |[39m               
+experienceYears[33m:[39m 
+driverData[33m.[39mexperienceYears [33m||[39m 
+[35m0[39m[33m,[39m
+ [90m    |[39m                                  
+         [31m[1m^[22m[39m
+ [90m 77 |[39m               bio[33m:[39m 
+driverData[33m.[39mbio [33m||[39m 
+[32m""[39m[33m,[39m
+ [90m 78 |[39m             })[33m;[39m
+ [90m 79 |[39m[0m
+Next.js build worker exited with code: 1 and 
+signal: null

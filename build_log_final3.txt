@@ -1,0 +1,48 @@
+﻿
+> temp_app@0.1.0 build
+> next build
+
+node.exe : [baseline-browser-mapping] The data 
+in this module is over two months old.  To 
+ensure accurate Baseline data, please update: 
+`npm i baseline-browser-mapping@latest -D`
+At C:\Program Files\nodejs\npm.ps1:29 char:3
++   & $NODE_EXE $NPM_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([b 
+   aseline-brows...ping@latest -D`:String) [],  
+   RemoteException
+    + FullyQualifiedErrorId : NativeCommandErro 
+   r
+ 
+   Γû▓ Next.js 16.0.3 (Turbopack)
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+[baseline-browser-mapping] The data in this 
+module is over two months old.  To ensure 
+accurate Baseline data, please update: `npm i 
+baseline-browser-mapping@latest -D`
+ Γ£ô Compiled successfully in 14.7s
+   Running TypeScript ...
+Failed to compile.
+
+./app/drivers/page.tsx:137:30
+Type error: Property 'vehicle' does not exist 
+on type 'Driver'. Did you mean 'vehicles'?
+
+[0m [90m 135 |[39m       [36mif[39m 
+(selectedType [33m!==[39m [32m"all"[39m) {
+ [90m 136 |[39m         filtered [33m=[39m 
+filtered[33m.[39mfilter(
+[31m[1m>[22m[39m[90m 137 |[39m           
+(driver) [33m=>[39m driver[33m.[39mvehicle[
+33m?[39m[33m.[39mtype [33m===[39m 
+selectedType
+ [90m     |[39m                              
+[31m[1m^[22m[39m
+ [90m 138 |[39m         )[33m;[39m
+ [90m 139 |[39m       }
+ [90m 140 |[39m[0m
+Next.js build worker exited with code: 1 and 
+signal: null
