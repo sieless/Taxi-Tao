@@ -35,7 +35,7 @@ export interface Driver {
   mpesaDetails?: {
     accountName?: string;
     phoneNumber?: string;
-    type: "till" | "paybill";
+    type: "till" | "paybill" | "send_money";
     tillNumber?: string;
     paybillNumber?: string;
     accountNumber?: string;

@@ -162,6 +162,27 @@ export default function MpesaSettings({ driver, onUpdate }: MpesaSettingsProps) 
         </div>
       )}
 
+      {/* Send Money Fields */}
+      {paymentType === 'send_money' && (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Phone Number *
+            </label>
+            <input
+              type="tel"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              placeholder="e.g., 0712345678"
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Customer flow: Send Money → Phone Number → Amount
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Save Button */}
       <div className="mt-6 flex items-center gap-3">
         <button
