@@ -54,6 +54,7 @@ export interface Vehicle {
   type: "sedan" | "suv" | "van" | "bike" | "tuk-tuk";
   active: boolean;
   baseFare: number;
+  color?: string;
 }
 
 export interface Booking {

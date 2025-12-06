@@ -42,10 +42,11 @@ export default function DriverSettings() {
   });
 
   const [mpesaForm, setMpesaForm] = useState({
-    type: "till" as "till" | "paybill",
+    type: "till" as "till" | "paybill" | "send_money",
     tillNumber: "",
     paybillNumber: "",
     accountNumber: "",
+    phoneNumber: "",
   });
 
   useEffect(() => {
@@ -83,6 +84,7 @@ export default function DriverSettings() {
                 tillNumber: driverData.mpesaDetails.tillNumber || "",
                 paybillNumber: driverData.mpesaDetails.paybillNumber || "",
                 accountNumber: driverData.mpesaDetails.accountNumber || "",
+                phoneNumber: driverData.mpesaDetails.phoneNumber || "",
               });
             }
           }
@@ -135,6 +137,7 @@ export default function DriverSettings() {
           tillNumber: mpesaForm.tillNumber,
           paybillNumber: mpesaForm.paybillNumber,
           accountNumber: mpesaForm.accountNumber,
+          phoneNumber: mpesaForm.phoneNumber,
         }
       });
 
@@ -145,6 +148,7 @@ export default function DriverSettings() {
           tillNumber: mpesaForm.tillNumber,
           paybillNumber: mpesaForm.paybillNumber,
           accountNumber: mpesaForm.accountNumber,
+          phoneNumber: mpesaForm.phoneNumber,
         }
       } : null);
       alert("M-Pesa details updated successfully!");
@@ -465,6 +469,7 @@ export default function DriverSettings() {
                           >
                             <option value="till">Buy Goods (Till Number)</option>
                             <option value="paybill">Paybill</option>
+                            <option value="send_money">Send Money (Phone Number)</option>
                           </select>
                         </div>
 
@@ -502,6 +507,19 @@ export default function DriverSettings() {
                               />
                             </div>
                           </>
+                        )}
+
+                        {mpesaForm.type === "send_money" && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                            <input
+                              type="tel"
+                              value={mpesaForm.phoneNumber}
+                              onChange={(e) => setMpesaForm({ ...mpesaForm, phoneNumber: e.target.value })}
+                              className="w-full p-2 border border-gray-300 rounded-lg"
+                              placeholder="e.g. 0712345678"
+                            />
+                          </div>
                         )}
 
                         <button 
