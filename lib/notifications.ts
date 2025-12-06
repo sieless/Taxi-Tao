@@ -1,9 +1,11 @@
 import { collection, addDoc, getDocs, query, where, orderBy, updateDoc, doc, Timestamp, deleteDoc } from "firebase/firestore";
 import { db } from "./firebase";
 import { Notification } from "./types";
+import { sendDriverEmail, shouldSendEmail, EmailType } from "./email-service";
 
 /**
  * Create a new notification for a driver
+ * Also sends an email for important notification types
  */
 export async function createNotification(
   recipientId: string,
@@ -32,6 +34,23 @@ export async function createNotification(
     };
 
     const docRef = await addDoc(collection(db, "notifications"), notificationData);
+
+    // Send email for important notifications
+    if (recipientEmail && shouldSendEmail(type)) {
+      try {
+        await sendDriverEmail(type as EmailType, recipientEmail, {
+          driverName: recipientName,
+          rejectionReason: metadata?.rejectionReason,
+          expiryDate: metadata?.expiryDate ? new Date(metadata.expiryDate) : undefined,
+          daysRemaining: metadata?.daysRemaining,
+          customMessage: message,
+        });
+      } catch (emailError) {
+        // Log but don't fail the notification creation
+        console.error("Error sending email notification:", emailError);
+      }
+    }
+
     return docRef.id;
   } catch (error) {
     console.error("Error creating notification:", error);

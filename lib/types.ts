@@ -217,6 +217,8 @@ export interface Notification {
   metadata?: {
     rejectionReason?: string;
     nextPaymentDue?: any; // Firestore Timestamp
+    expiryDate?: any; // For email templates
+    daysRemaining?: number; // For subscription expiring emails
     bookingId?: string;
     pickupLocation?: string;
     dropoffLocation?: string;
