@@ -582,6 +582,29 @@ export default function DriverDashboard() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 pt-20 pb-8">
+        {/* Verification Warning */}
+        {!user?.emailVerified && (
+          <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-6 rounded-r-lg shadow-sm">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="w-6 h-6 text-yellow-600" />
+                <div>
+                  <h3 className="text-sm font-bold text-yellow-800">Verification Required</h3>
+                  <p className="text-xs text-yellow-700">
+                    Please verify your email address to unlock full dashboard features.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => router.push("/verify-email")}
+                className="px-4 py-2 bg-yellow-600 text-white text-xs font-bold rounded-lg hover:bg-yellow-700 transition"
+              >
+                Verify Now
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Combined Profile & Vehicle Card */}
         <div className="bg-white rounded-xl shadow-md p-6 mb-8">
           <div className="flex flex-col lg:flex-row gap-6">
@@ -707,10 +730,20 @@ export default function DriverDashboard() {
                     </span>
                   </div>
                   <button
-                    onClick={() => setIsEditing(true)}
-                    className="w-full mt-2 px-3 py-1.5 bg-green-600 text-white rounded text-xs hover:bg-green-700 transition"
+                    onClick={() => {
+                      if (!user?.emailVerified) {
+                        router.push("/verify-email");
+                      } else {
+                        setIsEditing(true);
+                      }
+                    }}
+                    className={`w-full mt-2 px-3 py-1.5 rounded text-xs transition ${
+                      !user?.emailVerified
+                        ? "bg-yellow-500 hover:bg-yellow-600 text-white"
+                        : "bg-green-600 hover:bg-green-700 text-white"
+                    }`}
                   >
-                    Edit Profile
+                    {!user?.emailVerified ? "Complete Verification" : "Edit Profile"}
                   </button>
                 </div>
               </div>
@@ -1090,7 +1123,7 @@ export default function DriverDashboard() {
                       day: "2-digit",
                       month: "short",
                     })
-                  : "5th Next Month"}
+                  : "1 Month from Payment"}
               </p>
             </div>
 
@@ -1099,7 +1132,7 @@ export default function DriverDashboard() {
               <p className="text-xs font-semibold text-gray-500 uppercase mb-1">
                 Monthly Amount
               </p>
-              <p className="text-xl font-bold text-gray-800">KES 1,000</p>
+              <p className="text-xl font-bold text-gray-800">KES 2,000</p>
             </div>
 
             {/* Visibility */}
@@ -1142,7 +1175,7 @@ export default function DriverDashboard() {
               </a>
             </div>
             <p className="text-xs text-gray-600 mt-2">
-              Send KES 1,000 to till number{" "}
+              Send KES 2,000 to till number{" "}
               <span className="font-semibold">7323090</span> and share the
               M-Pesa code with support for verification.
             </p>

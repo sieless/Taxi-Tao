@@ -14,13 +14,14 @@ interface MpesaSettingsProps {
 export default function MpesaSettings({ driver, onUpdate }: MpesaSettingsProps) {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [paymentType, setPaymentType] = useState<'till' | 'paybill'>(
+  const [paymentType, setPaymentType] = useState<'till' | 'paybill' | 'send_money'>(
     driver.mpesaDetails?.type || 'till'
   );
   
   const [tillNumber, setTillNumber] = useState(driver.mpesaDetails?.tillNumber || '');
   const [paybillNumber, setPaybillNumber] = useState(driver.mpesaDetails?.paybillNumber || '');
   const [accountNumber, setAccountNumber] = useState(driver.mpesaDetails?.accountNumber || '');
+  const [phoneNumber, setPhoneNumber] = useState(driver.mpesaDetails?.phoneNumber || '');
 
   const handleSave = async () => {
     setSaving(true);
@@ -33,6 +34,7 @@ export default function MpesaSettings({ driver, onUpdate }: MpesaSettingsProps) 
         type: paymentType,
         ...(paymentType === 'till' && { tillNumber }),
         ...(paymentType === 'paybill' && { paybillNumber, accountNumber }),
+        ...(paymentType === 'send_money' && { phoneNumber }),
       };
       
       await updateDoc(driverRef, { mpesaDetails });
@@ -66,7 +68,7 @@ export default function MpesaSettings({ driver, onUpdate }: MpesaSettingsProps) 
         <label className="block text-sm font-medium text-gray-700 mb-3">
           Payment Type
         </label>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <button
             type="button"
             onClick={() => setPaymentType('till')}
@@ -90,6 +92,18 @@ export default function MpesaSettings({ driver, onUpdate }: MpesaSettingsProps) 
           >
             <div className="font-semibold text-gray-900">Paybill</div>
             <div className="text-xs text-gray-500 mt-1">For paybill accounts</div>
+          </button>
+          <button
+            type="button"
+            onClick={() => setPaymentType('send_money')}
+            className={`p-4 rounded-lg border-2 transition-all ${
+              paymentType === 'send_money'
+                ? 'border-green-500 bg-green-50'
+                : 'border-gray-200 hover:border-gray-300'
+            }`}
+          >
+            <div className="font-semibold text-gray-900">Send Money</div>
+            <div className="text-xs text-gray-500 mt-1">To phone number</div>
           </button>
         </div>
       </div>
@@ -152,7 +166,7 @@ export default function MpesaSettings({ driver, onUpdate }: MpesaSettingsProps) 
       <div className="mt-6 flex items-center gap-3">
         <button
           onClick={handleSave}
-          disabled={saving || (paymentType === 'till' ? !tillNumber : !paybillNumber || !accountNumber)}
+          disabled={saving || (paymentType === 'till' ? !tillNumber : paymentType === 'paybill' ? (!paybillNumber || !accountNumber) : !phoneNumber)}
           className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {saving ? (

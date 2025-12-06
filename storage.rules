@@ -14,19 +14,19 @@ service firebase.storage {
       return request.auth.uid == userId;
     }
     
-    // Driver profile pictures
-    match /taxi-drivers/{driverId}/{allPaths=**} {
-      // Allow authenticated drivers to upload/update their own profile pictures
-      allow write: if isSignedIn() && isOwner(driverId);
-      // Allow anyone to read driver profile pictures (for public display)
+    // Driver profile pictures (Flat structure as used in image-upload.ts)
+    match /taxi-drivers/{imageId} {
+      // Allow anyone to upload (needed for signup flow before auth)
+      allow write: if true;
+      // Allow anyone to read
       allow read: if true;
     }
     
-    // Vehicle photos
-    match /taxi-cars/{vehicleId}/{allPaths=**} {
-      // Allow authenticated users to upload vehicle photos
-      allow write: if isSignedIn();
-      // Allow anyone to read vehicle photos
+    // Vehicle photos (Flat structure)
+    match /taxi-cars/{imageId} {
+      // Allow anyone to upload (needed for signup flow)
+      allow write: if true;
+      // Allow anyone to read
       allow read: if true;
     }
     

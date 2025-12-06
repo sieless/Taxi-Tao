@@ -18,7 +18,8 @@ export function isSubscriptionExpired(nextPaymentDue: Timestamp | Date | undefin
  */
 export function getNextPaymentDueDate(): Date {
   const now = new Date();
-  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 5);
+  const nextMonth = new Date(now);
+  nextMonth.setMonth(now.getMonth() + 1);
   return nextMonth;
 }
 

@@ -77,7 +77,7 @@ export default function ExpiredSubscriptionsPage() {
   async function sendInAppNotification(driver: Driver) {
     try {
       const daysOverdue = getDaysOverdue(driver.nextPaymentDue);
-      const message = `Your subscription expired ${daysOverdue} day${daysOverdue > 1 ? 's' : ''} ago.\n\nPlease pay 1,000 KSH to Till 7323090 to reactivate your account.\n\nContact: +254 708 674 665`;
+      const message = `Your subscription expired ${daysOverdue} day${daysOverdue > 1 ? 's' : ''} ago.\n\nPlease pay 2,000 KSH to Till 7323090 to reactivate your account.\n\nContact: +254 708 674 665`;
       
       await createNotification(
         driver.id,
@@ -140,7 +140,7 @@ export default function ExpiredSubscriptionsPage() {
     try {
       const promises = drivers.map(driver => {
         const daysOverdue = getDaysOverdue(driver.nextPaymentDue);
-        const message = `Your subscription expired ${daysOverdue} day${daysOverdue > 1 ? 's' : ''} ago.\n\nPlease pay 1,000 KSH to Till 7323090 to reactivate your account.\n\nContact: +254 708 674 665`;
+        const message = `Your subscription expired ${daysOverdue} day${daysOverdue > 1 ? 's' : ''} ago.\n\nPlease pay 2,000 KSH to Till 7323090 to reactivate your account.\n\nContact: +254 708 674 665`;
         
         return createNotification(
           driver.id,

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { doc, setDoc, Timestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import Link from "next/link";
@@ -60,6 +60,10 @@ export default function SignUpPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       console.log("Auth user created:", user.uid);
+      
+      // Send verification email
+      await sendEmailVerification(user);
+      console.log("Verification email sent");
 
       // Create user document in Firestore
       console.log("Creating user document...");
@@ -92,18 +96,18 @@ export default function SignUpPage() {
           // Subscription fields
           subscriptionStatus: "pending",
           lastPaymentDate: null,
-          nextPaymentDue: Timestamp.fromDate(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 5)),
+          nextPaymentDue: Timestamp.fromDate(new Date(new Date().setMonth(new Date().getMonth() + 1))),
           paymentHistory: [],
           isVisibleToPublic: false, // Hidden until first payment
         });
         console.log("Driver document created");
       }
 
-      setSuccess("Account created successfully! Redirecting...");
+      setSuccess("Account created! Please check your email to verify your account. Redirecting...");
       
       setTimeout(() => {
         if (userType === "driver") {
-          router.push("/driver/dashboard");
+          router.push("/verify-email");
         } else {
           router.push("/");
         }
@@ -183,7 +187,7 @@ export default function SignUpPage() {
                 className="w-full p-6 border-2 border-gray-200 rounded-xl hover:border-green-500 hover:bg-green-50 transition text-left"
               >
                 <h3 className="text-lg font-bold text-gray-800 mb-2">Driver</h3>
-                <p className="text-gray-600 text-sm">Offer taxi services and earn income (Monthly subscription: 1000 KSH)</p>
+                <p className="text-gray-600 text-sm">Offer taxi services and earn income (Monthly subscription: 2000 KSH)</p>
               </button>
             </div>
           )}
@@ -353,7 +357,7 @@ export default function SignUpPage() {
               {userType === "driver" && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <p className="text-sm text-blue-800">
-                    <strong>Note:</strong> As a driver, you'll need to pay a monthly subscription of 1000 KSH (due on the 5th of each month) to keep your profile visible to customers.
+                    <strong>Note:</strong> As a driver, you'll need to pay a monthly subscription of 2000 KSH (due on the 5th of each month) to keep your profile visible to customers.
                   </p>
                 </div>
               )}
