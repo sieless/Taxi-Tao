@@ -27,6 +27,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { getAvailableBookings, acceptBooking } from "@/lib/booking-service";
+import { uploadCarPhoto, uploadProfilePhoto } from "@/lib/image-upload";
 import MobileMenu from "@/components/MobileMenu";
 import {
   getTodayEarnings,
@@ -261,46 +262,8 @@ export default function DriverDashboard() {
     }
   };
 
-  const uploadToCloudinary = async (file: File): Promise<string> => {
-    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-    let uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+  // Cloudinary upload function removed
 
-    if (!cloudName || !uploadPreset) {
-      throw new Error("Cloudinary configuration missing");
-    }
-
-    // URL encode the preset name to handle spaces
-    uploadPreset = encodeURIComponent(uploadPreset);
-
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", uploadPreset);
-    formData.append("folder", `drivers/${driver?.id}`);
-
-    try {
-      const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        console.error("Cloudinary error:", data);
-        throw new Error(
-          data.error?.message || "Failed to upload to Cloudinary"
-        );
-      }
-
-      return data.secure_url;
-    } catch (error) {
-      console.error("Upload error:", error);
-      throw error;
-    }
-  };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -313,11 +276,12 @@ export default function DriverDashboard() {
       if (selectedImage) {
         setUploading(true);
         try {
-          // Upload to Cloudinary
-          photoUrl = await uploadToCloudinary(selectedImage);
-        } catch (uploadError) {
-          console.error("Error uploading to Cloudinary:", uploadError);
-          alert("Failed to upload image. Please try again.");
+          // Upload to Firebase Storage
+          const result = await uploadProfilePhoto(selectedImage);
+          photoUrl = result.url;
+        } catch (uploadError: any) {
+          console.error("Error uploading to Firebase:", uploadError);
+          alert(`Failed to upload image: ${uploadError.message}`);
           setUploading(false);
           setSaving(false);
           return;
@@ -377,40 +341,12 @@ export default function DriverDashboard() {
       if (selectedCarImage) {
         setUploading(true);
         try {
-          // Upload car photo to Cloudinary
-          const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-          const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
-
-          if (!cloudName || !uploadPreset) {
-            throw new Error("Cloudinary configuration missing");
-          }
-
-          const formData = new FormData();
-          formData.append("file", selectedCarImage);
-          formData.append("upload_preset", encodeURIComponent(uploadPreset));
-          formData.append("folder", `vehicles/${driver.id}`);
-
-          const response = await fetch(
-            `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-            {
-              method: "POST",
-              body: formData,
-            }
-          );
-
-          const data = await response.json();
-
-          if (!response.ok) {
-            console.error("Cloudinary error:", data);
-            throw new Error(
-              data.error?.message || "Failed to upload car photo"
-            );
-          }
-
-          carPhotoUrl = data.secure_url;
-        } catch (uploadError) {
+          // Upload car photo to Firebase Storage
+          const result = await uploadCarPhoto(selectedCarImage);
+          carPhotoUrl = result.url;
+        } catch (uploadError: any) {
           console.error("Error uploading car photo:", uploadError);
-          alert("Failed to upload car photo. Please try again.");
+          alert(`Failed to upload car photo: ${uploadError.message}`);
           setUploading(false);
           setSaving(false);
           return;

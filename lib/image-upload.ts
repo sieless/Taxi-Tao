@@ -3,8 +3,9 @@
  * Handles uploading driver profile photos and car images
  */
 
-const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`;
-const CLOUDINARY_UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'taxi_photos';
+// Firebase Storage implementation
+// const CLOUDINARY_UPLOAD_URL = ... (removed)
+// const CLOUDINARY_UPLOAD_PRESET = ... (removed)
 
 export interface UploadResult {
   url: string;
@@ -81,45 +82,43 @@ export async function cropImageToSquare(file: File): Promise<File> {
   });
 }
 
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "./firebase";
+
 /**
- * Uploads an image to Cloudinary
+ * Uploads an image to Firebase Storage
  * @param file - The image file to upload
- * @param folder - Optional folder name in Cloudinary
+ * @param folder - Optional folder name in Storage
  * @returns Upload result with URL
  */
 export async function uploadImage(
   file: File,
-  folder?: string
+  folder: string = "uploads"
 ): Promise<UploadResult> {
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-  
-  if (folder) {
-    formData.append('folder', folder);
-  }
-
   try {
-    const response = await fetch(CLOUDINARY_UPLOAD_URL, {
-      method: 'POST',
-      body: formData,
-    });
-
-    if (!response.ok) {
-      throw new Error(`Upload failed: ${response.statusText}`);
-    }
-
-    const data = await response.json();
+    // Create a unique filename
+    const timestamp = Date.now();
+    const uniqueName = `${timestamp}-${file.name.replace(/[^a-zA-Z0-9.]/g, "_")}`;
+    const storagePath = `${folder}/${uniqueName}`;
+    
+    // Create a reference
+    const storageRef = ref(storage, storagePath);
+    
+    // Upload the file
+    const snapshot = await uploadBytes(storageRef, file);
+    
+    // Get the download URL
+    const downloadURL = await getDownloadURL(snapshot.ref);
 
     return {
-      url: data.secure_url,
-      publicId: data.public_id,
-      width: data.width,
-      height: data.height,
+      url: downloadURL,
+      publicId: storagePath,
+      width: 0, // Not available directly from Firebase Storage without extra logic
+      height: 0,
     };
-  } catch (error) {
-    console.error('Error uploading image:', error);
-    throw new Error('Failed to upload image. Please try again.');
+  } catch (error: any) {
+    console.error("Error uploading image:", error);
+    throw new Error(`Failed to upload image: ${error.message}`);
   }
 }
 
