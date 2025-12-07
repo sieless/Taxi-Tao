@@ -1,6 +1,6 @@
 // lib/email-service.ts
-// Sends emails via Resend API for custom domain support
-// Emails are sent from noreply@taxitao.co.ke
+// Sends emails via our API route (which calls Resend server-side)
+// This avoids CORS issues
 
 import { getEmailTemplate } from './email-templates';
 
@@ -19,40 +19,27 @@ interface EmailMetadata {
   customMessage?: string;
 }
 
-const RESEND_API_KEY = process.env.NEXT_PUBLIC_RESEND_API_KEY;
-
 /**
- * Send an email using Resend API
- * Sends from noreply@taxitao.co.ke
+ * Send an email via our API route
+ * The API route calls Resend server-side to avoid CORS
  */
 export async function sendEmail(
   to: string,
   subject: string,
   html: string
 ): Promise<boolean> {
-  if (!RESEND_API_KEY) {
-    console.error('Resend API key not configured');
-    return false;
-  }
-
   try {
-    const response = await fetch('https://api.resend.com/emails', {
+    const response = await fetch('/api/send-email', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        from: 'TaxiTao <noreply@taxitao.co.ke>',
-        to,
-        subject,
-        html,
-      }),
+      body: JSON.stringify({ to, subject, html }),
     });
 
     if (!response.ok) {
       const error = await response.json();
-      console.error('Resend API error:', error);
+      console.error('Email API error:', error);
       return false;
     }
 

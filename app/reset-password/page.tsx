@@ -2,14 +2,124 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { confirmPasswordReset, verifyPasswordResetCode } from "firebase/auth";
+import { confirmPasswordReset, verifyPasswordResetCode, applyActionCode } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { Lock, Eye, EyeOff, CheckCircle, AlertTriangle, Loader2 } from "lucide-react";
+import { Lock, Eye, EyeOff, CheckCircle, AlertTriangle, Loader2, Mail } from "lucide-react";
 import Link from "next/link";
 import Logo from "@/components/Logo";
 
-function ResetPasswordForm() {
+function AuthActionHandler() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  
+  const mode = searchParams.get("mode");
+  const oobCode = searchParams.get("oobCode");
+
+  // Render based on mode
+  if (mode === "verifyEmail") {
+    return <EmailVerification oobCode={oobCode} />;
+  } else if (mode === "resetPassword") {
+    return <ResetPasswordForm oobCode={oobCode} />;
+  } else {
+    // Default to password reset for backwards compatibility
+    return <ResetPasswordForm oobCode={oobCode} />;
+  }
+}
+
+// Email Verification Component
+function EmailVerification({ oobCode }: { oobCode: string | null }) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function verifyEmail() {
+      if (!oobCode) {
+        setError("Invalid or missing verification code.");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        await applyActionCode(auth, oobCode);
+        setSuccess(true);
+        setLoading(false);
+        
+        // Redirect to login after 3 seconds
+        setTimeout(() => {
+          router.push("/login");
+        }, 3000);
+      } catch (err: any) {
+        console.error("Error verifying email:", err);
+        if (err.code === "auth/expired-action-code") {
+          setError("This verification link has expired. Please request a new one.");
+        } else if (err.code === "auth/invalid-action-code") {
+          setError("This verification link is invalid or has already been used.");
+        } else {
+          setError("Unable to verify email. Please try again.");
+        }
+        setLoading(false);
+      }
+    }
+
+    verifyEmail();
+  }, [oobCode, router]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-green-600 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Verifying your email...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (success) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-white flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle className="w-8 h-8 text-green-600" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Email Verified!</h1>
+          <p className="text-gray-600 mb-6">
+            Your email has been successfully verified. You will be redirected to login shortly.
+          </p>
+          <Link
+            href="/login"
+            className="inline-block bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
+          >
+            Go to Login
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-white flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
+        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <AlertTriangle className="w-8 h-8 text-red-600" />
+        </div>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Verification Failed</h1>
+        <p className="text-gray-600 mb-6">{error}</p>
+        <Link
+          href="/login"
+          className="inline-block bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
+        >
+          Go to Login
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+// Password Reset Component
+function ResetPasswordForm({ oobCode }: { oobCode: string | null }) {
   const router = useRouter();
   
   const [password, setPassword] = useState("");
@@ -21,8 +131,6 @@ function ResetPasswordForm() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [email, setEmail] = useState("");
-
-  const oobCode = searchParams.get("oobCode");
 
   useEffect(() => {
     async function verifyCode() {
@@ -259,7 +367,7 @@ export default function ResetPasswordPage() {
         <Loader2 className="w-12 h-12 text-green-600 animate-spin" />
       </div>
     }>
-      <ResetPasswordForm />
+      <AuthActionHandler />
     </Suspense>
   );
 }
