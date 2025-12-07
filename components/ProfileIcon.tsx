@@ -120,7 +120,7 @@ export default function ProfileIcon() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute right-0 mt-2 w-[90vw] sm:w-80 max-w-80 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
           {/* Header Section */}
           <div className="bg-gradient-to-br from-green-500 to-green-700 p-4 text-white">
             <div className="flex items-center gap-3">

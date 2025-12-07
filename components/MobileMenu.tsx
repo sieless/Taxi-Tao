@@ -41,7 +41,7 @@ export default function MobileMenu({
       />
 
       {/* Drawer Panel */}
-      <div className="fixed top-0 right-0 bottom-0 w-80 bg-white shadow-2xl z-[80] flex flex-col animate-in slide-in-from-right duration-300">
+      <div className="fixed top-0 right-0 bottom-0 w-[85vw] max-w-80 bg-white shadow-2xl z-[80] flex flex-col animate-in slide-in-from-right duration-300">
         
         {/* Header / Profile Section */}
         <div className="p-6 bg-gray-50 border-b border-gray-100">
