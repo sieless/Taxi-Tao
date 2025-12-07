@@ -438,16 +438,7 @@ export default function DriverDashboard() {
     <div className="min-h-screen bg-gray-50">
       {/* Top Navbar - LOCKED (Mobile & Desktop) */}
       <div
-        className="bg-white border border-gray-200 fixed z-40 shadow-lg h-16 rounded-xl max-w-7xl w-[calc(100%-2rem)] left-1/2 -translate-x-1/2 top-4 md:left-[118px] md:top-[88px] md:translate-x-0"
-        style={
-          isMobile
-            ? {
-                left: "242px",
-                top: "73px",
-                transform: "none",
-              }
-            : {}
-        }
+        className="bg-white border border-gray-200 fixed z-40 shadow-lg h-16 rounded-xl w-[calc(100%-2rem)] left-1/2 -translate-x-1/2 top-4 md:max-w-7xl md:left-[118px] md:top-[88px] md:translate-x-0"
       >
         <div className="px-4 h-full flex items-center justify-between">
           <div className="flex items-center gap-3">
