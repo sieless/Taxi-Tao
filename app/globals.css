@@ -26,10 +26,19 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+
   /* Prevent horizontal overflow on mobile */
   overflow-x: hidden;
   width: 100%;
   max-width: 100vw;
+
   /* Prevent elastic bounce/overscroll on mobile */
   overscroll-behavior: none;
+}
+
+/* Global utility to ensure images don't overflow */
+img, video {
+  max-width: 100%;
+  height: auto;
+  display: block;
 }

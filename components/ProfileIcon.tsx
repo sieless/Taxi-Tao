@@ -1,11 +1,12 @@
+// ProfileIcon.tsx
 "use client";
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { 
-  User as UserIcon, 
-  LogOut, 
-  UserCircle, 
+import {
+  User as UserIcon,
+  LogOut,
+  UserCircle,
   LayoutDashboard,
   Calendar,
   Bell,
@@ -13,7 +14,7 @@ import {
   HelpCircle,
   MapPin,
   Wallet,
-  Users
+  Users,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
@@ -40,6 +41,17 @@ export default function ProfileIcon() {
     if (isOpen) {
       document.addEventListener("pointerdown", handleClickOutside);
       return () => document.removeEventListener("pointerdown", handleClickOutside);
+    }
+  }, [isOpen]);
+
+  // Close with Escape
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setIsOpen(false);
+    }
+    if (isOpen) {
+      document.addEventListener("keydown", onKey);
+      return () => document.removeEventListener("keydown", onKey);
     }
   }, [isOpen]);
 
@@ -109,6 +121,8 @@ export default function ProfileIcon() {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 p-2 rounded-full hover:bg-gray-100 transition"
         title="Profile"
+        aria-haspopup="true"
+        aria-expanded={isOpen}
       >
         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center text-white font-bold shadow-md overflow-hidden">
           {user.photoURL ? (
@@ -120,7 +134,11 @@ export default function ProfileIcon() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-[90vw] sm:w-80 max-w-80 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+        <div
+          className="absolute right-0 mt-2 w-[90vw] sm:w-80 max-w-80 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+          role="menu"
+          aria-label="Profile menu"
+        >
           {/* Header Section */}
           <div className="bg-gradient-to-br from-green-500 to-green-700 p-4 text-white">
             <div className="flex items-center gap-3">
@@ -146,12 +164,13 @@ export default function ProfileIcon() {
             <div className="px-3 py-2">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Quick Actions</p>
             </div>
-            
+
             {navigationItems.map((item, index) => (
               <button
                 key={index}
                 onClick={() => navigate(item.path)}
                 className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-gray-50 transition text-left group"
+                role="menuitem"
               >
                 <div className="w-9 h-9 rounded-lg bg-gray-100 group-hover:bg-green-50 flex items-center justify-center transition">
                   <item.icon className="w-4 h-4 text-gray-600 group-hover:text-green-600 transition" />
@@ -168,6 +187,7 @@ export default function ProfileIcon() {
             <button
               onClick={handleLogout}
               className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-red-50 transition text-left text-red-600 rounded-lg group"
+              role="menuitem"
             >
               <div className="w-9 h-9 rounded-lg bg-red-50 group-hover:bg-red-100 flex items-center justify-center transition">
                 <LogOut className="w-4 h-4" />

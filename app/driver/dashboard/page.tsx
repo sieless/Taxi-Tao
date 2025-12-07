@@ -435,10 +435,14 @@ export default function DriverDashboard() {
   const mainVehicle = driver.vehicles?.[0];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       {/* Top Navbar - LOCKED (Mobile & Desktop) */}
       <div
-        className="bg-white border border-gray-200 fixed z-40 shadow-lg h-16 rounded-xl w-[calc(100%-2rem)] left-1/2 -translate-x-1/2 top-4 md:max-w-7xl md:left-[118px] md:top-[88px] md:translate-x-0"
+        className="
+          bg-white border border-gray-200 fixed z-40 shadow-lg h-16 rounded-xl
+          inset-x-4 top-4
+          md:left-[118px] md:right-4 md:top-[88px] md:max-w-7xl md:rounded-xl
+        "
       >
         <div className="px-4 h-full flex items-center justify-between">
           <div className="flex items-center gap-3">

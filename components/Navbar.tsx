@@ -1,3 +1,4 @@
+// Navbar.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -27,15 +28,15 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close mobile menu when clicking outside
+  // Close mobile menu when toggled: toggle body scroll via class for safety
   useEffect(() => {
     if (isMenuOpen) {
-      document.body.style.overflow = "hidden";
+      document.body.classList.add("overflow-hidden");
     } else {
-      document.body.style.overflow = "unset";
+      document.body.classList.remove("overflow-hidden");
     }
     return () => {
-      document.body.style.overflow = "unset";
+      document.body.classList.remove("overflow-hidden");
     };
   }, [isMenuOpen]);
 
@@ -49,17 +50,11 @@ export default function Navbar() {
   return (
     <nav
       className={`sticky top-0 z-50 transition-all duration-300 ${
-        isScrolled
-          ? "bg-white/95 backdrop-blur-md shadow-md"
-          : "bg-white shadow-sm"
+        isScrolled ? "bg-white/95 backdrop-blur-md shadow-md" : "bg-white shadow-sm"
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div
-          className={`flex justify-between items-center transition-all duration-300 ${
-            isScrolled ? "py-2" : "py-3"
-          }`}
-        >
+        <div className={`flex justify-between items-center transition-all duration-300 ${isScrolled ? "py-2" : "py-3"}`}>
           {/* Logo */}
           <div className="flex items-center gap-3 group">
             <Logo variant="icon-only" size="md" clickable={true} />
@@ -81,7 +76,6 @@ export default function Navbar() {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-4 flex-shrink-0">
-            {/* Book Now Button */}
             <Link
               href="/#book"
               className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg font-medium transition-all shadow-md hover:shadow-lg whitespace-nowrap"
@@ -89,11 +83,9 @@ export default function Navbar() {
               Book Now
             </Link>
 
-            {/* Auth Section */}
             {user ? (
               <div className="flex items-center gap-3">
-                {/* Notification Bell - Customers Only */}
-                {userProfile?.role === 'customer' && (
+                {userProfile?.role === "customer" && (
                   <div className="relative">
                     <button
                       onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
@@ -103,7 +95,7 @@ export default function Navbar() {
                       <Bell className="w-5 h-5 text-gray-700" />
                       {unreadCount > 0 && (
                         <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                          {unreadCount > 9 ? '9+' : unreadCount}
+                          {unreadCount > 9 ? "9+" : unreadCount}
                         </span>
                       )}
                     </button>
@@ -139,40 +131,28 @@ export default function Navbar() {
             className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Toggle menu"
+            aria-expanded={isMenuOpen}
           >
-            {isMenuOpen ? (
-              <X className="h-6 w-6 text-gray-700" />
-            ) : (
-              <Menu className="h-6 w-6 text-gray-700" />
-            )}
+            {isMenuOpen ? <X className="h-6 w-6 text-gray-700" /> : <Menu className="h-6 w-6 text-gray-700" />}
           </button>
         </div>
       </div>
 
       {/* Mobile Menu Overlay */}
-      {isMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
-          onClick={() => setIsMenuOpen(false)}
-        />
-      )}
+      {isMenuOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setIsMenuOpen(false)} />}
 
       {/* Mobile Menu Slide-in */}
       <div
-        className={`fixed top-0 right-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out md:hidden ${
+        className={`fixed top-0 right-0 h-full w-[85vw] max-w-80 bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out md:hidden ${
           isMenuOpen ? "translate-x-0" : "translate-x-full"
         }`}
-        style={{ visibility: isMenuOpen ? 'visible' : 'hidden', transitionProperty: 'transform, visibility', transitionDuration: '300ms, 0s', transitionDelay: '0s, 300ms' }}
+        style={{ visibility: isMenuOpen ? "visible" : "hidden", transitionProperty: "transform, visibility", transitionDuration: "300ms, 0s", transitionDelay: "0s, 300ms" }}
       >
         <div className="flex flex-col h-full">
           {/* Mobile Menu Header */}
           <div className="flex justify-between items-center p-4 border-b border-gray-200">
             <span className="text-lg font-bold text-gray-900">Menu</span>
-            <button
-              onClick={() => setIsMenuOpen(false)}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              aria-label="Close menu"
-            >
+            <button onClick={() => setIsMenuOpen(false)} className="p-2 rounded-lg hover:bg-gray-100 transition-colors" aria-label="Close menu">
               <X className="h-6 w-6 text-gray-700" />
             </button>
           </div>
@@ -190,21 +170,11 @@ export default function Navbar() {
                 </div>
               </div>
               <Link
-                href={
-                  userProfile.role === "admin"
-                    ? "/admin/panel"
-                    : userProfile.role === "driver"
-                    ? "/driver/dashboard"
-                    : "/customer/profile"
-                }
+                href={userProfile.role === "admin" ? "/admin/panel" : userProfile.role === "driver" ? "/driver/dashboard" : "/customer/profile"}
                 onClick={() => setIsMenuOpen(false)}
                 className="mt-3 block text-center bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg font-medium transition-colors"
               >
-                {userProfile.role === "admin"
-                  ? "Admin Panel"
-                  : userProfile.role === "driver"
-                  ? "Dashboard"
-                  : "My Profile"}
+                {userProfile.role === "admin" ? "Admin Panel" : userProfile.role === "driver" ? "Dashboard" : "My Profile"}
               </Link>
             </div>
           )}
@@ -215,76 +185,39 @@ export default function Navbar() {
               {navLinks.map((link) => {
                 const Icon = link.icon;
                 return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors group"
-                  >
+                  <Link key={link.href} href={link.href} onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors group">
                     <Icon className="w-5 h-5 text-gray-500 group-hover:text-green-600 transition-colors" />
-                    <span className="font-medium text-gray-700 group-hover:text-green-600 transition-colors">
-                      {link.label}
-                    </span>
+                    <span className="font-medium text-gray-700 group-hover:text-green-600 transition-colors">{link.label}</span>
                   </Link>
                 );
               })}
+            </div>
+
+            {user && userProfile?.role === "customer" && (
+              <div className="px-4 py-2 border-t border-gray-100">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">My Account</p>
+                <Link href="/customer/profile" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors group">
+                  <User className="w-5 h-5 text-gray-500 group-hover:text-green-600 transition-colors" />
+                  <span className="font-medium text-gray-700 group-hover:text-green-600 transition-colors">My Profile</span>
+                </Link>
+                <Link href="/customer/bookings" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors group">
+                  <Briefcase className="w-5 h-5 text-gray-500 group-hover:text-green-600 transition-colors" />
+                  <span className="font-medium text-gray-700 group-hover:text-green-600 transition-colors">My Bookings</span>
+                </Link>
+                <Link href="/customer/history" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors group">
+                  <History className="w-5 h-5 text-gray-500 group-hover:text-green-600 transition-colors" />
+                  <span className="font-medium text-gray-700 group-hover:text-green-600 transition-colors">Driver History</span>
+                </Link>
               </div>
-              
-              {/* Customer Links */}
-              {user && userProfile?.role === 'customer' && (
-                <div className="px-4 py-2 border-t border-gray-100">
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">My Account</p>
-                  <Link
-                    href="/customer/profile"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors group"
-                  >
-                    <User className="w-5 h-5 text-gray-500 group-hover:text-green-600 transition-colors" />
-                    <span className="font-medium text-gray-700 group-hover:text-green-600 transition-colors">
-                      My Profile
-                    </span>
-                  </Link>
-                  <Link
-                    href="/customer/bookings"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors group"
-                  >
-                    <Briefcase className="w-5 h-5 text-gray-500 group-hover:text-green-600 transition-colors" />
-                    <span className="font-medium text-gray-700 group-hover:text-green-600 transition-colors">
-                      My Bookings
-                    </span>
-                  </Link>
-                  <Link
-                    href="/customer/history"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors group"
-                  >
-                    <History className="w-5 h-5 text-gray-500 group-hover:text-green-600 transition-colors" />
-                    <span className="font-medium text-gray-700 group-hover:text-green-600 transition-colors">
-                      Driver History
-                    </span>
-                  </Link>
-                </div>
-              )}
-              
-              {/* Mobile Auth Links (when not logged in) */}
+            )}
+
             {!user && (
               <div className="mt-4 px-4 pt-4 border-t border-gray-200 space-y-2">
-                <Link
-                  href="/signup"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors group"
-                >
+                <Link href="/signup" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors group">
                   <User className="w-5 h-5 text-gray-500 group-hover:text-green-600 transition-colors" />
-                  <span className="font-medium text-gray-700 group-hover:text-green-600 transition-colors">
-                    Sign Up
-                  </span>
+                  <span className="font-medium text-gray-700 group-hover:text-green-600 transition-colors">Sign Up</span>
                 </Link>
-                <Link
-                  href="/login"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center justify-center bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-medium transition-colors shadow-md"
-                >
+                <Link href="/login" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-center bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-medium transition-colors shadow-md">
                   Login
                 </Link>
               </div>
@@ -293,17 +226,10 @@ export default function Navbar() {
 
           {/* Mobile Menu Footer */}
           <div className="p-4 border-t border-gray-200 space-y-3">
-            <Link
-              href="/#book"
-              onClick={() => setIsMenuOpen(false)}
-              className="block text-center bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-medium transition-colors shadow-md"
-            >
+            <Link href="/#book" onClick={() => setIsMenuOpen(false)} className="block text-center bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-medium transition-colors shadow-md">
               Book Now
             </Link>
-            <a
-              href="tel:+254708674665"
-              className="flex items-center justify-center gap-2 text-gray-600 hover:text-green-600 transition-colors"
-            >
+            <a href="tel:+254708674665" className="flex items-center justify-center gap-2 text-gray-600 hover:text-green-600 transition-colors">
               <Phone className="w-4 h-4" />
               <span className="font-medium">+254 708 674 665</span>
             </a>
