@@ -1,9 +1,7 @@
 // lib/email-service.ts
-// Sends emails by writing to Firestore 'mail' collection
-// Firebase Trigger Email extension automatically sends emails from this collection
+// Sends emails via Resend API for custom domain support
+// Emails are sent from noreply@taxitao.co.ke
 
-import { collection, addDoc, Timestamp } from 'firebase/firestore';
-import { db } from './firebase';
 import { getEmailTemplate } from './email-templates';
 
 export type EmailType = 
@@ -21,28 +19,47 @@ interface EmailMetadata {
   customMessage?: string;
 }
 
+const RESEND_API_KEY = process.env.NEXT_PUBLIC_RESEND_API_KEY;
+
 /**
- * Send an email by writing to the 'mail' collection
- * Firebase extension will automatically pick it up and send
+ * Send an email using Resend API
+ * Sends from noreply@taxitao.co.ke
  */
 export async function sendEmail(
   to: string,
   subject: string,
   html: string
 ): Promise<boolean> {
+  if (!RESEND_API_KEY) {
+    console.error('Resend API key not configured');
+    return false;
+  }
+
   try {
-    await addDoc(collection(db, 'mail'), {
-      to,
-      message: {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'TaxiTao <noreply@taxitao.co.ke>',
+        to,
         subject,
         html,
-      },
-      createdAt: Timestamp.now(),
+      }),
     });
-    console.log(`Email queued for: ${to}`);
+
+    if (!response.ok) {
+      const error = await response.json();
+      console.error('Resend API error:', error);
+      return false;
+    }
+
+    console.log(`Email sent successfully to: ${to}`);
     return true;
   } catch (error) {
-    console.error('Error queuing email:', error);
+    console.error('Error sending email:', error);
     return false;
   }
 }
