@@ -135,7 +135,7 @@ export default function ProfileIcon() {
 
       {isOpen && (
         <div
-          className="absolute right-0 mt-2 w-[90vw] sm:w-80 max-w-80 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+          className="absolute right-0 mt-2 w-[90vw] sm:w-72 max-w-72 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
           role="menu"
           aria-label="Profile menu"
         >

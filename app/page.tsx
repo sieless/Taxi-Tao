@@ -205,25 +205,21 @@ export default function Home() {
       {/* Hero Section */}
       <section
         id="home"
-        className="relative text-white py-20 md:py-32 min-h-[600px] flex items-center"
+        className="relative w-full h-[70vh] md:h-[60vh] bg-cover bg-center bg-no-repeat flex items-center"
+        style={{
+          backgroundImage: `url('https://images.unsplash.com/photo-1502224562085-639556652f33?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80')`,
+        }}
       >
-        <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-black/70 z-10"></div>
-          <img
-            src="https://images.unsplash.com/photo-1502224562085-639556652f33?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
-            alt="Taxi Background"
-            className="w-full h-full object-cover"
-          />
-        </div>
-        <div className="relative z-20 max-w-7xl mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 animate-fade-in delay-200">
+        <div className="absolute inset-0 bg-black/40 z-0" />
+        <div className="relative z-10 max-w-7xl mx-auto px-4 text-center text-white flex flex-col items-center justify-center h-full">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 animate-fade-in delay-200 will-change-transform will-change-opacity">
             Quick & Reliable Taxi Services
           </h1>
-          <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto animate-fade-in delay-200">
+          <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto animate-fade-in delay-200 will-change-transform will-change-opacity">
             Experience seamless transportation with taxitao's professional
             drivers and well-maintained vehicles in Machakos, Kitui and Makueni.
           </p>
-          <div className="flex flex-col md:flex-row justify-center gap-4 animate-fade-in delay-400">
+          <div className="flex flex-col md:flex-row justify-center gap-4 animate-fade-in delay-400 will-change-transform will-change-opacity">
             <Link
               href="/booking"
               className="bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 rounded-full text-lg transition flex items-center justify-center gap-2 animate-pulse"
@@ -237,7 +233,7 @@ export default function Home() {
               <MapPin className="w-5 h-5" /> Find Drivers
             </Link>
           </div>
-          <div className="mt-12 flex flex-wrap justify-center gap-4 animate-fade-in delay-600">
+          <div className="relative z-10 flex flex-wrap items-center justify-center gap-6 md:gap-10 px-4 py-6 max-w-5xl mx-auto mt-8 animate-fade-in delay-600 will-change-transform will-change-opacity">
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20 text-center w-32">
               <Clock className="w-8 h-8 mb-2 mx-auto text-green-300" />
               <p className="font-semibold text-sm">24/7 Service</p>
@@ -259,46 +255,44 @@ export default function Home() {
       </section>
 
       {/* Booking Section */}
-      <section id="booking" className="bg-white py-16">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="max-w-4xl mx-auto bg-green-50 rounded-xl shadow-lg overflow-hidden">
-            <div className="p-6 md:p-8">
-              <h2 className="text-3xl font-bold text-green-700 mb-2">
-                Book Your Taxi Now
-              </h2>
-              <p className="text-gray-600 mb-6">
-                Fill in the details below to request a taxi
-              </p>
-              <Suspense
-                fallback={
-                  <div className="p-4 text-center text-gray-500">
-                    Loading booking form...
-                  </div>
-                }
+      <div className="relative z-20 -mt-20 md:-mt-28 px-4 pb-16">
+        <div className="max-w-5xl mx-auto bg-green-50 rounded-xl shadow-lg overflow-hidden">
+          <div className="p-6 md:p-8">
+            <h2 className="text-3xl font-bold text-green-700 mb-2">
+              Book Your Taxi Now
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Fill in the details below to request a taxi
+            </p>
+            <Suspense
+              fallback={
+                <div className="p-4 text-center text-gray-500">
+                  Loading booking form...
+                </div>
+              }
+            >
+              <BookingForm />
+            </Suspense>
+          </div>
+          <div className="bg-green-100 border-t border-green-200 p-4 text-center">
+            <p className="text-green-700">
+              Call for enquiries:{" "}
+              <a
+                href="tel:+254708674665"
+                className="font-semibold hover:underline"
               >
-                <BookingForm />
-              </Suspense>
-            </div>
-            <div className="bg-green-100 border-t border-green-200 p-4 text-center">
-              <p className="text-green-700">
-                Call for enquiries:{" "}
-                <a
-                  href="tel:+254708674665"
-                  className="font-semibold hover:underline"
-                >
-                  +254 708 674 665
-                </a>
-              </p>
-            </div>
+                +254 708 674 665
+              </a>
+            </p>
           </div>
         </div>
-      </section>
+      </div>
 
       {/* Available Drivers Section - Real-time Updates (Hidden from logged-in drivers) */}
       {showAvailableDrivers && <AvailableDrivers />}
 
       {/* Services Section */}
-      <section id="services" className="py-16 bg-white">
+      <section id="services" className="py-6 md:py-12 bg-white">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-12">
             <span className="inline-block bg-green-100 text-green-700 px-4 py-1 rounded-full text-sm font-semibold mb-3">
@@ -313,9 +307,9 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-4 max-w-6xl mx-auto">
             {/* Standard Taxi Service */}
-            <div className="bg-white rounded-xl shadow-md overflow-hidden transition duration-300 border border-gray-100 hover:border-green-200 flex flex-col">
+            <div className="bg-white rounded-xl shadow-md overflow-hidden transition duration-300 border border-gray-100 hover:border-green-200 flex flex-col hover:scale-105 active:scale-95">
               <div className="h-48 bg-green-50 relative">
                 <Image
                   src="/images/service-standard.png"
@@ -348,7 +342,7 @@ export default function Home() {
             </div>
 
             {/* Executive Ride Service */}
-            <div className="bg-white rounded-xl shadow-md overflow-hidden transition duration-300 border border-gray-100 hover:border-green-200 flex flex-col">
+            <div className="bg-white rounded-xl shadow-md overflow-hidden transition duration-300 border border-gray-100 hover:border-green-200 flex flex-col hover:scale-105 active:scale-95">
               <div className="h-48 bg-green-50 relative">
                 <Image
                   src="/images/service-executive.png"
@@ -381,7 +375,7 @@ export default function Home() {
             </div>
 
             {/* Group Transport Service */}
-            <div className="bg-white rounded-xl shadow-md overflow-hidden transition duration-300 border border-gray-100 hover:border-green-200 flex flex-col">
+            <div className="bg-white rounded-xl shadow-md overflow-hidden transition duration-300 border border-gray-100 hover:border-green-200 flex flex-col hover:scale-105 active:scale-95">
               <div className="h-48 bg-green-50 relative">
                 <Image
                   src="/images/service-group.png"
@@ -419,7 +413,7 @@ export default function Home() {
       </section>
 
       {/* Call Center Section */}
-      <section className="bg-green-600 text-white py-16">
+      <section className="w-full px-4 py-10 bg-green-600 text-white text-center">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <div className="max-w-4xl mx-auto">
             <div className="inline-block bg-white text-green-600 rounded-full p-4 mb-6 shadow-lg">
@@ -484,7 +478,7 @@ export default function Home() {
       </section>
 
       {/* Testimonials Section */}
-      <section id="testimonials" className="py-16 bg-gray-50">
+      <section id="testimonials" className="py-6 md:py-12 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-12">
             <span className="inline-block bg-green-100 text-green-700 px-4 py-1 rounded-full text-sm font-semibold mb-3">
@@ -550,7 +544,7 @@ export default function Home() {
       </section>
 
       {/* About Section */}
-      <section id="about" className="py-16 bg-white">
+      <section id="about" className="py-6 md:py-12 bg-white">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex flex-col lg:flex-row items-center gap-12">
             <div className="lg:w-1/2">
@@ -616,7 +610,7 @@ export default function Home() {
       </section>
 
       {/* Contact Section */}
-      <section id="contact" className="py-16 bg-gray-50">
+      <section id="contact" className="py-6 md:py-12 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-12">
             <span className="inline-block bg-green-100 text-green-700 px-4 py-1 rounded-full text-sm font-semibold mb-3">
