@@ -46,7 +46,7 @@ export default function MobileMenu({
       <div
         className="
           fixed top-0 right-0 bottom-0
-          w-[85vw] max-w-80
+          w-[85vw] max-w-[350px]
           bg-white shadow-2xl z-[80] flex flex-col
           animate-in slide-in-from-right duration-300
           overflow-y-auto

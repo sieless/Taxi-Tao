@@ -47,9 +47,14 @@ export default function Navbar() {
     { href: "/#contact", label: "Contact", icon: Mail },
   ];
 
+  // Hide navbar on driver dashboard pages
+  if (pathname?.startsWith("/driver") || pathname?.startsWith("/d/")) {
+    return null;
+  }
+
   return (
     <nav
-      className={`sticky top-0 z-50 transition-all duration-300 ${
+      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
         isScrolled ? "bg-white/95 backdrop-blur-md shadow-md" : "bg-white shadow-sm"
       }`}
     >

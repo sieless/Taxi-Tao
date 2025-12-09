@@ -36,6 +36,19 @@ body {
   overscroll-behavior: none;
 }
 
+/* Prevent background images from stretching */
+.bg-cover {
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+}
+
+/* Prevent fixed elements from causing horizontal scrolling */
+* {
+  max-width: 100vw;
+  box-sizing: border-box;
+}
+
 /* Global utility to ensure images don't overflow */
 img, video {
   max-width: 100%;

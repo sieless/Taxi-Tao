@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
@@ -68,7 +68,9 @@ export default function DriverDashboard() {
   const [carPreviewUrl, setCarPreviewUrl] = useState<string | null>(null);
   const [showPaymentDetails, setShowPaymentDetails] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isPricingOpen, setIsPricingOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
 
   // Header position - LOCKED at your chosen position
   const [editForm, setEditForm] = useState({
@@ -106,6 +108,19 @@ export default function DriverDashboard() {
   const [newRequestsCount, setNewRequestsCount] = useState(0);
   const [activeTripsCount, setActiveTripsCount] = useState(0);
   const [statsLoading, setStatsLoading] = useState(true);
+
+  // Close profile menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setIsProfileMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -491,32 +506,98 @@ export default function DriverDashboard() {
               </button>
             </div>
             <NotificationBell driverId={user?.uid || ""} />
-            <div className="flex items-center gap-3 border-l pl-4 ml-4">
-              <div className="text-right">
-                <p className="text-sm font-bold text-gray-800">{driver.name}</p>
-                <p className="text-xs text-gray-500">{driver.phone}</p>
-              </div>
-              <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center border-2 border-green-500 overflow-hidden relative group">
-                {driver.profilePhotoUrl ? (
-                  <img
-                    src={driver.profilePhotoUrl}
-                    alt={driver.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <User className="w-6 h-6 text-green-700" />
-                )}
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <Camera className="w-4 h-4 text-white" />
-                </button>
-              </div>
+            
+            {/* Profile Dropdown */}
+            <div className="relative ml-4 border-l pl-4" ref={profileMenuRef}>
+              <button 
+                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                className="flex items-center gap-3 hover:bg-gray-50 p-2 rounded-lg transition-colors"
+              >
+                <div className="text-right hidden lg:block">
+                  <p className="text-sm font-bold text-gray-800">{driver.name}</p>
+                  <p className="text-xs text-gray-500">{driver.phone}</p>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center border-2 border-green-500 overflow-hidden">
+                  {driver.profilePhotoUrl ? (
+                    <img
+                      src={driver.profilePhotoUrl}
+                      alt={driver.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <User className="w-6 h-6 text-green-700" />
+                  )}
+                </div>
+                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {/* Dropdown Menu */}
+              {isProfileMenuOpen && (
+                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="p-3 border-b border-gray-100 lg:hidden">
+                    <p className="font-bold text-gray-800">{driver.name}</p>
+                    <p className="text-xs text-gray-500">{driver.phone}</p>
+                  </div>
+                  
+                  <div className="p-2">
+                    <button
+                      onClick={() => {
+                        setIsEditing(true);
+                        setIsProfileMenuOpen(false);
+                      }}
+                      className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors text-left"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center text-orange-600">
+                        <User className="w-4 h-4" />
+                      </div>
+                      <span className="text-sm font-medium">Edit Profile</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        router.push("/driver/history");
+                        setIsProfileMenuOpen(false);
+                      }}
+                      className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors text-left"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                        <History className="w-4 h-4" />
+                      </div>
+                      <span className="text-sm font-medium">Ride History</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        router.push("/driver/settings");
+                        setIsProfileMenuOpen(false);
+                      }}
+                      className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors text-left"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
+                        <Settings className="w-4 h-4" />
+                      </div>
+                      <span className="text-sm font-medium">Settings</span>
+                    </button>
+                  </div>
+
+                  <div className="p-2 border-t border-gray-100 bg-gray-50">
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        setIsProfileMenuOpen(false);
+                      }}
+                      className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors text-left"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span className="text-sm font-medium">Sign Out</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-800"
+              className="hidden md:flex items-center gap-2 text-gray-600 hover:text-gray-800"
             >
               <LogOut className="w-5 h-5" />
               <span>Logout</span>
