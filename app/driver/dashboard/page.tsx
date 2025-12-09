@@ -436,21 +436,18 @@ export default function DriverDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
-      {/* Top Navbar - LOCKED (Mobile & Desktop) */}
-      <div
-        className="
-          bg-white border border-gray-200 fixed z-40 shadow-lg h-16 rounded-xl
-          inset-x-4 top-4
-          md:left-[118px] md:right-4 md:top-[88px] md:max-w-7xl md:rounded-xl
-        "
-      >
-        <div className="px-4 h-full flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Logo variant="icon-only" size="md" clickable={true} />
-            <h1 className="text-2xl font-bold text-gray-800">
-              Driver Dashboard
-            </h1>
-          </div>
+      {/* Top Navbar - Aligned with Content */}
+      <div className="fixed top-4 left-0 right-0 z-40 px-4 md:px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-white border border-gray-200 shadow-lg h-16 rounded-xl">
+            <div className="px-4 h-full flex items-center justify-between">
+              {/* Left section - Logo */}
+              <div className="flex items-center gap-3">
+                <Logo variant="icon-only" size="md" clickable={true} />
+                <h1 className="text-lg md:text-2xl font-bold text-gray-800">
+                  Driver Dashboard
+                </h1>
+              </div>
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-4">
@@ -575,8 +572,10 @@ export default function DriverDashboard() {
           </div>
         </div>
       </div>
+      </div>
+      </div>
 
-      <div className="max-w-7xl mx-auto px-4 pt-20 pb-8">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 pt-20 pb-8">
         {/* Verification Warning */}
         {!user?.emailVerified && (
           <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-6 rounded-r-lg shadow-sm">

@@ -205,7 +205,7 @@ export default function Home() {
       {/* Hero Section */}
       <section
         id="home"
-        className="relative text-white py-20 md:py-32 min-h-[600px] flex items-center"
+        className="relative text-white py-20 md:py-32 min-h-[600px] flex items-center overflow-hidden px-4 md:px-6"
       >
         <div className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-black/70 z-10"></div>
@@ -215,7 +215,7 @@ export default function Home() {
             className="w-full h-full object-cover"
           />
         </div>
-        <div className="relative z-20 max-w-7xl mx-auto px-4 text-center">
+        <div className="relative z-20 max-w-7xl mx-auto text-center">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 animate-fade-in delay-200">
             Quick & Reliable Taxi Services
           </h1>
@@ -259,8 +259,8 @@ export default function Home() {
       </section>
 
       {/* Booking Section */}
-      <section id="booking" className="bg-white py-16">
-        <div className="max-w-7xl mx-auto px-4">
+      <section id="booking" className="bg-white py-16 px-4 md:px-6">
+        <div className="max-w-7xl mx-auto">
           <div className="max-w-4xl mx-auto bg-green-50 rounded-xl shadow-lg overflow-hidden">
             <div className="p-6 md:p-8">
               <h2 className="text-3xl font-bold text-green-700 mb-2">
@@ -298,8 +298,8 @@ export default function Home() {
       {showAvailableDrivers && <AvailableDrivers />}
 
       {/* Services Section */}
-      <section id="services" className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4">
+      <section id="services" className="py-16 bg-white px-4 md:px-6">
+        <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <span className="inline-block bg-green-100 text-green-700 px-4 py-1 rounded-full text-sm font-semibold mb-3">
               OUR SERVICES
@@ -419,8 +419,8 @@ export default function Home() {
       </section>
 
       {/* Call Center Section */}
-      <section className="bg-green-600 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 text-center">
+      <section className="bg-green-600 text-white py-16 px-4 md:px-6">
+        <div className="max-w-7xl mx-auto text-center">
           <div className="max-w-4xl mx-auto">
             <div className="inline-block bg-white text-green-600 rounded-full p-4 mb-6 shadow-lg">
               <Headset className="w-10 h-10" />
@@ -484,8 +484,8 @@ export default function Home() {
       </section>
 
       {/* Testimonials Section */}
-      <section id="testimonials" className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4">
+      <section id="testimonials" className="py-16 bg-gray-50 px-4 md:px-6">
+        <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <span className="inline-block bg-green-100 text-green-700 px-4 py-1 rounded-full text-sm font-semibold mb-3">
               TESTIMONIALS
@@ -550,8 +550,8 @@ export default function Home() {
       </section>
 
       {/* About Section */}
-      <section id="about" className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4">
+      <section id="about" className="py-16 bg-white px-4 md:px-6">
+        <div className="max-w-7xl mx-auto">
           <div className="flex flex-col lg:flex-row items-center gap-12">
             <div className="lg:w-1/2">
               {/* Placeholder for About Image */}
@@ -616,8 +616,8 @@ export default function Home() {
       </section>
 
       {/* Contact Section */}
-      <section id="contact" className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4">
+      <section id="contact" className="py-16 bg-gray-50 px-4 md:px-6">
+        <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <span className="inline-block bg-green-100 text-green-700 px-4 py-1 rounded-full text-sm font-semibold mb-3">
               CONTACT US

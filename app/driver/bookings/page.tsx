@@ -71,7 +71,7 @@ export default function DriverBookingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-6 md:px-6 md:py-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">

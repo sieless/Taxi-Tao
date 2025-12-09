@@ -65,7 +65,7 @@ export default function CustomerDashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Map Section */}
-      <div className="bg-white border-b">
+      <div className="bg-white border-b px-4 md:px-6">
         <div className="max-w-7xl mx-auto p-6">
           <div className="bg-gradient-to-br from-green-500 to-green-700 rounded-2xl p-8 text-white">
             <h1 className="text-3xl font-bold mb-2">Welcome Back!</h1>
@@ -82,7 +82,7 @@ export default function CustomerDashboardPage() {
       </div>
 
       {/* Content Section */}
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-6 md:px-6">
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-xl shadow-sm p-6">
