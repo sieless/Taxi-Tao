@@ -64,59 +64,89 @@ export default function CustomerDashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Map Section */}
-      <div className="bg-white border-b px-4 md:px-6">
-        <div className="max-w-7xl mx-auto p-6">
-          <div className="bg-gradient-to-br from-green-500 to-green-700 rounded-2xl p-8 text-white">
-            <h1 className="text-3xl font-bold mb-2">Welcome Back!</h1>
-            <p className="text-green-50 mb-6">Ready for your next ride?</p>
-            
-            {/* Map Placeholder */}
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-12 text-center border-2 border-white/20">
-              <MapPin className="w-16 h-16 mx-auto mb-4 text-white/80" />
-              <p className="text-lg font-medium">Interactive Map</p>
-              <p className="text-sm text-green-50 mt-2">Track your rides in real-time</p>
-            </div>
+      {/* Compact Header Section */}
+      <div className="bg-gradient-to-br from-green-600 to-green-700 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="max-w-3xl">
+            <h1 className="text-3xl md:text-4xl font-bold mb-2">Welcome Back!</h1>
+            <p className="text-green-50 text-lg">Ready for your next ride?</p>
           </div>
         </div>
       </div>
 
       {/* Content Section */}
-      <div className="max-w-7xl mx-auto p-6 md:px-6">
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <p className="text-sm text-gray-600 mb-1">Total Bookings</p>
-            <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-gray-100 rounded-lg">
+                  <Calendar className="w-6 h-6 text-gray-700" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 font-medium">Total Bookings</p>
+                  <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <p className="text-sm text-gray-600 mb-1">Active Rides</p>
-            <p className="text-3xl font-bold text-green-600">{stats.active}</p>
+          
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-green-100 rounded-lg">
+                  <MapPin className="w-6 h-6 text-green-700" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 font-medium">Active Rides</p>
+                  <p className="text-3xl font-bold text-green-600">{stats.active}</p>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <p className="text-sm text-gray-600 mb-1">Completed</p>
-            <p className="text-3xl font-bold text-blue-600">{stats.completed}</p>
+          
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-blue-100 rounded-lg">
+                  <Clock className="w-6 h-6 text-blue-700" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 font-medium">Completed</p>
+                  <p className="text-3xl font-bold text-blue-600">{stats.completed}</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
           <button
             onClick={() => router.push("/customer/book")}
-            className="bg-green-600 hover:bg-green-700 text-white rounded-xl p-8 text-left transition group"
+            className="bg-gradient-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-2xl p-8 text-left transition-all shadow-md hover:shadow-xl group"
           >
-            <PlusCircle className="w-12 h-12 mb-4 group-hover:scale-110 transition" />
+            <div className="flex items-start justify-between mb-4">
+              <div className="p-4 bg-white/10 rounded-xl">
+                <PlusCircle className="w-10 h-10 group-hover:scale-110 transition" />
+              </div>
+            </div>
             <h3 className="text-2xl font-bold mb-2">Book a Ride</h3>
-            <p className="text-green-50">Start a new booking now</p>
+            <p className="text-green-50 text-sm">Schedule your next journey with trusted drivers</p>
           </button>
           
           <button
             onClick={() => router.push("/customer/bookings")}
-            className="bg-white hover:bg-gray-50 border-2 border-gray-200 rounded-xl p-8 text-left transition group"
+            className="bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-green-300 rounded-2xl p-8 text-left transition-all shadow-md hover:shadow-xl group"
           >
-            <Calendar className="w-12 h-12 mb-4 text-green-600 group-hover:scale-110 transition" />
+            <div className="flex items-start justify-between mb-4">
+              <div className="p-4 bg-green-50 rounded-xl">
+                <Calendar className="w-10 h-10 text-green-600 group-hover:scale-110 transition" />
+              </div>
+            </div>
             <h3 className="text-2xl font-bold text-gray-900 mb-2">My Bookings</h3>
-            <p className="text-gray-600">View booking history</p>
+            <p className="text-gray-600 text-sm">View and manage all your ride bookings</p>
           </button>
         </div>
 
