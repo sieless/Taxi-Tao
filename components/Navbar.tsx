@@ -82,7 +82,7 @@ export default function Navbar() {
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-4 flex-shrink-0">
             <Link
-              href="/#book"
+              href="/#booking"
               className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg font-medium transition-all shadow-md hover:shadow-lg whitespace-nowrap"
             >
               Book Now

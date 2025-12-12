@@ -22,7 +22,7 @@ export default function RootLayout({
       <body className={`font-sans bg-gray-50 text-gray-900`}>
         <AuthProvider>
           <Navbar />
-          <main className="min-h-screen">{children}</main>
+          <main className="min-h-screen pt-16 md:pt-20">{children}</main>
           <Footer />
         </AuthProvider>
       </body>

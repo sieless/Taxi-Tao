@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Alert } fro
 import { MapPin, Navigation } from "lucide-react-native";
 import { RideService } from "../lib/ride-service";
 import { useAuth } from "../lib/auth-context";
+import { LocationService } from "../lib/location-service";
 
 interface RideRequestFormProps {
   currentLocation: { lat: number; lng: number } | null;
@@ -27,25 +28,42 @@ export default function RideRequestForm({ currentLocation, onRideRequested, onCa
 
     setLoading(true);
     try {
-      // Mocking geocoding for destination for now
-      // In a real app, we'd use Google Places API to get lat/lng for destination
-      const mockDropoff = {
+      const now = new Date();
+      const pickupDate = now.toISOString().slice(0, 10);
+      const pickupTime = now.toISOString().slice(11, 16);
+
+      // Real geocoding
+      const coords = await LocationService.geocodeAddress(destination);
+      
+      if (!coords) {
+        Alert.alert("Location Not Found", "Could not find coordinates for that destination. Please try a more specific address.");
+        setLoading(false);
+        return;
+      }
+
+      const dropoff = {
         address: destination,
-        lat: currentLocation.lat + 0.01, // Just a bit away
-        lng: currentLocation.lng + 0.01,
+        lat: coords.lat,
+        lng: coords.lng,
       };
+
+      // Reverse geocode pickup if it's "Current Location"
+      let pickupAddress = "Current Location";
+      const resolvedPickup = await LocationService.reverseGeocode(currentLocation.lat, currentLocation.lng);
+      if (resolvedPickup) pickupAddress = resolvedPickup;
 
       const rideId = await RideService.requestRide(
         user.uid,
         userProfile.name || "Customer",
         userProfile.phone || "",
         {
-          address: "Current Location", // We should reverse geocode this
+          address: pickupAddress,
           lat: currentLocation.lat,
           lng: currentLocation.lng,
         },
-        mockDropoff,
-        500 // Mock fare estimate
+        dropoff,
+        500, // Mock fare estimate
+        { pickupDate, pickupTime, ttlMinutes: 30 }
       );
 
       onRideRequested(rideId);

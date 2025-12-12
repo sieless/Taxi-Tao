@@ -12,18 +12,42 @@ interface MapProps {
 export default function Map({ showUserLocation = true, drivers = [], onRegionChange }: MapProps) {
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(true);
 
   useEffect(() => {
-    (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        setErrorMsg("Permission to access location was denied");
-        return;
-      }
+    let isMounted = true;
 
-      let location = await Location.getCurrentPositionAsync({});
-      setLocation(location);
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") {
+          if (isMounted) {
+            setErrorMsg("Permission to access location was denied");
+            setIsLoadingLocation(false);
+          }
+          return;
+        }
+
+        const currentLocation = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        
+        if (isMounted) {
+          setLocation(currentLocation);
+          setIsLoadingLocation(false);
+        }
+      } catch (error) {
+        console.error("Error getting location:", error);
+        if (isMounted) {
+          setErrorMsg("Failed to get location");
+          setIsLoadingLocation(false);
+        }
+      }
     })();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   if (errorMsg) {
@@ -63,7 +87,6 @@ export default function Map({ showUserLocation = true, drivers = [], onRegionCha
             coordinate={{ latitude: driver.lat, longitude: driver.lng }}
             title="Driver"
             description={driver.type}
-            image={require("../assets/adaptive-icon.png")} // Placeholder, replace with car icon
           />
         ))}
       </MapView>

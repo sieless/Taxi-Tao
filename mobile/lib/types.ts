@@ -84,6 +84,8 @@ export interface BookingRequest {
     | "pending"
     | "accepted"
     | "assigned"
+    | "arrived"
+    | "in_progress"
     | "expired"
     | "cancelled"
     | "completed";

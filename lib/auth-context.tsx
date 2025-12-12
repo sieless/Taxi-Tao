@@ -17,10 +17,10 @@ interface AuthContextType {
   userProfile: AppUser | null;
   driverProfile: AppDriver | null;
   loading: boolean;
-  error: string | null; // Added error state
+  error: string | null;
   signIn: (email: string, password: string) => Promise<string | null>;
   logout: () => Promise<void>;
-  refreshUserProfile: () => Promise<void>;
+  refreshUserProfile: (currentUser?: FirebaseUser | null) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -29,7 +29,6 @@ const AuthContext = createContext<AuthContextType>({
   driverProfile: null,
   loading: true,
   error: null,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   signIn: async () => null,
   logout: async () => {},
   refreshUserProfile: async () => {},
@@ -47,102 +46,86 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  // helper: read cached profile if present
+  // Load cached profiles
   const loadCachedProfile = () => {
     try {
-      const raw = localStorage.getItem("userProfile");
-      if (raw) {
-        setUserProfile(JSON.parse(raw));
-      }
+      const rawUser = localStorage.getItem("userProfile");
+      if (rawUser) setUserProfile(JSON.parse(rawUser));
       const rawDriver = localStorage.getItem("driverProfile");
-      if (rawDriver) {
-        setDriverProfile(JSON.parse(rawDriver));
-      }
+      if (rawDriver) setDriverProfile(JSON.parse(rawDriver));
     } catch (e) {
-      // ignore cache errors
       console.warn("Failed to parse cached profile", e);
     }
   };
 
-  // refresh user profile from Firestore (callable)
+  // Refresh profile from Firestore
   const refreshUserProfile = async (currentUser?: FirebaseUser | null) => {
     const targetUser = currentUser || user;
     if (!targetUser) return;
-    
-    setError(null); // Clear previous errors
+
+    setError(null);
+
     try {
       const userDocRef = doc(db, "users", targetUser.uid);
       const userDoc = await getDoc(userDocRef);
-      
+
       if (userDoc.exists()) {
         const data = userDoc.data();
-        const profileData = { 
-          id: userDoc.id, 
-          ...data,
-          name: data.name || targetUser.displayName || targetUser.email?.split("@")[0] || "Anonymous" 
-        } as AppUser;
-        console.log("🔍 User Profile Loaded:", profileData);
+        const profileData: AppUser = {
+          id: userDoc.id,
+          ...(data as any),
+          name:
+            data?.name ||
+            targetUser.displayName ||
+            targetUser.email?.split("@")[0] ||
+            "Anonymous",
+        };
         setUserProfile(profileData);
-        try { localStorage.setItem("userProfile", JSON.stringify(profileData)); } catch {}
-        
-        // load driver profile if user is driver:
+        localStorage.setItem("userProfile", JSON.stringify(profileData));
+
         if (profileData.role === "driver" && profileData.driverId) {
           try {
-            const driverDoc = await getDoc(doc(db, "drivers", profileData.driverId));
+            const driverDoc = await getDoc(
+              doc(db, "drivers", profileData.driverId)
+            );
             if (driverDoc.exists()) {
-              const d = { id: driverDoc.id, ...(driverDoc.data() as any) } as AppDriver;
-              setDriverProfile(d);
-              try { localStorage.setItem("driverProfile", JSON.stringify(d)); } catch {}
+              const driverData: AppDriver = {
+                id: driverDoc.id,
+                ...(driverDoc.data() as any),
+              };
+              setDriverProfile(driverData);
+              localStorage.setItem("driverProfile", JSON.stringify(driverData));
             } else {
               setDriverProfile(null);
             }
           } catch (drvErr: any) {
-            if (drvErr?.code !== "permission-denied") console.error("Error fetching driver profile:", drvErr);
+            if (drvErr.code !== "permission-denied")
+              console.error("Driver profile fetch error:", drvErr);
+            setDriverProfile(null);
           }
         } else {
           setDriverProfile(null);
         }
       } else {
-        console.warn("User document missing. Creating new profile for:", targetUser.uid);
         // Auto-create profile if missing
-        const newProfile: any = {
+        const newProfile: Partial<AppUser> = {
           email: targetUser.email || "",
-          role: "customer", // Default role
+          role: "customer",
+          name:
+            targetUser.displayName || targetUser.email?.split("@")[0] || "User",
           createdAt: serverTimestamp(),
-          name: targetUser.displayName || targetUser.email?.split("@")[0] || "User",
         };
-        
-        try {
-          await setDoc(userDocRef, newProfile);
-          // Fetch it back to get the timestamp correctly
-          const newDoc = await getDoc(userDocRef);
-          const data = newDoc.data();
-          const profileData = { 
-            id: newDoc.id, 
-            ...(data as any),
-            name: data?.name || newProfile.name 
-          } as AppUser;
-          setUserProfile(profileData);
-          try { localStorage.setItem("userProfile", JSON.stringify(profileData)); } catch {}
-        } catch (createErr: any) {
-          console.error("Error creating user profile:", createErr);
-          if (createErr?.code === "permission-denied") {
-            setError("Permission denied: Cannot create user profile. Check Firestore rules.");
-          } else {
-            setError(`Error creating profile: ${createErr.message}`);
-          }
-        }
+        await setDoc(userDocRef, newProfile);
+        setUserProfile({ id: userDocRef.id, ...newProfile } as AppUser);
+        localStorage.setItem(
+          "userProfile",
+          JSON.stringify({ id: userDocRef.id, ...newProfile })
+        );
+        setDriverProfile(null);
       }
-    } catch (error: any) {
-      // permission-denied is expected for some rules while not fully logged-in
-      const errorMessage = error?.message || "Unknown error";
-      if (error?.code === "permission-denied") {
-        console.warn("Permission denied when reading user profile. Check Firestore rules.");
-        setError("Permission denied: Cannot read user profile. Please update Firestore Rules.");
-      } else {
-        console.error("Error fetching user profile:", error);
-        setError(`Error: ${errorMessage}`);
-      }
+    } catch (err: any) {
+      console.error("Error fetching user profile:", err);
+      setError(err.message || "Unknown error while fetching profile");
       setUserProfile(null);
       setDriverProfile(null);
     }
@@ -153,64 +136,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setLoading(true);
       setUser(firebaseUser);
-      if (firebaseUser) {
-        // fetch profile immediately, passing the user object to avoid state race condition
-        await refreshUserProfile(firebaseUser);
-      } else {
+      if (firebaseUser) await refreshUserProfile(firebaseUser);
+      else {
         setUserProfile(null);
         setDriverProfile(null);
-        try { localStorage.removeItem("userProfile"); localStorage.removeItem("driverProfile"); } catch {}
+        localStorage.removeItem("userProfile");
+        localStorage.removeItem("driverProfile");
       }
       setLoading(false);
     });
 
-    return unsubscribe;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => unsubscribe();
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    setError(null);
     try {
       const normalized = email.trim().toLowerCase();
-      const userCredential = await signInWithEmailAndPassword(auth, normalized, password);
-      // set firebase user immediately
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        normalized,
+        password
+      );
+
       setUser(userCredential.user);
-      // fetch and set user profile
-      try {
-        const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
-        if (userDoc.exists()) {
-          const userData = { id: userDoc.id, ...(userDoc.data() as any) } as AppUser;
-          setUserProfile(userData);
-          try { localStorage.setItem("userProfile", JSON.stringify(userData)); } catch {}
-          // If driver role, fetch driver doc
-          if (userData.role === "driver" && userData.driverId) {
-            try {
-              const driverDoc = await getDoc(doc(db, "drivers", userData.driverId));
-              if (driverDoc.exists()) {
-                const d = { id: driverDoc.id, ...(driverDoc.data() as any) } as AppDriver;
-                setDriverProfile(d);
-                try { localStorage.setItem("driverProfile", JSON.stringify(d)); } catch {}
-              }
-            } catch (drvErr: any) {
-              if (drvErr?.code !== "permission-denied") console.error("Error fetching driver profile:", drvErr);
-            }
-          }
-          return userData.role;
-        } else {
-          console.warn("User document missing after signIn - uid:", userCredential.user.uid);
-          return null;
-        }
-      } catch (error: any) {
-        if (error?.code === "permission-denied") {
-          console.warn("Permission denied when reading user role.");
-        } else {
-          console.error("Error fetching user role after signIn:", error);
-        }
-        return null;
+
+      // Fetch Firestore profile directly here to get role immediately
+      const userDocRef = doc(db, "users", userCredential.user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (userDoc.exists()) {
+        const data = userDoc.data();
+        const role = (data as any).role || "customer";
+        await refreshUserProfile(userCredential.user); // update React state
+        return role;
+      } else {
+        // If no doc, auto-create
+        const newProfile: Partial<AppUser> = {
+          email: userCredential.user.email || "",
+          role: "customer",
+          name:
+            userCredential.user.displayName ||
+            userCredential.user.email?.split("@")[0] ||
+            "User",
+          createdAt: serverTimestamp(),
+        };
+        await setDoc(userDocRef, newProfile);
+        await refreshUserProfile(userCredential.user);
+        return "customer";
       }
     } catch (err: any) {
       console.error("Sign in failed:", err);
-      // return a string code to allow UI to show message
-      return err?.code || "signin-failed";
+      setError(err.message || "Sign in failed");
+      return err.code || "signin-failed";
     }
   };
 
@@ -223,19 +201,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       setUserProfile(null);
       setDriverProfile(null);
-      try { localStorage.removeItem("userProfile"); localStorage.removeItem("driverProfile"); } catch {}
-      // use next/router to route — do not force reload
+      localStorage.removeItem("userProfile");
+      localStorage.removeItem("driverProfile");
       try {
         router.replace("/");
       } catch {
-        // ignore if router unavailable
         window.location.href = "/";
       }
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, userProfile, driverProfile, loading, error, signIn, logout, refreshUserProfile }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        userProfile,
+        driverProfile,
+        loading,
+        error,
+        signIn,
+        logout,
+        refreshUserProfile,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

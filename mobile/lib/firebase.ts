@@ -1,8 +1,7 @@
 import { initializeApp, getApp, getApps } from "firebase/app";
-import { initializeAuth, getReactNativePersistence, getAuth } from "firebase/auth";
+import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
@@ -16,10 +15,11 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Initialize Auth with persistence
-const auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(AsyncStorage),
-});
+// Initialize Auth
+// Note: Firebase JS SDK v12 with Expo uses web-based persistence automatically.
+// For native apps, consider using @react-native-firebase/auth instead.
+// The warning about AsyncStorage can be safely ignored when using the JS SDK.
+const auth = getAuth(app);
 
 const db = getFirestore(app);
 const storage = getStorage(app);
