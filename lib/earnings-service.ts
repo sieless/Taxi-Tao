@@ -1,6 +1,12 @@
-import { db } from './firebase';
-import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
-import { BookingRequest } from './types';
+import { db } from "./firebase";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  Timestamp,
+} from "firebase/firestore";
+import { BookingRequest } from "./types";
 
 /**
  * Calculate today's earnings for a driver
@@ -12,10 +18,10 @@ export async function getTodayEarnings(driverId: string): Promise<number> {
     const todayTimestamp = Timestamp.fromDate(today);
 
     const q = query(
-      collection(db, 'bookingRequests'),
-      where('acceptedBy', '==', driverId),
-      where('status', '==', 'completed'),
-      where('completedAt', '>=', todayTimestamp)
+      collection(db, "bookingRequests"),
+      where("acceptedBy", "==", driverId),
+      where("status", "==", "completed"),
+      where("completedAt", ">=", todayTimestamp)
     );
 
     const snapshot = await getDocs(q);
@@ -23,12 +29,13 @@ export async function getTodayEarnings(driverId: string): Promise<number> {
 
     snapshot.forEach((doc) => {
       const booking = doc.data() as BookingRequest;
-      total += booking.earnings || 0;
+      // Use earnings if available, otherwise fall back to fare
+      total += booking.earnings || booking.fare || 0;
     });
 
     return total;
   } catch (error) {
-    console.error('Error calculating today earnings:', error);
+    console.error("Error calculating today earnings:", error);
     return 0;
   }
 }
@@ -43,10 +50,10 @@ export async function getMonthlyEarnings(driverId: string): Promise<number> {
     const monthStartTimestamp = Timestamp.fromDate(firstDayOfMonth);
 
     const q = query(
-      collection(db, 'bookingRequests'),
-      where('acceptedBy', '==', driverId),
-      where('status', '==', 'completed'),
-      where('completedAt', '>=', monthStartTimestamp)
+      collection(db, "bookingRequests"),
+      where("acceptedBy", "==", driverId),
+      where("status", "==", "completed"),
+      where("completedAt", ">=", monthStartTimestamp)
     );
 
     const snapshot = await getDocs(q);
@@ -54,12 +61,13 @@ export async function getMonthlyEarnings(driverId: string): Promise<number> {
 
     snapshot.forEach((doc) => {
       const booking = doc.data() as BookingRequest;
-      total += booking.earnings || 0;
+      // Use earnings if available, otherwise fall back to fare
+      total += booking.earnings || booking.fare || 0;
     });
 
     return total;
   } catch (error) {
-    console.error('Error calculating monthly earnings:', error);
+    console.error("Error calculating monthly earnings:", error);
     return 0;
   }
 }
@@ -67,24 +75,31 @@ export async function getMonthlyEarnings(driverId: string): Promise<number> {
 /**
  * Get earnings data for the last N months for charting
  */
-export async function getEarningsHistory(driverId: string, months: number = 6): Promise<{ month: string; earnings: number }[]> {
+export async function getEarningsHistory(
+  driverId: string,
+  months: number = 6
+): Promise<{ month: string; earnings: number }[]> {
   try {
     const result: { month: string; earnings: number }[] = [];
     const now = new Date();
 
     for (let i = months - 1; i >= 0; i--) {
       const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const nextMonthDate = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
-      
+      const nextMonthDate = new Date(
+        now.getFullYear(),
+        now.getMonth() - i + 1,
+        1
+      );
+
       const monthStart = Timestamp.fromDate(monthDate);
       const monthEnd = Timestamp.fromDate(nextMonthDate);
 
       const q = query(
-        collection(db, 'bookingRequests'),
-        where('acceptedBy', '==', driverId),
-        where('status', '==', 'completed'),
-        where('completedAt', '>=', monthStart),
-        where('completedAt', '<', monthEnd)
+        collection(db, "bookingRequests"),
+        where("acceptedBy", "==", driverId),
+        where("status", "==", "completed"),
+        where("completedAt", ">=", monthStart),
+        where("completedAt", "<", monthEnd)
       );
 
       const snapshot = await getDocs(q);
@@ -96,14 +111,14 @@ export async function getEarningsHistory(driverId: string, months: number = 6): 
       });
 
       result.push({
-        month: monthDate.toLocaleDateString('en-US', { month: 'short' }),
-        earnings: monthTotal
+        month: monthDate.toLocaleDateString("en-US", { month: "short" }),
+        earnings: monthTotal,
       });
     }
 
     return result;
   } catch (error) {
-    console.error('Error getting earnings history:', error);
+    console.error("Error getting earnings history:", error);
     return [];
   }
 }
@@ -114,15 +129,15 @@ export async function getEarningsHistory(driverId: string, months: number = 6): 
 export async function getNewRequestsCount(location: string): Promise<number> {
   try {
     const q = query(
-      collection(db, 'bookingRequests'),
-      where('status', '==', 'pending'),
-      where('pickupLocation', '==', location)
+      collection(db, "bookingRequests"),
+      where("status", "==", "pending"),
+      where("pickupLocation", "==", location)
     );
 
     const snapshot = await getDocs(q);
     return snapshot.size;
   } catch (error) {
-    console.error('Error counting new requests:', error);
+    console.error("Error counting new requests:", error);
     return 0;
   }
 }
@@ -133,15 +148,15 @@ export async function getNewRequestsCount(location: string): Promise<number> {
 export async function getActiveTripsCount(driverId: string): Promise<number> {
   try {
     const q = query(
-      collection(db, 'bookingRequests'),
-      where('acceptedBy', '==', driverId),
-      where('status', '==', 'accepted')
+      collection(db, "bookingRequests"),
+      where("acceptedBy", "==", driverId),
+      where("status", "==", "accepted")
     );
 
     const snapshot = await getDocs(q);
     return snapshot.size;
   } catch (error) {
-    console.error('Error counting active trips:', error);
+    console.error("Error counting active trips:", error);
     return 0;
   }
 }

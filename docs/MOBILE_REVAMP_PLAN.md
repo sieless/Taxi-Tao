@@ -102,3 +102,26 @@ Follow "Conventional Commits" to keep history clean. Commit after completing eac
 
 ## 🚀 Getting Started
 We will start immediately with **Phase 1.1: Driver Presence Sync**. This is the most critical fix to make the mobile app "real" to the rest of the system.
+
+---
+
+## 🎨 Content & Design Needs (Post-Audit)
+
+### 1. Missing Pages/Views
+- **Ride History**:
+    - *Driver*: List of completed trips with earnings per trip.
+    - *Customer*: List of past rides with date, driver, and cost.
+- **Ride In-Progress**:
+    - *Driver*: Full screen map with "Navigate", "Arrived", "Start Trip", "End Trip" slider/buttons.
+    - *Customer*: Live driver tracking, ETA, "Share Ride" button.
+- **Earnings Detail**:
+    - *Driver*: Chart/List showing daily/weekly earnings.
+
+### 2. UI Polish
+- **Menu**: Replace custom overlay with `expo-router` Drawer or a proper Modal component.
+- **Empty States**: Add friendly illustrations for "No Rides Available" or "No History".
+- **Loading States**: Replace simple spinners with Skeleton loaders for a premium feel.
+
+### 3. Copy & Content
+- **Onboarding**: Add a 3-slide "Walkthrough" before Login (e.g., "Request a Ride", "Track in Real-time", "Pay Securely").
+- **Help/Support**: Populate the Help page with FAQs and Support Contact (WhatsApp/Email).

@@ -48,6 +48,7 @@ import Logo from "@/components/Logo";
 
 import DriverPricingManager from "@/components/DriverPricingManager";
 import ServicePackagesConfig from "@/components/ServicePackagesConfig";
+import CustomerDetailsModal from "@/components/CustomerDetailsModal";
 import { DollarSign, TrendingUp, Briefcase, Settings } from "lucide-react";
 
 export default function DriverDashboard() {
@@ -70,6 +71,10 @@ export default function DriverDashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isPricingOpen, setIsPricingOpen] = useState(false);
+  const [showCustomerDetails, setShowCustomerDetails] = useState(false);
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(
+    null
+  );
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   // Header position - LOCKED at your chosen position
@@ -112,7 +117,10 @@ export default function DriverDashboard() {
   // Close profile menu when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+      if (
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(event.target as Node)
+      ) {
         setIsProfileMenuOpen(false);
       }
     }
@@ -279,7 +287,6 @@ export default function DriverDashboard() {
 
   // Cloudinary upload function removed
 
-
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!driver || !user) return;
@@ -379,7 +386,9 @@ export default function DriverDashboard() {
         year: vehicleForm.year ? Number(vehicleForm.year) : 2020,
         plate: vehicleForm.plate,
         type: vehicleForm.type,
-        images: carPhotoUrl ? [carPhotoUrl] : (driver.vehicles?.[0]?.images || []),
+        images: carPhotoUrl
+          ? [carPhotoUrl]
+          : driver.vehicles?.[0]?.images || [],
         seats: driver.vehicles?.[0]?.seats || 4,
         active: true,
         baseFare: driver.vehicles?.[0]?.baseFare || 500,
@@ -464,196 +473,239 @@ export default function DriverDashboard() {
                 </h1>
               </div>
 
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center gap-4">
-            <button
-              onClick={() => router.push("/driver/history")}
-              className="flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors"
-            >
-              <History className="w-5 h-5" />
-              <span>History</span>
-            </button>
-            <button
-              onClick={() => router.push("/driver/settings")}
-              className="flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors"
-            >
-              <Settings className="w-5 h-5" />
-              <span>Settings</span>
-            </button>
-            <div className="flex items-center gap-2 mr-4">
-              <span
-                className={`text-sm font-medium ${
-                  driver?.status === "available"
-                    ? "text-green-600"
-                    : "text-gray-500"
-                }`}
-              >
-                {driver?.status === "available" ? "Online" : "Offline"}
-              </span>
-              <button
-                onClick={toggleStatus}
-                className={`transition-colors ${
-                  driver?.status === "available"
-                    ? "text-green-600"
-                    : "text-gray-400"
-                }`}
-              >
-                {driver?.status === "available" ? (
-                  <ToggleRight className="w-8 h-8" />
-                ) : (
-                  <ToggleLeft className="w-8 h-8" />
-                )}
-              </button>
-            </div>
-            <NotificationBell driverId={user?.uid || ""} />
-            
-            {/* Profile Dropdown */}
-            <div className="relative ml-4 border-l pl-4" ref={profileMenuRef}>
-              <button 
-                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                className="flex items-center gap-3 hover:bg-gray-50 p-2 rounded-lg transition-colors"
-              >
-                <div className="text-right hidden lg:block">
-                  <p className="text-sm font-bold text-gray-800">{driver.name}</p>
-                  <p className="text-xs text-gray-500">{driver.phone}</p>
+              {/* Desktop Menu */}
+              <div className="hidden md:flex items-center gap-4">
+                <button
+                  onClick={() => router.push("/driver/history")}
+                  className="flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors"
+                >
+                  <History className="w-5 h-5" />
+                  <span>History</span>
+                </button>
+                <button
+                  onClick={() => router.push("/driver/settings")}
+                  className="flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors"
+                >
+                  <Settings className="w-5 h-5" />
+                  <span>Settings</span>
+                </button>
+                <div className="flex items-center gap-2 mr-4">
+                  <span
+                    className={`text-sm font-medium ${
+                      driver?.status === "available"
+                        ? "text-green-600"
+                        : "text-gray-500"
+                    }`}
+                  >
+                    {driver?.status === "available" ? "Online" : "Offline"}
+                  </span>
+                  <button
+                    onClick={toggleStatus}
+                    className={`transition-colors ${
+                      driver?.status === "available"
+                        ? "text-green-600"
+                        : "text-gray-400"
+                    }`}
+                  >
+                    {driver?.status === "available" ? (
+                      <ToggleRight className="w-8 h-8" />
+                    ) : (
+                      <ToggleLeft className="w-8 h-8" />
+                    )}
+                  </button>
                 </div>
-                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center border-2 border-green-500 overflow-hidden">
-                  {driver.profilePhotoUrl ? (
-                    <img
-                      src={driver.profilePhotoUrl}
-                      alt={driver.name}
-                      className="w-full h-full object-cover"
+                <NotificationBell
+                  driverId={
+                    driver?.id || userProfile?.driverId || user?.uid || ""
+                  }
+                  onNotificationClick={(notification) => {
+                    // Handle both Notification and DriverNotification types
+                    const bookingId =
+                      "bookingId" in notification
+                        ? notification.bookingId
+                        : undefined;
+                    if (bookingId) {
+                      setSelectedBookingId(bookingId);
+                      setShowCustomerDetails(true);
+                    }
+                  }}
+                />
+
+                {/* Profile Dropdown */}
+                <div
+                  className="relative ml-4 border-l pl-4"
+                  ref={profileMenuRef}
+                >
+                  <button
+                    onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                    className="flex items-center gap-3 hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                  >
+                    <div className="text-right hidden lg:block">
+                      <p className="text-sm font-bold text-gray-800">
+                        {driver.name}
+                      </p>
+                      <p className="text-xs text-gray-500">{driver.phone}</p>
+                    </div>
+                    <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center border-2 border-green-500 overflow-hidden">
+                      {driver.profilePhotoUrl ? (
+                        <img
+                          src={driver.profilePhotoUrl}
+                          alt={driver.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <User className="w-6 h-6 text-green-700" />
+                      )}
+                    </div>
+                    <ChevronDown
+                      className={`w-4 h-4 text-gray-400 transition-transform ${
+                        isProfileMenuOpen ? "rotate-180" : ""
+                      }`}
                     />
-                  ) : (
-                    <User className="w-6 h-6 text-green-700" />
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {isProfileMenuOpen && (
+                    <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div className="p-3 border-b border-gray-100 lg:hidden">
+                        <p className="font-bold text-gray-800">{driver.name}</p>
+                        <p className="text-xs text-gray-500">{driver.phone}</p>
+                      </div>
+
+                      <div className="p-2">
+                        <button
+                          onClick={() => {
+                            setIsEditing(true);
+                            setIsProfileMenuOpen(false);
+                          }}
+                          className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors text-left"
+                        >
+                          <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center text-orange-600">
+                            <User className="w-4 h-4" />
+                          </div>
+                          <span className="text-sm font-medium">
+                            Edit Profile
+                          </span>
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            router.push("/driver/history");
+                            setIsProfileMenuOpen(false);
+                          }}
+                          className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors text-left"
+                        >
+                          <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                            <History className="w-4 h-4" />
+                          </div>
+                          <span className="text-sm font-medium">
+                            Ride History
+                          </span>
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            router.push("/driver/settings");
+                            setIsProfileMenuOpen(false);
+                          }}
+                          className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors text-left"
+                        >
+                          <div className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
+                            <Settings className="w-4 h-4" />
+                          </div>
+                          <span className="text-sm font-medium">Settings</span>
+                        </button>
+                      </div>
+
+                      <div className="p-2 border-t border-gray-100 bg-gray-50">
+                        <button
+                          onClick={() => {
+                            handleLogout();
+                            setIsProfileMenuOpen(false);
+                          }}
+                          className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors text-left"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          <span className="text-sm font-medium">Sign Out</span>
+                        </button>
+                      </div>
+                    </div>
                   )}
                 </div>
-                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
-              </button>
+                <button
+                  onClick={handleLogout}
+                  className="hidden md:flex items-center gap-2 text-gray-600 hover:text-gray-800"
+                >
+                  <LogOut className="w-5 h-5" />
+                  <span>Logout</span>
+                </button>
+              </div>
 
-              {/* Dropdown Menu */}
-              {isProfileMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                  <div className="p-3 border-b border-gray-100 lg:hidden">
-                    <p className="font-bold text-gray-800">{driver.name}</p>
-                    <p className="text-xs text-gray-500">{driver.phone}</p>
-                  </div>
-                  
-                  <div className="p-2">
-                    <button
-                      onClick={() => {
-                        setIsEditing(true);
-                        setIsProfileMenuOpen(false);
-                      }}
-                      className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors text-left"
-                    >
-                      <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center text-orange-600">
-                        <User className="w-4 h-4" />
-                      </div>
-                      <span className="text-sm font-medium">Edit Profile</span>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        router.push("/driver/history");
-                        setIsProfileMenuOpen(false);
-                      }}
-                      className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors text-left"
-                    >
-                      <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
-                        <History className="w-4 h-4" />
-                      </div>
-                      <span className="text-sm font-medium">Ride History</span>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        router.push("/driver/settings");
-                        setIsProfileMenuOpen(false);
-                      }}
-                      className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors text-left"
-                    >
-                      <div className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
-                        <Settings className="w-4 h-4" />
-                      </div>
-                      <span className="text-sm font-medium">Settings</span>
-                    </button>
-                  </div>
-
-                  <div className="p-2 border-t border-gray-100 bg-gray-50">
-                    <button
-                      onClick={() => {
-                        handleLogout();
-                        setIsProfileMenuOpen(false);
-                      }}
-                      className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors text-left"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      <span className="text-sm font-medium">Sign Out</span>
-                    </button>
-                  </div>
+              {/* Mobile Menu */}
+              <div className="flex md:hidden items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`text-xs font-medium ${
+                      driver?.status === "available"
+                        ? "text-green-600"
+                        : "text-gray-500"
+                    }`}
+                  >
+                    {driver?.status === "available" ? "Online" : "Offline"}
+                  </span>
+                  <button
+                    onClick={toggleStatus}
+                    className={`transition-colors ${
+                      driver?.status === "available"
+                        ? "text-green-600"
+                        : "text-gray-400"
+                    }`}
+                  >
+                    {driver?.status === "available" ? (
+                      <ToggleRight className="w-7 h-7" />
+                    ) : (
+                      <ToggleLeft className="w-7 h-7" />
+                    )}
+                  </button>
                 </div>
-              )}
-            </div>
-            <button
-              onClick={handleLogout}
-              className="hidden md:flex items-center gap-2 text-gray-600 hover:text-gray-800"
-            >
-              <LogOut className="w-5 h-5" />
-              <span>Logout</span>
-            </button>
-          </div>
+                <NotificationBell
+                  driverId={
+                    driver?.id || userProfile?.driverId || user?.uid || ""
+                  }
+                  onNotificationClick={(notification) => {
+                    // Handle both Notification and DriverNotification types
+                    const bookingId =
+                      "bookingId" in notification
+                        ? notification.bookingId
+                        : undefined;
+                    if (bookingId) {
+                      setSelectedBookingId(bookingId);
+                      setShowCustomerDetails(true);
+                    }
+                  }}
+                />
+                <div className="relative">
+                  <button
+                    onClick={() => setMobileMenuOpen(true)}
+                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    <Menu className="w-6 h-6 text-gray-600" />
+                  </button>
 
-          {/* Mobile Menu */}
-          <div className="flex md:hidden items-center gap-3">
-            <div className="flex items-center gap-2">
-              <span
-                className={`text-xs font-medium ${
-                  driver?.status === "available"
-                    ? "text-green-600"
-                    : "text-gray-500"
-                }`}
-              >
-                {driver?.status === "available" ? "Online" : "Offline"}
-              </span>
-              <button
-                onClick={toggleStatus}
-                className={`transition-colors ${
-                  driver?.status === "available"
-                    ? "text-green-600"
-                    : "text-gray-400"
-                }`}
-              >
-                {driver?.status === "available" ? (
-                  <ToggleRight className="w-7 h-7" />
-                ) : (
-                  <ToggleLeft className="w-7 h-7" />
-                )}
-              </button>
-            </div>
-            <NotificationBell driverId={user?.uid || ""} />
-            <div className="relative">
-              <button
-                onClick={() => setMobileMenuOpen(true)}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <Menu className="w-6 h-6 text-gray-600" />
-              </button>
-
-              {/* New Mobile Menu Component */}
-              <MobileMenu
-                isOpen={mobileMenuOpen}
-                onClose={() => setMobileMenuOpen(false)}
-                driver={driver}
-                onLogout={handleLogout}
-                onToggleStatus={toggleStatus}
-                onEditProfile={() => setIsEditing(true)}
-              />
+                  {/* New Mobile Menu Component */}
+                  <MobileMenu
+                    isOpen={mobileMenuOpen}
+                    onClose={() => setMobileMenuOpen(false)}
+                    driver={driver}
+                    onLogout={handleLogout}
+                    onToggleStatus={toggleStatus}
+                    onEditProfile={() => setIsEditing(true)}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 pt-20 pb-8">
@@ -664,9 +716,12 @@ export default function DriverDashboard() {
               <div className="flex items-center gap-3">
                 <AlertTriangle className="w-6 h-6 text-yellow-600" />
                 <div>
-                  <h3 className="text-sm font-bold text-yellow-800">Verification Required</h3>
+                  <h3 className="text-sm font-bold text-yellow-800">
+                    Verification Required
+                  </h3>
                   <p className="text-xs text-yellow-700">
-                    Please verify your email address to unlock full dashboard features.
+                    Please verify your email address to unlock full dashboard
+                    features.
                   </p>
                 </div>
               </div>
@@ -818,7 +873,9 @@ export default function DriverDashboard() {
                         : "bg-green-600 hover:bg-green-700 text-white"
                     }`}
                   >
-                    {!user?.emailVerified ? "Complete Verification" : "Edit Profile"}
+                    {!user?.emailVerified
+                      ? "Complete Verification"
+                      : "Edit Profile"}
                   </button>
                 </div>
               </div>
@@ -1435,7 +1492,9 @@ export default function DriverDashboard() {
                     <div className="w-full h-48 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden mb-3 relative bg-gray-50">
                       {carPreviewUrl || driver?.vehicles?.[0]?.images?.[0] ? (
                         <img
-                          src={carPreviewUrl || driver?.vehicles?.[0]?.images?.[0]}
+                          src={
+                            carPreviewUrl || driver?.vehicles?.[0]?.images?.[0]
+                          }
                           alt="Car Preview"
                           className="w-full h-full object-cover"
                         />
@@ -1696,7 +1755,9 @@ export default function DriverDashboard() {
                     <div className="w-full h-48 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden mb-3 relative bg-gray-50">
                       {carPreviewUrl || driver?.vehicles?.[0]?.images?.[0] ? (
                         <img
-                          src={carPreviewUrl || driver?.vehicles?.[0]?.images?.[0]}
+                          src={
+                            carPreviewUrl || driver?.vehicles?.[0]?.images?.[0]
+                          }
                           alt="Car Preview"
                           className="w-full h-full object-cover"
                         />
@@ -1869,6 +1930,23 @@ export default function DriverDashboard() {
           </div>
         )}
       </div>
+
+      {/* Customer Details Modal */}
+      {showCustomerDetails && selectedBookingId && driver && (
+        <CustomerDetailsModal
+          isOpen={showCustomerDetails}
+          onClose={() => {
+            setShowCustomerDetails(false);
+            setSelectedBookingId(null);
+          }}
+          bookingId={selectedBookingId}
+          driverId={driver.id}
+          onBookingAccepted={() => {
+            fetchRides();
+            fetchStatistics();
+          }}
+        />
+      )}
     </div>
   );
 }

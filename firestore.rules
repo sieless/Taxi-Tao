@@ -39,15 +39,15 @@ service cloud.firestore {
     }
     
     function getUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return isSignedIn() ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data : null;
     }
     
     function isAdmin() {
-      return isSignedIn() && getUserData().role == 'admin';
+      return isSignedIn() && getUserData() != null && getUserData().role == 'admin';
     }
     
     function isDriver() {
-      return isSignedIn() && getUserData().role == 'driver';
+      return isSignedIn() && getUserData() != null && getUserData().role == 'driver';
     }
 
     /**

@@ -1,9 +1,16 @@
 // lib/matching-service.ts
 
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
-import { db } from './firebase';
-import { getDriverPricing, createRouteKey } from './pricing-service';
-import { getNearbyHub } from './location-mapping';
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  doc,
+  getDoc,
+} from "firebase/firestore";
+import { db } from "./firebase";
+import { getDriverPricing, createRouteKey } from "./pricing-service";
+import { getNearbyHub } from "./location-mapping";
 
 // Type for driver user documents that combine User and Driver fields
 interface DriverUser {
@@ -23,8 +30,8 @@ export interface DriverMatch {
   totalRides: number;
   price: number;
   matchScore: number;
-  category?: 'best_value' | 'lowest_price' | 'best_rated';
-  matchType: 'exact' | 'nearby';
+  category?: "best_value" | "lowest_price" | "best_rated";
+  matchType: "exact" | "nearby";
   viaLocation?: string; // e.g., "Via Machakos"
   // Driver contact details
   phone?: string;
@@ -36,7 +43,7 @@ export interface DriverMatch {
   vehicle?: {
     make: string;
     model: string;
-    type: 'sedan' | 'suv' | 'van' | 'bike' | 'tuk-tuk';
+    type: "sedan" | "suv" | "van" | "bike" | "tuk-tuk";
     color?: string;
     carPhotoUrl?: string;
   };
@@ -51,33 +58,33 @@ export async function findDriversForRoute(
   toLocation: string
 ): Promise<DriverMatch[]> {
   try {
-    // Get all users with role='driver' and active status
-    const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('role', '==', 'driver'));
-    const snapshot = await getDocs(q);
-    
+    // Query drivers collection directly instead of users collection
+    // This avoids permission issues since drivers collection allows read for everyone
+    const driversRef = collection(db, "drivers");
+    const snapshot = await getDocs(driversRef);
+
     const matches: DriverMatch[] = [];
-    
+
     // 1. Determine standardized keys and hubs
     const exactRouteKey = createRouteKey(fromLocation, toLocation);
-    
+
     const toHub = getNearbyHub(toLocation);
     const hubRouteKey = toHub ? createRouteKey(fromLocation, toHub) : null;
 
     for (const docSnap of snapshot.docs) {
-      const user = { id: docSnap.id, ...docSnap.data() } as DriverUser;
-      
+      const driverData = { id: docSnap.id, ...docSnap.data() } as any;
+
       // Skip inactive drivers
-      if (user.active === false) continue;
-      
-      // Get driver's pricing using their driverId
-      const driverId = user.driverId || user.id;
+      if (driverData.active === false) continue;
+
+      // Get driver's pricing using their driverId (which is the document ID)
+      const driverId = driverData.id;
       const pricing = await getDriverPricing(driverId);
       if (!pricing || !pricing.routePricing) continue;
-      
+
       // 2. Check for EXACT match first
       let routePrice = pricing.routePricing[exactRouteKey];
-      let matchType: 'exact' | 'nearby' = 'exact';
+      let matchType: "exact" | "nearby" = "exact";
       let viaLocation: string | undefined = undefined;
 
       // 3. If no exact match, check for HUB match (Fallback)
@@ -85,29 +92,37 @@ export async function findDriversForRoute(
         const hubPrice = pricing.routePricing[hubRouteKey];
         if (hubPrice && hubPrice.price) {
           routePrice = hubPrice;
-          matchType = 'nearby';
+          matchType = "nearby";
           viaLocation = toHub || undefined;
         }
       }
-      
+
       if (routePrice && routePrice.price) {
         // Fetch full driver details from /drivers collection
         let driverDetails = null;
         try {
-          const driverDocRef = doc(db, 'drivers', driverId);
+          const driverDocRef = doc(db, "drivers", driverId);
           const driverDoc = await getDoc(driverDocRef);
           if (driverDoc.exists()) {
             driverDetails = driverDoc.data();
           }
         } catch (error) {
-          console.error(`Error fetching driver details for ${driverId}:`, error);
+          console.error(
+            `Error fetching driver details for ${driverId}:`,
+            error
+          );
         }
 
         matches.push({
           driverId: driverId,
-          driverName: user.name || driverDetails?.name || 'Unknown Driver',
-          rating: user.averageRating || user.rating || driverDetails?.averageRating || 4.5,
-          totalRides: user.totalRides || driverDetails?.totalRides || 0,
+          driverName:
+            driverData.name || driverDetails?.name || "Unknown Driver",
+          rating:
+            driverData.averageRating ||
+            driverData.rating ||
+            driverDetails?.averageRating ||
+            4.5,
+          totalRides: driverData.totalRides || driverDetails?.totalRides || 0,
           price: routePrice.price,
           matchScore: 0, // Will be calculated later
           matchType,
@@ -119,20 +134,22 @@ export async function findDriversForRoute(
           profilePhotoUrl: driverDetails?.profilePhotoUrl,
           bio: driverDetails?.bio,
           // Vehicle details
-          vehicle: driverDetails?.vehicle ? {
-            make: driverDetails.vehicle.make,
-            model: driverDetails.vehicle.model,
-            type: driverDetails.vehicle.type,
-            color: driverDetails.vehicle.color,
-            carPhotoUrl: driverDetails.vehicle.carPhotoUrl
-          } : undefined
+          vehicle: driverDetails?.vehicle
+            ? {
+                make: driverDetails.vehicle.make,
+                model: driverDetails.vehicle.model,
+                type: driverDetails.vehicle.type,
+                color: driverDetails.vehicle.color,
+                carPhotoUrl: driverDetails.vehicle.carPhotoUrl,
+              }
+            : undefined,
         });
       }
     }
-    
+
     return matches;
   } catch (error) {
-    console.error('Error finding drivers for route:', error);
+    console.error("Error finding drivers for route:", error);
     return [];
   }
 }
@@ -143,19 +160,20 @@ export async function findDriversForRoute(
  */
 function calculateMatchScore(driver: DriverMatch, avgPrice: number): number {
   // Normalize price (lower is better, scale 0-100)
-  const priceScore = avgPrice > 0 ? Math.max(0, 100 - ((driver.price / avgPrice) * 100)) : 50;
-  
+  const priceScore =
+    avgPrice > 0 ? Math.max(0, 100 - (driver.price / avgPrice) * 100) : 50;
+
   // Normalize rating (0-5 scale to 0-100)
   const ratingScore = (driver.rating / 5) * 100;
-  
+
   // Normalize experience (cap at 100 rides = 100 score)
   const experienceScore = Math.min(100, driver.totalRides);
-  
+
   // Weighted average
-  let score = (priceScore * 0.4) + (ratingScore * 0.4) + (experienceScore * 0.2);
+  let score = priceScore * 0.4 + ratingScore * 0.4 + experienceScore * 0.2;
 
   // Penalize nearby matches slightly to prefer exact matches if both exist
-  if (driver.matchType === 'nearby') {
+  if (driver.matchType === "nearby") {
     score *= 0.9;
   }
 
@@ -174,34 +192,35 @@ export async function getRecommendations(
   bestRated: DriverMatch | null;
 }> {
   const drivers = await findDriversForRoute(fromLocation, toLocation);
-  
+
   if (drivers.length === 0) {
     return { bestValue: null, lowestPrice: null, bestRated: null };
   }
-  
+
   // Calculate average price for scoring
-  const avgPrice = drivers.reduce((sum, d) => sum + d.price, 0) / drivers.length;
-  
+  const avgPrice =
+    drivers.reduce((sum, d) => sum + d.price, 0) / drivers.length;
+
   // Calculate match scores
-  drivers.forEach(driver => {
+  drivers.forEach((driver) => {
     driver.matchScore = calculateMatchScore(driver, avgPrice);
   });
-  
+
   // Best Value: highest match score
   const bestValue = [...drivers].sort((a, b) => b.matchScore - a.matchScore)[0];
-  if (bestValue) bestValue.category = 'best_value';
-  
+  if (bestValue) bestValue.category = "best_value";
+
   // Lowest Price: cheapest option
   const lowestPrice = [...drivers].sort((a, b) => a.price - b.price)[0];
-  if (lowestPrice) lowestPrice.category = 'lowest_price';
-  
+  if (lowestPrice) lowestPrice.category = "lowest_price";
+
   // Best Rated: highest rating, then lowest price as tiebreaker
   const bestRated = [...drivers].sort((a, b) => {
     if (b.rating !== a.rating) return b.rating - a.rating;
     return a.price - b.price;
   })[0];
-  if (bestRated) bestRated.category = 'best_rated';
-  
+  if (bestRated) bestRated.category = "best_rated";
+
   return { bestValue, lowestPrice, bestRated };
 }
 
@@ -213,14 +232,15 @@ export async function getAllDriversForRoute(
   toLocation: string
 ): Promise<DriverMatch[]> {
   const drivers = await findDriversForRoute(fromLocation, toLocation);
-  
+
   // Calculate average price for scoring
-  const avgPrice = drivers.reduce((sum, d) => sum + d.price, 0) / drivers.length;
-  
+  const avgPrice =
+    drivers.reduce((sum, d) => sum + d.price, 0) / drivers.length;
+
   // Calculate match scores and sort by score
-  drivers.forEach(driver => {
+  drivers.forEach((driver) => {
     driver.matchScore = calculateMatchScore(driver, avgPrice);
   });
-  
+
   return drivers.sort((a, b) => b.matchScore - a.matchScore);
 }

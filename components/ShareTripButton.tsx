@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Share2, Check, Copy } from 'lucide-react';
+import { useState } from "react";
+import { Share2, Check, Copy } from "lucide-react";
 
 interface ShareTripButtonProps {
   bookingId: string;
@@ -7,22 +7,28 @@ interface ShareTripButtonProps {
   vehicleDetails?: string;
 }
 
-export default function ShareTripButton({ bookingId, driverName, vehicleDetails }: ShareTripButtonProps) {
+export default function ShareTripButton({
+  bookingId,
+  driverName,
+  vehicleDetails,
+}: ShareTripButtonProps) {
   const [copied, setCopied] = useState(false);
 
   const handleShare = async () => {
-    const shareUrl = `${window.location.origin}/track/${bookingId}`;
-    const shareText = `Track my ride with ${driverName || 'TaxiTao'}${vehicleDetails ? ` (${vehicleDetails})` : ''}: ${shareUrl}`;
+    const shareUrl = `https://taxitao.co.ke/track/${bookingId}`;
+    const shareText = `Track my ride with ${driverName || "TaxiTao"}${
+      vehicleDetails ? ` (${vehicleDetails})` : ""
+    }: ${shareUrl}`;
 
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Track my TaxiTao Ride',
+          title: "Track my TaxiTao Ride",
           text: shareText,
           url: shareUrl,
         });
       } catch (error) {
-        console.log('Error sharing:', error);
+        console.log("Error sharing:", error);
       }
     } else {
       // Fallback to clipboard
@@ -31,7 +37,7 @@ export default function ShareTripButton({ bookingId, driverName, vehicleDetails 
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       } catch (error) {
-        console.error('Failed to copy:', error);
+        console.error("Failed to copy:", error);
       }
     }
   };

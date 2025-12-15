@@ -171,7 +171,7 @@ export interface Payment {
 export interface Subscription {
   id: string;
   driverId: string;
-  monthlyFee: number; // Default 2000 KSH, can be adjusted
+  monthlyFee: number; // Default 500 KSH, can be adjusted
   status: "active" | "pending" | "expired" | "suspended";
   startDate: any; // Firestore Timestamp
   lastPaymentDate?: any;

@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, query, where, orderBy, onSnapshot } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { Bell, Check, X } from "lucide-react";
@@ -17,44 +23,51 @@ interface Notification {
 }
 
 export default function DriverNotificationsPage() {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "unread">("all");
 
+  // Use userProfile.driverId if available, otherwise fallback to user.uid
+  const driverId = userProfile?.driverId || user?.uid || "";
+
   useEffect(() => {
-    if (!user) return;
+    if (!driverId) {
+      setLoading(false);
+      return;
+    }
 
     const q = query(
       collection(db, "driverNotifications"),
-      where("driverId", "==", user.uid),
+      where("driverId", "==", driverId),
       orderBy("createdAt", "desc")
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const notifs = snapshot.docs.map(doc => ({
+      const notifs = snapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       })) as Notification[];
       setNotifications(notifs);
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [driverId]);
 
-  const filteredNotifications = filter === "all"
-    ? notifications
-    : notifications.filter(n => !n.read);
+  const filteredNotifications =
+    filter === "all" ? notifications : notifications.filter((n) => !n.read);
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Notifications</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Notifications
+          </h1>
           <p className="text-gray-600">{unreadCount} unread notifications</p>
         </div>
 
@@ -108,7 +121,8 @@ export default function DriverNotificationsPage() {
                   <div className="flex-1">
                     <p className="text-gray-900 font-medium">{notif.message}</p>
                     <p className="text-sm text-gray-500 mt-1">
-                      {notif.createdAt?.toDate?.()?.toLocaleString() || "Just now"}
+                      {notif.createdAt?.toDate?.()?.toLocaleString() ||
+                        "Just now"}
                     </p>
                   </div>
                   {!notif.read && (

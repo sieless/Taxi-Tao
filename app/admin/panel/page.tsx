@@ -1,21 +1,44 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { collection, getDocs, doc, updateDoc, query, where, deleteDoc, Timestamp } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  doc,
+  updateDoc,
+  query,
+  where,
+  deleteDoc,
+  Timestamp,
+  onSnapshot,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Driver, BookingRequest } from "@/lib/types";
-import { LogOut, CheckCircle, XCircle, AlertTriangle, Users, FileText, MessageSquare, Car, RefreshCw, MapPin, Flag, Calendar, Trash2 } from "lucide-react";
+import {
+  LogOut,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Users,
+  FileText,
+  MessageSquare,
+  Car,
+  RefreshCw,
+  MapPin,
+  Flag,
+  Calendar,
+  Trash2,
+} from "lucide-react";
 import { getNextPaymentDueDate } from "@/lib/subscription-utils";
 import { createNotification } from "@/lib/notifications";
 import Logo from "@/components/Logo";
 
 const docs = [
-  { id: 'readme', title: 'Project Overview', file: 'README.md' },
-  { id: 'admin', title: 'Admin Setup', file: 'ADMIN_SETUP.md' },
-  { id: 'auth', title: 'Authentication', file: 'AUTH.md' },
+  { id: "readme", title: "Project Overview", file: "README.md" },
+  { id: "admin", title: "Admin Setup", file: "ADMIN_SETUP.md" },
+  { id: "auth", title: "Authentication", file: "AUTH.md" },
 ];
 
 export default function AdminPanel() {
@@ -23,15 +46,19 @@ export default function AdminPanel() {
   const router = useRouter();
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'pending' | 'expired'>('pending');
+  const [filter, setFilter] = useState<"all" | "pending" | "expired">(
+    "pending"
+  );
   const [bookingRequests, setBookingRequests] = useState<any[]>([]);
   const [clientIssues, setClientIssues] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'drivers' | 'dispatch' | 'docs'>('drivers');
-  const [selectedDoc, setSelectedDoc] = useState<string>('readme');
+  const [activeTab, setActiveTab] = useState<"drivers" | "dispatch" | "docs">(
+    "drivers"
+  );
+  const [selectedDoc, setSelectedDoc] = useState<string>("readme");
 
   // Fetch booking requests when dispatch tab is active
   useEffect(() => {
-    if (activeTab === 'dispatch') {
+    if (activeTab === "dispatch") {
       fetchBookingRequests();
     }
   }, [activeTab]);
@@ -40,22 +67,22 @@ export default function AdminPanel() {
     try {
       const q = query(collection(db, "bookingRequests"));
       const querySnapshot = await getDocs(q);
-      const requests = querySnapshot.docs.map(doc => ({
+      const requests = querySnapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       }));
       setBookingRequests(requests);
     } catch (error) {
       console.error("Error fetching booking requests:", error);
     }
-    
+
     // Also fetch client issues
     try {
       const q = query(collection(db, "client_issues"));
       const querySnapshot = await getDocs(q);
-      const issues = querySnapshot.docs.map(doc => ({
+      const issues = querySnapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       }));
       setClientIssues(issues);
     } catch (error) {
@@ -64,29 +91,34 @@ export default function AdminPanel() {
   }
 
   // Calculate counts
-  const pendingCount = drivers.filter(d => d.subscriptionStatus === 'pending').length;
-  const expiredCount = drivers.filter(d => d.subscriptionStatus === 'expired').length;
+  const pendingCount = drivers.filter(
+    (d) => d.subscriptionStatus === "pending"
+  ).length;
+  const expiredCount = drivers.filter(
+    (d) => d.subscriptionStatus === "expired"
+  ).length;
 
-  // Fetch drivers
+  // Real-time listener for drivers
   useEffect(() => {
-    fetchDrivers();
-  }, []);
+    const q = query(collection(db, "drivers"));
+    const unsubscribe = onSnapshot(
+      q,
+      (querySnapshot) => {
+        const driversData: Driver[] = [];
+        querySnapshot.forEach((doc) => {
+          driversData.push({ id: doc.id, ...doc.data() } as Driver);
+        });
+        setDrivers(driversData);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Error fetching drivers:", error);
+        setLoading(false);
+      }
+    );
 
-  async function fetchDrivers() {
-    try {
-      const q = query(collection(db, "drivers"));
-      const querySnapshot = await getDocs(q);
-      const driversData: Driver[] = [];
-      querySnapshot.forEach((doc) => {
-        driversData.push({ id: doc.id, ...doc.data() } as Driver);
-      });
-      setDrivers(driversData);
-      setLoading(false);
-    } catch (error) {
-      console.error("Error fetching drivers:", error);
-      setLoading(false);
-    }
-  }
+    return () => unsubscribe();
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -94,34 +126,116 @@ export default function AdminPanel() {
   };
 
   async function broadcastToWhatsApp(request: any) {
-    const message = `🚖 *New Ride Request*\n\n` +
+    const message =
+      `🚖 *New Ride Request - Not Confirmed*\n\n` +
       `📍 Pickup: ${request.pickupLocation}\n` +
       `🏁 Dropoff: ${request.destination}\n` +
-      `📅 Date: ${request.pickupDate} at ${request.pickupTime}\n\n` +
-      `Click here to accept: https://taxitao.com/driver/dashboard`;
-    
-    // 1. Open WhatsApp
-    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+      `📅 Date: ${request.pickupDate} at ${request.pickupTime}\n` +
+      `👤 Customer: ${request.customerName}\n` +
+      `📞 Phone: ${request.customerPhone}\n\n` +
+      `⚠️ *This ride is pending and needs a driver!*\n\n` +
+      `Click here to accept: https://taxitao.co.ke/driver/dashboard`;
 
-    // 2. Create System Notification for all drivers (conceptually, or just log it for now as we don't have a "broadcast" notification type yet that targets all)
-    // For now, we'll create a notification for the admin to confirm it was sent, or if we had a list of online drivers we'd loop them.
-    // Since we don't want to spam the DB with 100s of notifications in this loop, we'll assume a "system_broadcast" type might be handled by a cloud function later.
-    // But per request "make broadcast on system /drivers", we will add a notification record that could be fetched by drivers.
-    
+    // 1. Open WhatsApp
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+
+    // 2. Send internal notifications to drivers in the area
     try {
-      // Example: Create a "global" notification or just one for record keeping
+      // Find drivers in the pickup location area
+      const driversRef = collection(db, "drivers");
+      const locationQuery = query(
+        driversRef,
+        where("status", "==", "available"),
+        where("subscriptionStatus", "==", "active"),
+        where("isVisibleToPublic", "==", true)
+      );
+
+      const querySnapshot = await getDocs(locationQuery);
+      const allActiveDrivers: Driver[] = querySnapshot.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+      })) as Driver[];
+
+      // Filter drivers by location (pickup area)
+      // Match drivers whose currentLocation or businessLocation matches pickup area
+      const pickupLocationLower =
+        request.pickupLocation?.toLowerCase().trim() || "";
+      const areaDrivers = allActiveDrivers.filter((driver) => {
+        const currentLoc = driver.currentLocation?.toLowerCase().trim() || "";
+        const businessLoc = driver.businessLocation?.toLowerCase().trim() || "";
+
+        // Check if driver's location matches pickup location (exact or contains)
+        return (
+          currentLoc === pickupLocationLower ||
+          businessLoc === pickupLocationLower ||
+          currentLoc.includes(pickupLocationLower) ||
+          businessLoc.includes(pickupLocationLower) ||
+          pickupLocationLower.includes(currentLoc) ||
+          pickupLocationLower.includes(businessLoc)
+        );
+      });
+
+      // If no area-specific drivers found, fallback to all active drivers
+      const targetDrivers =
+        areaDrivers.length > 0 ? areaDrivers : allActiveDrivers;
+
+      // Create notifications for each driver in the area
+      const notificationPromises = targetDrivers.map((driver) =>
+        createNotification(
+          driver.id,
+          driver.email || "",
+          driver.phone || "",
+          driver.name,
+          "ride_request",
+          "🚖 New Ride Request - Needs Driver",
+          `Pending ride from ${request.pickupLocation} to ${request.destination} on ${request.pickupDate} at ${request.pickupTime}. Customer: ${request.customerName} (${request.customerPhone}). This ride is not confirmed and needs a driver!`,
+          user?.uid || "admin",
+          {
+            bookingId: request.id,
+            pickupLocation: request.pickupLocation,
+            destination: request.destination,
+            pickupDate: request.pickupDate,
+            pickupTime: request.pickupTime,
+            customerName: request.customerName,
+            customerPhone: request.customerPhone,
+          }
+        )
+      );
+
+      await Promise.all(notificationPromises);
+
+      // Also create a system broadcast notification for drivers who check system_broadcast
       await createNotification(
-        'system_broadcast', // Special ID or topic
-        'drivers@taxitao.com',
-        '0000000000',
-        'All Drivers',
-        'ride_request',
-        'New Ride Available',
-        `New ride from ${request.pickupLocation} to ${request.destination}`,
-        user?.uid || 'admin'
+        "system_broadcast",
+        "drivers@taxitao.co.ke",
+        "0000000000",
+        "All Drivers",
+        "ride_request",
+        "🚖 New Ride Request - Needs Driver",
+        `Pending ride from ${request.pickupLocation} to ${request.destination} on ${request.pickupDate} at ${request.pickupTime}. This ride is not confirmed and needs a driver!`,
+        user?.uid || "admin",
+        {
+          bookingId: request.id,
+          pickupLocation: request.pickupLocation,
+          destination: request.destination,
+          pickupDate: request.pickupDate,
+          pickupTime: request.pickupTime,
+        }
+      );
+
+      const areaInfo =
+        areaDrivers.length > 0
+          ? `${areaDrivers.length} drivers in ${request.pickupLocation} area`
+          : `${targetDrivers.length} active drivers (no area-specific matches found)`;
+
+      alert(
+        `✅ Broadcast sent!\n- WhatsApp message opened\n- Internal notifications sent to ${areaInfo}`
       );
     } catch (error) {
-      console.error("Error creating system broadcast:", error);
+      console.error("Error creating internal broadcast:", error);
+      alert(
+        "⚠️ WhatsApp opened, but failed to send internal notifications. Please try again."
+      );
     }
   }
 
@@ -129,7 +243,7 @@ export default function AdminPanel() {
     if (!confirm("Are you sure you want to delete this request?")) return;
     try {
       await deleteDoc(doc(db, "bookingRequests", requestId));
-      setBookingRequests(prev => prev.filter(r => r.id !== requestId));
+      setBookingRequests((prev) => prev.filter((r) => r.id !== requestId));
     } catch (error) {
       console.error("Error deleting request:", error);
       alert("Failed to delete request");
@@ -140,10 +254,12 @@ export default function AdminPanel() {
     if (!confirm("Mark this issue as solved?")) return;
     try {
       await updateDoc(doc(db, "bookingRequests", requestId), {
-        status: 'solved' // or 'completed' depending on flow, but user asked for solved/pending in issues
+        status: "solved", // or 'completed' depending on flow, but user asked for solved/pending in issues
       });
       // Refresh local state
-      setBookingRequests(prev => prev.map(r => r.id === requestId ? { ...r, status: 'solved' } : r));
+      setBookingRequests((prev) =>
+        prev.map((r) => (r.id === requestId ? { ...r, status: "solved" } : r))
+      );
     } catch (error) {
       console.error("Error resolving issue:", error);
       alert("Failed to resolve issue");
@@ -154,28 +270,36 @@ export default function AdminPanel() {
     if (!confirm("Mark this client issue as solved?")) return;
     try {
       await updateDoc(doc(db, "client_issues", issueId), {
-        status: 'solved'
+        status: "solved",
       });
-      setClientIssues(prev => prev.map(i => i.id === issueId ? { ...i, status: 'solved' } : i));
+      setClientIssues((prev) =>
+        prev.map((i) => (i.id === issueId ? { ...i, status: "solved" } : i))
+      );
     } catch (error) {
       console.error("Error resolving client issue:", error);
       alert("Failed to resolve client issue");
     }
   }
 
-  async function verifyPayment(driverId: string, name: string, email: string, phone: string) {
-    if (!confirm(`Are you sure you want to verify payment for ${name}?`)) return;
+  async function verifyPayment(
+    driverId: string,
+    name: string,
+    email: string,
+    phone: string
+  ) {
+    if (!confirm(`Are you sure you want to verify payment for ${name}?`))
+      return;
 
     try {
       const driverRef = doc(db, "drivers", driverId);
       const nextDue = getNextPaymentDueDate();
-      
+
       await updateDoc(driverRef, {
-        subscriptionStatus: 'active',
+        subscriptionStatus: "active",
         isVisibleToPublic: true,
         lastPaymentDate: new Date(),
         nextPaymentDue: nextDue,
-        active: true
+        active: true,
       });
 
       // Create notification
@@ -184,30 +308,35 @@ export default function AdminPanel() {
         email,
         phone,
         name,
-        'payment_verified',
-        'Subscription Activated',
+        "payment_verified",
+        "Subscription Activated",
         `Your payment has been verified. Your subscription is active until ${nextDue.toLocaleDateString()}.`,
-        user?.uid || 'admin'
+        user?.uid || "admin"
       );
 
       alert(`Payment verified for ${name}`);
-      fetchDrivers(); // Refresh list
+      // fetchDrivers(); // Real-time listener handles updates // Refresh list
     } catch (error) {
       console.error("Error verifying payment:", error);
       alert("Failed to verify payment");
     }
   }
 
-  async function rejectPayment(driverId: string, name: string, email: string, phone: string) {
+  async function rejectPayment(
+    driverId: string,
+    name: string,
+    email: string,
+    phone: string
+  ) {
     const reason = prompt("Enter reason for rejection:");
     if (!reason) return;
 
     try {
       const driverRef = doc(db, "drivers", driverId);
-      
+
       await updateDoc(driverRef, {
-        subscriptionStatus: 'expired', // Or keep as pending/suspended
-        isVisibleToPublic: false
+        subscriptionStatus: "expired", // Or keep as pending/suspended
+        isVisibleToPublic: false,
       });
 
       // Create notification
@@ -216,15 +345,15 @@ export default function AdminPanel() {
         email,
         phone,
         name,
-        'payment_rejected',
-        'Payment Rejected',
+        "payment_rejected",
+        "Payment Rejected",
         `Your payment was rejected. Reason: ${reason}`,
-        user?.uid || 'admin',
+        user?.uid || "admin",
         { rejectionReason: reason }
       );
 
       alert(`Payment rejected for ${name}`);
-      fetchDrivers();
+      // fetchDrivers(); // Real-time listener handles updates
     } catch (error) {
       console.error("Error rejecting payment:", error);
       alert("Failed to reject payment");
@@ -233,19 +362,27 @@ export default function AdminPanel() {
 
   function sendMessageToDriver(driver: Driver) {
     const message = `Hello ${driver.name}, regarding your TaxiTao account...`;
-    window.open(`https://wa.me/${driver.whatsapp}?text=${encodeURIComponent(message)}`, '_blank');
+    window.open(
+      `https://wa.me/${driver.whatsapp}?text=${encodeURIComponent(message)}`,
+      "_blank"
+    );
   }
 
   async function deleteDriver(driverId: string, name: string) {
-    if (!confirm(`Are you sure you want to PERMANENTLY DELETE driver ${name}? This action cannot be undone.`)) return;
+    if (
+      !confirm(
+        `Are you sure you want to PERMANENTLY DELETE driver ${name}? This action cannot be undone.`
+      )
+    )
+      return;
 
     try {
       await deleteDoc(doc(db, "drivers", driverId));
       // Also try to delete from users collection if possible, but for now just driver profile
-      // await deleteDoc(doc(db, "users", driverId)); 
-      
+      // await deleteDoc(doc(db, "users", driverId));
+
       alert(`Driver ${name} deleted successfully`);
-      fetchDrivers();
+      // fetchDrivers(); // Real-time listener handles updates
     } catch (error) {
       console.error("Error deleting driver:", error);
       alert("Failed to delete driver");
@@ -262,7 +399,9 @@ export default function AdminPanel() {
               <Logo variant="icon-only" size="md" clickable={true} />
               <h1 className="text-2xl font-bold text-gray-800">Admin Panel</h1>
             </div>
-            <p className="text-sm text-gray-600 mt-1 ml-14">Manage drivers and subscriptions</p>
+            <p className="text-sm text-gray-600 mt-1 ml-14">
+              Manage drivers and subscriptions
+            </p>
           </div>
           <div className="flex items-center gap-4">
             <button
@@ -281,16 +420,16 @@ export default function AdminPanel() {
             </button>
           </div>
         </div>
-        
+
         {/* Tabs */}
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex gap-4 border-b border-gray-200">
             <button
-              onClick={() => setActiveTab('drivers')}
+              onClick={() => setActiveTab("drivers")}
               className={`px-4 py-3 font-medium transition border-b-2 ${
-                activeTab === 'drivers'
-                  ? 'border-green-600 text-green-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-800'
+                activeTab === "drivers"
+                  ? "border-green-600 text-green-600"
+                  : "border-transparent text-gray-600 hover:text-gray-800"
               }`}
             >
               <div className="flex items-center gap-2">
@@ -299,11 +438,11 @@ export default function AdminPanel() {
               </div>
             </button>
             <button
-              onClick={() => setActiveTab('dispatch')}
+              onClick={() => setActiveTab("dispatch")}
               className={`px-4 py-3 font-medium transition border-b-2 ${
-                activeTab === 'dispatch'
-                  ? 'border-green-600 text-green-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-800'
+                activeTab === "dispatch"
+                  ? "border-green-600 text-green-600"
+                  : "border-transparent text-gray-600 hover:text-gray-800"
               }`}
             >
               <div className="flex items-center gap-2">
@@ -312,11 +451,11 @@ export default function AdminPanel() {
               </div>
             </button>
             <button
-              onClick={() => setActiveTab('docs')}
+              onClick={() => setActiveTab("docs")}
               className={`px-4 py-3 font-medium transition border-b-2 ${
-                activeTab === 'docs'
-                  ? 'border-green-600 text-green-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-800'
+                activeTab === "docs"
+                  ? "border-green-600 text-green-600"
+                  : "border-transparent text-gray-600 hover:text-gray-800"
               }`}
             >
               <div className="flex items-center gap-2">
@@ -330,7 +469,7 @@ export default function AdminPanel() {
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Drivers Tab */}
-        {activeTab === 'drivers' && (
+        {activeTab === "drivers" && (
           <>
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -341,7 +480,9 @@ export default function AdminPanel() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Total Drivers</p>
-                    <p className="text-2xl font-bold text-gray-800">{drivers.length}</p>
+                    <p className="text-2xl font-bold text-gray-800">
+                      {drivers.length}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -352,8 +493,12 @@ export default function AdminPanel() {
                     <AlertTriangle className="w-6 h-6 text-yellow-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Pending Verification</p>
-                    <p className="text-2xl font-bold text-gray-800">{pendingCount}</p>
+                    <p className="text-sm text-gray-600">
+                      Pending Verification
+                    </p>
+                    <p className="text-2xl font-bold text-gray-800">
+                      {pendingCount}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -364,8 +509,12 @@ export default function AdminPanel() {
                     <XCircle className="w-6 h-6 text-red-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Expired Subscriptions</p>
-                    <p className="text-2xl font-bold text-gray-800">{expiredCount}</p>
+                    <p className="text-sm text-gray-600">
+                      Expired Subscriptions
+                    </p>
+                    <p className="text-2xl font-bold text-gray-800">
+                      {expiredCount}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -375,31 +524,31 @@ export default function AdminPanel() {
             <div className="bg-white rounded-xl shadow-md p-4 mb-6">
               <div className="flex gap-4">
                 <button
-                  onClick={() => setFilter('all')}
+                  onClick={() => setFilter("all")}
                   className={`px-4 py-2 rounded-lg font-medium transition ${
-                    filter === 'all'
-                      ? 'bg-green-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    filter === "all"
+                      ? "bg-green-600 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                   }`}
                 >
                   All Drivers
                 </button>
                 <button
-                  onClick={() => setFilter('pending')}
+                  onClick={() => setFilter("pending")}
                   className={`px-4 py-2 rounded-lg font-medium transition ${
-                    filter === 'pending'
-                      ? 'bg-green-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    filter === "pending"
+                      ? "bg-green-600 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                   }`}
                 >
                   Pending ({pendingCount})
                 </button>
                 <button
-                  onClick={() => setFilter('expired')}
+                  onClick={() => setFilter("expired")}
                   className={`px-4 py-2 rounded-lg font-medium transition ${
-                    filter === 'expired'
-                      ? 'bg-green-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    filter === "expired"
+                      ? "bg-green-600 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                   }`}
                 >
                   Expired ({expiredCount})
@@ -413,43 +562,77 @@ export default function AdminPanel() {
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Driver</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Visibility</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Next Due</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Driver
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Contact
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Visibility
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Next Due
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {drivers.map((driver) => {
-                      const nextDue = driver.nextPaymentDue ? (driver.nextPaymentDue instanceof Timestamp ? driver.nextPaymentDue.toDate() : new Date(driver.nextPaymentDue)) : new Date();
+                      const nextDue = driver.nextPaymentDue
+                        ? driver.nextPaymentDue instanceof Timestamp
+                          ? driver.nextPaymentDue.toDate()
+                          : new Date(driver.nextPaymentDue)
+                        : new Date();
                       return (
                         <tr key={driver.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div>
-                              <div className="text-sm font-medium text-gray-900">{driver.name}</div>
-                              <div className="text-sm text-gray-500">{driver.email}</div>
+                              <div className="text-sm font-medium text-gray-900">
+                                {driver.name}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {driver.email}
+                              </div>
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{driver.phone}</div>
-                            <div className="text-sm text-gray-500">WhatsApp: {driver.whatsapp}</div>
+                            <div className="text-sm text-gray-900">
+                              {driver.phone}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              WhatsApp: {driver.whatsapp}
+                            </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                              driver.subscriptionStatus === 'active' ? 'bg-green-100 text-green-800' :
-                              driver.subscriptionStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-red-100 text-red-800'
-                            }`}>
-                              {(driver.subscriptionStatus || 'unknown').toUpperCase()}
+                            <span
+                              className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                driver.subscriptionStatus === "active"
+                                  ? "bg-green-100 text-green-800"
+                                  : driver.subscriptionStatus === "pending"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : "bg-red-100 text-red-800"
+                              }`}
+                            >
+                              {(
+                                driver.subscriptionStatus || "unknown"
+                              ).toUpperCase()}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                              driver.isVisibleToPublic ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
-                            }`}>
-                              {driver.isVisibleToPublic ? 'PUBLIC' : 'HIDDEN'}
+                            <span
+                              className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                driver.isVisibleToPublic
+                                  ? "bg-blue-100 text-blue-800"
+                                  : "bg-gray-100 text-gray-800"
+                              }`}
+                            >
+                              {driver.isVisibleToPublic ? "PUBLIC" : "HIDDEN"}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -457,10 +640,17 @@ export default function AdminPanel() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div className="flex gap-2 flex-wrap">
-                              {driver.subscriptionStatus !== 'active' && (
+                              {driver.subscriptionStatus !== "active" && (
                                 <>
                                   <button
-                                    onClick={() => verifyPayment(driver.id, driver.name, driver.email || '', driver.phone || '')}
+                                    onClick={() =>
+                                      verifyPayment(
+                                        driver.id,
+                                        driver.name,
+                                        driver.email || "",
+                                        driver.phone || ""
+                                      )
+                                    }
                                     className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded transition"
                                     title="Verify payment and activate subscription"
                                   >
@@ -468,7 +658,14 @@ export default function AdminPanel() {
                                     Verify
                                   </button>
                                   <button
-                                    onClick={() => rejectPayment(driver.id, driver.name, driver.email || '', driver.phone || '')}
+                                    onClick={() =>
+                                      rejectPayment(
+                                        driver.id,
+                                        driver.name,
+                                        driver.email || "",
+                                        driver.phone || ""
+                                      )
+                                    }
                                     className="flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded transition"
                                     title="Reject payment"
                                   >
@@ -477,7 +674,7 @@ export default function AdminPanel() {
                                   </button>
                                 </>
                               )}
-                              {driver.subscriptionStatus === 'active' && (
+                              {driver.subscriptionStatus === "active" && (
                                 <span className="text-green-600">✓ Active</span>
                               )}
                               <button
@@ -489,7 +686,9 @@ export default function AdminPanel() {
                                 Message
                               </button>
                               <button
-                                onClick={() => deleteDriver(driver.id, driver.name)}
+                                onClick={() =>
+                                  deleteDriver(driver.id, driver.name)
+                                }
                                 className="flex items-center gap-1 bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded transition"
                                 title="Delete driver"
                               >
@@ -515,11 +714,13 @@ export default function AdminPanel() {
         )}
 
         {/* Dispatch Tab */}
-        {activeTab === 'dispatch' && (
+        {activeTab === "dispatch" && (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className="text-xl font-bold text-gray-800">Active Ride Requests</h2>
-              <button 
+              <h2 className="text-xl font-bold text-gray-800">
+                Active Ride Requests
+              </h2>
+              <button
                 onClick={fetchBookingRequests}
                 className="flex items-center gap-2 text-green-600 hover:text-green-700 font-medium"
               >
@@ -538,55 +739,80 @@ export default function AdminPanel() {
                     Pending
                   </h3>
                   <span className="bg-white text-gray-600 text-xs font-bold px-2 py-1 rounded-full shadow-sm">
-                    {bookingRequests.filter(r => r.status === 'pending').length}
+                    {
+                      bookingRequests.filter((r) => r.status === "pending")
+                        .length
+                    }
                   </span>
                 </div>
-                
+
                 <div className="space-y-3">
-                  {bookingRequests.filter(r => r.status === 'pending').length === 0 ? (
-                    <p className="text-center text-gray-400 text-sm py-8">No pending requests</p>
+                  {bookingRequests.filter((r) => r.status === "pending")
+                    .length === 0 ? (
+                    <p className="text-center text-gray-400 text-sm py-8">
+                      No pending requests
+                    </p>
                   ) : (
-                    bookingRequests.filter(r => r.status === 'pending').map((request) => (
-                      <div key={request.id} className="bg-white rounded-lg shadow-sm p-3 border border-gray-200 hover:shadow-md transition">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <p className="font-bold text-gray-800 text-sm">{request.customerName}</p>
-                            <p className="text-xs text-gray-500">{request.customerPhone}</p>
+                    bookingRequests
+                      .filter((r) => r.status === "pending")
+                      .map((request) => (
+                        <div
+                          key={request.id}
+                          className="bg-white rounded-lg shadow-sm p-3 border border-gray-200 hover:shadow-md transition"
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <p className="font-bold text-gray-800 text-sm">
+                                {request.customerName}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {request.customerPhone}
+                              </p>
+                            </div>
+                            <span className="text-[10px] font-bold bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded">
+                              {request.pickupTime}
+                            </span>
                           </div>
-                          <span className="text-[10px] font-bold bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded">
-                            {request.pickupTime}
-                          </span>
-                        </div>
 
-                        <div className="space-y-1.5 mb-3">
-                          <div className="flex items-start gap-2">
-                            <MapPin className="w-3 h-3 text-green-600 mt-0.5 flex-shrink-0" />
-                            <p className="text-xs text-gray-600 line-clamp-1" title={request.pickupLocation}>{request.pickupLocation}</p>
+                          <div className="space-y-1.5 mb-3">
+                            <div className="flex items-start gap-2">
+                              <MapPin className="w-3 h-3 text-green-600 mt-0.5 flex-shrink-0" />
+                              <p
+                                className="text-xs text-gray-600 line-clamp-1"
+                                title={request.pickupLocation}
+                              >
+                                {request.pickupLocation}
+                              </p>
+                            </div>
+                            <div className="flex items-start gap-2">
+                              <Flag className="w-3 h-3 text-red-600 mt-0.5 flex-shrink-0" />
+                              <p
+                                className="text-xs text-gray-600 line-clamp-1"
+                                title={request.destination}
+                              >
+                                {request.destination}
+                              </p>
+                            </div>
                           </div>
-                          <div className="flex items-start gap-2">
-                            <Flag className="w-3 h-3 text-red-600 mt-0.5 flex-shrink-0" />
-                            <p className="text-xs text-gray-600 line-clamp-1" title={request.destination}>{request.destination}</p>
-                          </div>
-                        </div>
 
-                        <div className="flex gap-2 mt-2">
-                          <button
-                            onClick={() => broadcastToWhatsApp(request)}
-                            className="flex-1 bg-[#25D366] hover:bg-[#128C7E] text-white text-xs font-bold py-2 rounded transition flex items-center justify-center gap-1.5"
-                          >
-                            <MessageSquare className="w-3 h-3" />
-                            Broadcast
-                          </button>
-                          <button
-                            onClick={() => deleteRequest(request.id)}
-                            className="bg-red-100 hover:bg-red-200 text-red-600 p-2 rounded transition"
-                            title="Delete Request"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="flex gap-2 mt-2">
+                            <button
+                              onClick={() => broadcastToWhatsApp(request)}
+                              className="flex-1 bg-[#25D366] hover:bg-[#128C7E] text-white text-xs font-bold py-2 rounded transition flex items-center justify-center gap-1.5"
+                            >
+                              <MessageSquare className="w-3 h-3" />
+                              Broadcast
+                            </button>
+                            <button
+                              onClick={() => deleteRequest(request.id)}
+                              className="bg-red-100 hover:bg-red-200 text-red-600 p-2 rounded transition"
+                              title="Delete Request"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      ))
                   )}
                 </div>
               </div>
@@ -599,19 +825,32 @@ export default function AdminPanel() {
                     Completed
                   </h3>
                   <span className="bg-white text-gray-600 text-xs font-bold px-2 py-1 rounded-full shadow-sm">
-                    {bookingRequests.filter(r => r.status === 'completed').length}
+                    {
+                      bookingRequests.filter((r) => r.status === "completed")
+                        .length
+                    }
                   </span>
                 </div>
                 <div className="space-y-3">
-                  {bookingRequests.filter(r => r.status === 'completed').length === 0 ? (
-                    <p className="text-center text-gray-400 text-sm py-8">No completed requests</p>
+                  {bookingRequests.filter((r) => r.status === "completed")
+                    .length === 0 ? (
+                    <p className="text-center text-gray-400 text-sm py-8">
+                      No completed requests
+                    </p>
                   ) : (
-                    bookingRequests.filter(r => r.status === 'completed').map((request) => (
-                      <div key={request.id} className="bg-white rounded-lg shadow-sm p-3 border border-gray-200 opacity-75">
-                        <p className="text-sm font-medium text-gray-800">{request.customerName}</p>
-                        <p className="text-xs text-gray-500">Completed</p>
-                      </div>
-                    ))
+                    bookingRequests
+                      .filter((r) => r.status === "completed")
+                      .map((request) => (
+                        <div
+                          key={request.id}
+                          className="bg-white rounded-lg shadow-sm p-3 border border-gray-200 opacity-75"
+                        >
+                          <p className="text-sm font-medium text-gray-800">
+                            {request.customerName}
+                          </p>
+                          <p className="text-xs text-gray-500">Completed</p>
+                        </div>
+                      ))
                   )}
                 </div>
               </div>
@@ -624,53 +863,81 @@ export default function AdminPanel() {
                     Issues
                   </h3>
                   <span className="bg-white text-gray-600 text-xs font-bold px-2 py-1 rounded-full shadow-sm">
-                    {bookingRequests.filter(r => r.status === 'issue').length + clientIssues.filter(i => i.status !== 'solved').length}
+                    {bookingRequests.filter((r) => r.status === "issue")
+                      .length +
+                      clientIssues.filter((i) => i.status !== "solved").length}
                   </span>
                 </div>
                 <div className="space-y-3">
                   {/* Booking Issues */}
-                  {bookingRequests.filter(r => r.status === 'issue').map((request) => (
-                    <div key={request.id} className="bg-white rounded-lg shadow-sm p-3 border border-red-200">
-                      <p className="text-sm font-medium text-gray-800">{request.customerName}</p>
-                      <p className="text-xs text-red-500 mb-2">Ride Issue Reported</p>
-                      <button
-                        onClick={() => resolveIssue(request.id)}
-                        className="w-full bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-1.5 rounded transition flex items-center justify-center gap-1"
+                  {bookingRequests
+                    .filter((r) => r.status === "issue")
+                    .map((request) => (
+                      <div
+                        key={request.id}
+                        className="bg-white rounded-lg shadow-sm p-3 border border-red-200"
                       >
-                        <CheckCircle className="w-3 h-3" />
-                        Mark Solved
-                      </button>
-                    </div>
-                  ))}
+                        <p className="text-sm font-medium text-gray-800">
+                          {request.customerName}
+                        </p>
+                        <p className="text-xs text-red-500 mb-2">
+                          Ride Issue Reported
+                        </p>
+                        <button
+                          onClick={() => resolveIssue(request.id)}
+                          className="w-full bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-1.5 rounded transition flex items-center justify-center gap-1"
+                        >
+                          <CheckCircle className="w-3 h-3" />
+                          Mark Solved
+                        </button>
+                      </div>
+                    ))}
 
                   {/* Client Reported Issues */}
-                  {clientIssues.filter(i => i.status !== 'solved').map((issue) => (
-                    <div key={issue.id} className="bg-white rounded-lg shadow-sm p-3 border border-orange-200">
-                      <div className="flex justify-between items-start">
-                        <p className="text-sm font-medium text-gray-800">Client Report</p>
-                        <span className="text-[10px] bg-orange-100 text-orange-800 px-1.5 py-0.5 rounded uppercase font-bold">
-                          {issue.issueType}
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-600 mt-1 mb-2 line-clamp-2" title={issue.description}>
-                        {issue.description}
-                      </p>
-                      {issue.driverId && (
-                        <p className="text-xs text-gray-500 mb-2">Driver ID: {issue.driverId}</p>
-                      )}
-                      <button
-                        onClick={() => resolveClientIssue(issue.id)}
-                        className="w-full bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-1.5 rounded transition flex items-center justify-center gap-1"
+                  {clientIssues
+                    .filter((i) => i.status !== "solved")
+                    .map((issue) => (
+                      <div
+                        key={issue.id}
+                        className="bg-white rounded-lg shadow-sm p-3 border border-orange-200"
                       >
-                        <CheckCircle className="w-3 h-3" />
-                        Mark Solved
-                      </button>
-                    </div>
-                  ))}
+                        <div className="flex justify-between items-start">
+                          <p className="text-sm font-medium text-gray-800">
+                            Client Report
+                          </p>
+                          <span className="text-[10px] bg-orange-100 text-orange-800 px-1.5 py-0.5 rounded uppercase font-bold">
+                            {issue.issueType}
+                          </span>
+                        </div>
+                        <p
+                          className="text-xs text-gray-600 mt-1 mb-2 line-clamp-2"
+                          title={issue.description}
+                        >
+                          {issue.description}
+                        </p>
+                        {issue.driverId && (
+                          <p className="text-xs text-gray-500 mb-2">
+                            Driver ID: {issue.driverId}
+                          </p>
+                        )}
+                        <button
+                          onClick={() => resolveClientIssue(issue.id)}
+                          className="w-full bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-1.5 rounded transition flex items-center justify-center gap-1"
+                        >
+                          <CheckCircle className="w-3 h-3" />
+                          Mark Solved
+                        </button>
+                      </div>
+                    ))}
 
-                  {bookingRequests.filter(r => r.status === 'issue').length === 0 && clientIssues.filter(i => i.status !== 'solved').length === 0 && (
-                    <p className="text-center text-gray-400 text-sm py-8">No reported issues</p>
-                  )}
+                  {bookingRequests.filter((r) => r.status === "issue")
+                    .length === 0 &&
+                    clientIssues.filter((i) => i.status !== "solved").length ===
+                      0 && (
+                      <p className="text-center text-gray-400 text-sm py-8">
+                        No reported issues
+                      </p>
+                    )}
                 </div>
               </div>
             </div>
@@ -678,7 +945,7 @@ export default function AdminPanel() {
         )}
 
         {/* Documentation Tab */}
-        {activeTab === 'docs' && (
+        {activeTab === "docs" && (
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Sidebar */}
             <div className="lg:col-span-1">
@@ -691,8 +958,8 @@ export default function AdminPanel() {
                       onClick={() => setSelectedDoc(doc.id)}
                       className={`w-full text-left px-4 py-2 rounded-lg transition ${
                         selectedDoc === doc.id
-                          ? 'bg-green-100 text-green-800 font-medium'
-                          : 'hover:bg-gray-100 text-gray-700'
+                          ? "bg-green-100 text-green-800 font-medium"
+                          : "hover:bg-gray-100 text-gray-700"
                       }`}
                     >
                       {doc.title}
@@ -707,36 +974,54 @@ export default function AdminPanel() {
               <div className="bg-white rounded-xl shadow-md p-8">
                 <div className="mb-6">
                   <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                    {docs.find(d => d.id === selectedDoc)?.title}
+                    {docs.find((d) => d.id === selectedDoc)?.title}
                   </h2>
                   <p className="text-sm text-gray-500">
-                    File: <code className="bg-gray-100 px-2 py-1 rounded">docs/{docs.find(d => d.id === selectedDoc)?.file}</code>
+                    File:{" "}
+                    <code className="bg-gray-100 px-2 py-1 rounded">
+                      docs/{docs.find((d) => d.id === selectedDoc)?.file}
+                    </code>
                   </p>
                 </div>
-                
+
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                   <p className="text-sm text-blue-800">
-                    <strong>Note:</strong> Documentation files are located in the <code className="bg-blue-100 px-2 py-1 rounded">docs/</code> folder. 
-                    You can view and edit them directly in your code editor.
+                    <strong>Note:</strong> Documentation files are located in
+                    the{" "}
+                    <code className="bg-blue-100 px-2 py-1 rounded">docs/</code>{" "}
+                    folder. You can view and edit them directly in your code
+                    editor.
                   </p>
                 </div>
 
                 <div className="space-y-4">
                   <p className="text-gray-700">
-                    To view the full documentation, please open the file from your project directory:
+                    To view the full documentation, please open the file from
+                    your project directory:
                   </p>
                   <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                     <code className="text-sm text-gray-800">
-                      docs/{docs.find(d => d.id === selectedDoc)?.file}
+                      docs/{docs.find((d) => d.id === selectedDoc)?.file}
                     </code>
                   </div>
-                  
+
                   <div className="mt-6">
-                    <h3 className="font-bold text-gray-800 mb-3">Quick Links:</h3>
+                    <h3 className="font-bold text-gray-800 mb-3">
+                      Quick Links:
+                    </h3>
                     <ul className="list-disc list-inside space-y-2 text-gray-700">
-                      <li><strong>README:</strong> Project overview and setup instructions</li>
-                      <li><strong>Admin Setup:</strong> How to configure admin accounts and Firebase</li>
-                      <li><strong>Authentication:</strong> User roles, login flow, and security</li>
+                      <li>
+                        <strong>README:</strong> Project overview and setup
+                        instructions
+                      </li>
+                      <li>
+                        <strong>Admin Setup:</strong> How to configure admin
+                        accounts and Firebase
+                      </li>
+                      <li>
+                        <strong>Authentication:</strong> User roles, login flow,
+                        and security
+                      </li>
                     </ul>
                   </div>
                 </div>

@@ -2,7 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { FileText, Shield, Scale, AlertCircle, Menu, X, Home, ChevronRight } from "lucide-react";
+import {
+  FileText,
+  Shield,
+  Scale,
+  AlertCircle,
+  Menu,
+  X,
+  Home,
+  ChevronRight,
+} from "lucide-react";
 import Logo from "@/components/Logo";
 
 export default function TermsOfUsePage() {
@@ -29,7 +38,7 @@ export default function TermsOfUsePage() {
     "18. Termination of Service",
     "19. Modifications to Terms",
     "20. Governing Law and Jurisdiction",
-    "21. Contact Information"
+    "21. Contact Information",
   ];
 
   return (
@@ -49,12 +58,16 @@ export default function TermsOfUsePage() {
               <Scale className="w-6 h-6" />
               <h1 className="text-xl font-bold">Terms of Use</h1>
             </div>
-            <p className="text-sm text-green-100">Last Updated: December 9, 2024</p>
+            <p className="text-sm text-green-100">
+              Last Updated: December 9, 2024
+            </p>
           </div>
 
           {/* Table of Contents */}
           <nav className="mb-8">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-green-200 mb-4">Contents</h2>
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-green-200 mb-4">
+              Contents
+            </h2>
             <ul className="space-y-1">
               {sections.map((section, index) => (
                 <li key={index}>
@@ -86,18 +99,25 @@ export default function TermsOfUsePage() {
         className="lg:hidden fixed top-4 left-4 z-50 bg-green-800 text-white p-3 rounded-lg shadow-lg"
         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
       >
-        {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        {mobileMenuOpen ? (
+          <X className="w-6 h-6" />
+        ) : (
+          <Menu className="w-6 h-6" />
+        )}
       </button>
 
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setMobileMenuOpen(false)} />
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={() => setMobileMenuOpen(false)}
+        />
       )}
 
       {/* Mobile Menu */}
       <aside
         className={`lg:hidden fixed top-0 left-0 h-screen w-80 bg-gradient-to-br from-green-800 to-green-900 text-white z-50 transform transition-transform duration-300 overflow-y-auto ${
-          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+          mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="p-8">
@@ -110,11 +130,15 @@ export default function TermsOfUsePage() {
 
           <div className="mb-8">
             <h1 className="text-xl font-bold mb-2">Terms of Use</h1>
-            <p className="text-sm text-green-100">Last Updated: December 9, 2024</p>
+            <p className="text-sm text-green-100">
+              Last Updated: December 9, 2024
+            </p>
           </div>
 
           <nav className="mb-8">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-green-200 mb-4">Contents</h2>
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-green-200 mb-4">
+              Contents
+            </h2>
             <ul className="space-y-1">
               {sections.map((section, index) => (
                 <li key={index}>
@@ -146,16 +170,22 @@ export default function TermsOfUsePage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-12 py-12">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm text-gray-500 mb-8">
-            <Link href="/" className="hover:text-green-600">Home</Link>
+            <Link href="/" className="hover:text-green-600">
+              Home
+            </Link>
             <ChevronRight className="w-4 h-4" />
             <span className="text-gray-900 font-medium">Terms of Use</span>
           </div>
 
           {/* Header */}
           <div className="mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">Terms of Use</h1>
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+              Terms of Use
+            </h1>
             <p className="text-lg text-gray-600">
-              Please read these Terms of Use carefully before using the TaxiTao platform. By accessing or using our services, you agree to be bound by these terms.
+              Please read these Terms of Use carefully before using the TaxiTao
+              platform. By accessing or using our services, you agree to be
+              bound by these terms.
             </p>
           </div>
 
@@ -164,20 +194,49 @@ export default function TermsOfUsePage() {
             {/* Section 1 */}
             <section id="section-1" className="mb-12 scroll-mt-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-                <span className="flex-shrink-0 w-10 h-10 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-lg font-bold">1</span>
+                <span className="flex-shrink-0 w-10 h-10 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-lg font-bold">
+                  1
+                </span>
                 Definitions and Interpretation
               </h2>
               <div className="space-y-3 text-gray-700">
                 <p className="font-semibold">In these Terms of Use:</p>
                 <ul className="list-disc pl-6 space-y-2">
-                  <li><strong>"Platform"</strong> refers to the TaxiTao website (taxitao.co.ke), mobile applications, and all related services.</li>
-                  <li><strong>"Company," "We," "Us," "Our"</strong> refers to TaxiTao, a transportation platform operating in Kenya.</li>
-                  <li><strong>"User," "You," "Your"</strong> refers to any individual or entity accessing or using the Platform.</li>
-                  <li><strong>"Driver"</strong> refers to registered transportation service providers on the Platform.</li>
-                  <li><strong>"Customer"</strong> refers to users requesting transportation services.</li>
-                  <li><strong>"Services"</strong> refers to the taxi booking and transportation coordination services provided through the Platform.</li>
-                  <li><strong>"Trip"</strong> refers to any completed or scheduled transportation service booked through the Platform.</li>
-                  <li><strong>"Fare"</strong> refers to the total cost of a Trip, including base fare, distance charges, and any applicable surcharges.</li>
+                  <li>
+                    <strong>"Platform"</strong> refers to the TaxiTao website
+                    (taxitao.co.ke), mobile applications, and all related
+                    services.
+                  </li>
+                  <li>
+                    <strong>"Company," "We," "Us," "Our"</strong> refers to
+                    TaxiTao, a transportation platform operating in Kenya.
+                  </li>
+                  <li>
+                    <strong>"User," "You," "Your"</strong> refers to any
+                    individual or entity accessing or using the Platform.
+                  </li>
+                  <li>
+                    <strong>"Driver"</strong> refers to registered
+                    transportation service providers on the Platform.
+                  </li>
+                  <li>
+                    <strong>"Customer"</strong> refers to users requesting
+                    transportation services.
+                  </li>
+                  <li>
+                    <strong>"Services"</strong> refers to the taxi booking and
+                    transportation coordination services provided through the
+                    Platform.
+                  </li>
+                  <li>
+                    <strong>"Trip"</strong> refers to any completed or scheduled
+                    transportation service booked through the Platform.
+                  </li>
+                  <li>
+                    <strong>"Fare"</strong> refers to the total cost of a Trip,
+                    including base fare, distance charges, and any applicable
+                    surcharges.
+                  </li>
                 </ul>
               </div>
             </section>
@@ -185,27 +244,49 @@ export default function TermsOfUsePage() {
             {/* Section 2 */}
             <section id="section-2" className="mb-12 scroll-mt-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-                <span className="flex-shrink-0 w-10 h-10 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-lg font-bold">2</span>
+                <span className="flex-shrink-0 w-10 h-10 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-lg font-bold">
+                  2
+                </span>
                 Acceptance of Terms
               </h2>
               <div className="space-y-3 text-gray-700">
-                <p>By accessing, browsing, or using the TaxiTao Platform, you acknowledge that you have read, understood, and agree to be bound by these Terms of Use and all applicable laws and regulations.</p>
-                <p>If you do not agree to these terms, you must immediately discontinue use of the Platform.</p>
-                <p>Your continued use of the Platform following any modifications to these Terms constitutes your acceptance of such modifications.</p>
+                <p>
+                  By accessing, browsing, or using the TaxiTao Platform, you
+                  acknowledge that you have read, understood, and agree to be
+                  bound by these Terms of Use and all applicable laws and
+                  regulations.
+                </p>
+                <p>
+                  If you do not agree to these terms, you must immediately
+                  discontinue use of the Platform.
+                </p>
+                <p>
+                  Your continued use of the Platform following any modifications
+                  to these Terms constitutes your acceptance of such
+                  modifications.
+                </p>
               </div>
             </section>
 
             {/* Section 3 */}
             <section id="section-3" className="mb-12 scroll-mt-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-                <span className="flex-shrink-0 w-10 h-10 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-lg font-bold">3</span>
+                <span className="flex-shrink-0 w-10 h-10 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-lg font-bold">
+                  3
+                </span>
                 Description of Services
               </h2>
               <div className="space-y-3 text-gray-700">
                 <p>TaxiTao provides a technology platform that:</p>
                 <ul className="list-disc pl-6 space-y-2">
-                  <li>Connects Customers with independent Drivers for transportation services</li>
-                  <li>Facilitates booking, scheduling, and payment processing for transportation services</li>
+                  <li>
+                    Connects Customers with independent Drivers for
+                    transportation services
+                  </li>
+                  <li>
+                    Facilitates booking, scheduling, and payment processing for
+                    transportation services
+                  </li>
                   <li>Provides route pricing information and fare estimates</li>
                   <li>Enables communication between Customers and Drivers</li>
                   <li>Offers driver rating and review systems</li>
@@ -215,51 +296,145 @@ export default function TermsOfUsePage() {
                     <AlertCircle className="w-5 h-5 text-blue-600 mr-3 flex-shrink-0 mt-0.5" />
                     <div className="text-blue-900 text-sm">
                       <p className="font-bold mb-1">Important Notice</p>
-                      <p>TaxiTao is a technology platform only. We are NOT a transportation provider, taxi company, or employer of Drivers. All transportation services are provided by independent third-party Drivers. TaxiTao does not employ Drivers and has no control over their actions, conduct, or vehicle condition.</p>
+                      <p>
+                        TaxiTao is a technology platform only. We are NOT a
+                        transportation provider, taxi company, or employer of
+                        Drivers. All transportation services are provided by
+                        independent third-party Drivers. TaxiTao does not employ
+                        Drivers and has no control over their actions, conduct,
+                        or vehicle condition.
+                      </p>
                     </div>
                   </div>
                 </div>
               </div>
             </section>
 
-            {/* Remaining sections would continue with similar structure... Due to length constraints, I'll show the pattern for critical sections */}
+            {/* Section 9 - Service Fees and Charges */}
+            <section id="section-9" className="mb-12 scroll-mt-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
+                <span className="flex-shrink-0 w-10 h-10 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-lg font-bold">
+                  9
+                </span>
+                Service Fees and Charges
+              </h2>
+              <div className="space-y-3 text-gray-700">
+                <div>
+                  <p className="font-semibold mb-2">
+                    9.1 Driver Subscription Fees
+                  </p>
+                  <p className="mb-3">
+                    Drivers are required to pay a monthly subscription fee to
+                    maintain their profile visibility on the Platform. The
+                    current subscription fee is 500 KSH per month, due on the
+                    5th of each month.
+                  </p>
+                  <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 my-4">
+                    <div className="flex">
+                      <AlertCircle className="w-5 h-5 text-yellow-600 mr-3 flex-shrink-0 mt-0.5" />
+                      <div className="text-yellow-900 text-sm">
+                        <p className="font-bold mb-1">Important Notice</p>
+                        <p>
+                          Please note that subscription fees are subject to
+                          change at our discretion. We reserve the right to
+                          modify the subscription fee amount, payment schedule,
+                          or terms at any time. Drivers will be notified of any
+                          changes to subscription fees with reasonable advance
+                          notice. The current fee structure is not guaranteed to
+                          remain static and may be adjusted based on business
+                          needs, market conditions, or platform improvements.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <p className="font-semibold mb-2">9.2 Payment Methods</p>
+                  <p>
+                    Subscription fees must be paid via M-Pesa to the designated
+                    Till Number provided by TaxiTao. Payment verification is
+                    processed manually and may take up to 24 hours.
+                  </p>
+                </div>
+                <div>
+                  <p className="font-semibold mb-2">9.3 Service Fees</p>
+                  <p>
+                    TaxiTao may charge service fees for certain platform
+                    features or premium services. All fees will be clearly
+                    disclosed before you incur any charges.
+                  </p>
+                </div>
+              </div>
+            </section>
 
             {/* Section 13 - Liability (Critical with Warning) */}
             <section id="section-13" className="mb-12 scroll-mt-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-                <span className="flex-shrink-0 w-10 h-10 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-lg font-bold">13</span>
+                <span className="flex-shrink-0 w-10 h-10 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-lg font-bold">
+                  13
+                </span>
                 Liability and Disclaimers
               </h2>
-              
+
               <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-6">
                 <div className="flex">
                   <AlertCircle className="w-5 h-5 text-yellow-600 mr-3 flex-shrink-0 mt-0.5" />
                   <div className="text-yellow-900 text-sm">
                     <p className="font-bold mb-1">IMPORTANT LEGAL NOTICE</p>
-                    <p>Please read this section carefully as it limits our liability to you.</p>
+                    <p>
+                      Please read this section carefully as it limits our
+                      liability to you.
+                    </p>
                   </div>
                 </div>
               </div>
-              
+
               <div className="space-y-6 text-gray-700">
                 <div>
                   <p className="font-semibold mb-2">13.1 Platform Disclaimer</p>
                   <ul className="list-disc pl-6 space-y-2">
-                    <li>TaxiTao provides the Platform on an "AS IS" and "AS AVAILABLE" basis</li>
-                    <li>We make no warranties regarding service availability, accuracy, or reliability</li>
-                    <li>We do not guarantee fault-free or uninterrupted service</li>
-                    <li>Technical issues may occur and we are not liable for resulting damages</li>
+                    <li>
+                      TaxiTao provides the Platform on an "AS IS" and "AS
+                      AVAILABLE" basis
+                    </li>
+                    <li>
+                      We make no warranties regarding service availability,
+                      accuracy, or reliability
+                    </li>
+                    <li>
+                      We do not guarantee fault-free or uninterrupted service
+                    </li>
+                    <li>
+                      Technical issues may occur and we are not liable for
+                      resulting damages
+                    </li>
                   </ul>
                 </div>
 
                 <div className="bg-red-50 border-l-4 border-red-500 p-4">
-                  <p className="font-semibold text-red-900 mb-2">13.2 Limitation of Liability</p>
+                  <p className="font-semibold text-red-900 mb-2">
+                    13.2 Limitation of Liability
+                  </p>
                   <ul className="list-disc pl-6 space-y-2 text-red-900 text-sm">
-                    <li>TaxiTao is NOT liable for Drivers' actions, negligence, or misconduct</li>
-                    <li>We are NOT responsible for property damage or personal injury during trips</li>
-                    <li>We are NOT liable for lost, stolen, or damaged items</li>
-                    <li>Our maximum liability is limited to the fees paid in the last 6 months or KES 10,000, whichever is less</li>
-                    <li>We are NOT liable for indirect, consequential, or punitive damages</li>
+                    <li>
+                      TaxiTao is NOT liable for Drivers' actions, negligence, or
+                      misconduct
+                    </li>
+                    <li>
+                      We are NOT responsible for property damage or personal
+                      injury during trips
+                    </li>
+                    <li>
+                      We are NOT liable for lost, stolen, or damaged items
+                    </li>
+                    <li>
+                      Our maximum liability is limited to the fees paid in the
+                      last 6 months or KES 10,000, whichever is less
+                    </li>
+                    <li>
+                      We are NOT liable for indirect, consequential, or punitive
+                      damages
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -268,18 +443,51 @@ export default function TermsOfUsePage() {
             {/* Final Sections */}
             <section id="section-21" className="mb-12 scroll-mt-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-                <span className="flex-shrink-0 w-10 h-10 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-lg font-bold">21</span>
+                <span className="flex-shrink-0 w-10 h-10 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-lg font-bold">
+                  21
+                </span>
                 Contact Information
               </h2>
               <div className="space-y-3 text-gray-700">
-                <p>For questions, concerns, or complaints regarding these Terms of Use, please contact us:</p>
+                <p>
+                  For questions, concerns, or complaints regarding these Terms
+                  of Use, please contact us:
+                </p>
                 <div className="bg-gray-50 border border-gray-200 p-6 rounded-lg mt-4">
-                  <p className="font-bold text-gray-900 mb-4">TaxiTao Customer Support</p>
+                  <p className="font-bold text-gray-900 mb-4">
+                    TaxiTao Customer Support
+                  </p>
                   <div className="space-y-2 text-sm">
-                    <p>Email: <a href="mailto:support@taxitao.co.ke" className="text-green-600 hover:text-green-700 font-medium">support@taxitao.co.ke</a></p>
-                    <p>Phone: <a href="tel:+254708674665" className="text-green-600 hover:text-green-700 font-medium">+254 708 674 665</a></p>
-                    <p className="text-gray-600">Operating Hours: Monday - Sunday, 6:00 AM - 10:00 PM EAT</p>
-                    <p className="mt-3">Website: <a href="https://www.taxitao.co.ke" className="text-green-600 hover:text-green-700 font-medium">www.taxitao.co.ke</a></p>
+                    <p>
+                      Email:{" "}
+                      <a
+                        href="mailto:support@taxitao.co.ke"
+                        className="text-green-600 hover:text-green-700 font-medium"
+                      >
+                        support@taxitao.co.ke
+                      </a>
+                    </p>
+                    <p>
+                      Phone:{" "}
+                      <a
+                        href="tel:+254708674665"
+                        className="text-green-600 hover:text-green-700 font-medium"
+                      >
+                        +254 708 674 665
+                      </a>
+                    </p>
+                    <p className="text-gray-600">
+                      Operating Hours: Monday - Sunday, 6:00 AM - 10:00 PM EAT
+                    </p>
+                    <p className="mt-3">
+                      Website:{" "}
+                      <a
+                        href="https://www.taxitao.co.ke"
+                        className="text-green-600 hover:text-green-700 font-medium"
+                      >
+                        www.taxitao.co.ke
+                      </a>
+                    </p>
                   </div>
                 </div>
               </div>
@@ -290,9 +498,14 @@ export default function TermsOfUsePage() {
               <div className="flex">
                 <Shield className="w-6 h-6 text-green-600 mr-3 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-bold text-green-900 mb-2">Acknowledgment</p>
+                  <p className="font-bold text-green-900 mb-2">
+                    Acknowledgment
+                  </p>
                   <p className="text-green-800 text-sm">
-                    BY USING THE TAXITAO PLATFORM, YOU ACKNOWLEDGE THAT YOU HAVE READ, UNDERSTOOD, AND AGREE TO BE BOUND BY THESE TERMS OF USE. IF YOU DO NOT AGREE TO THESE TERMS, YOU MUST NOT USE OUR SERVICES.
+                    BY USING THE TAXITAO PLATFORM, YOU ACKNOWLEDGE THAT YOU HAVE
+                    READ, UNDERSTOOD, AND AGREE TO BE BOUND BY THESE TERMS OF
+                    USE. IF YOU DO NOT AGREE TO THESE TERMS, YOU MUST NOT USE
+                    OUR SERVICES.
                   </p>
                 </div>
               </div>

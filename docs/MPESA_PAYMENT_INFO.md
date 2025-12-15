@@ -4,7 +4,7 @@
 
 **M-Pesa Till Number:** 7323090  
 **Account Name:** Titus Kipkirui  
-**Monthly Subscription Amount:** KES 2,000
+**Monthly Subscription Amount:** KES 500
 
 ## Payment Instructions
 
@@ -12,14 +12,14 @@
 2. Select "Lipa na M-Pesa"
 3. Select "Buy Goods and Services"
 4. Enter Till Number: **7323090**
-5. Enter Amount: **2000**
+5. Enter Amount: **500**
 6. Enter your M-Pesa PIN
 7. Confirm the payment
 
 ## After Payment
 
 1. You will receive an M-Pesa confirmation message with a transaction code (e.g., QA12BC3456)
-2. Share this M-Pesa code with support via WhatsApp: +254 710 450 640
+2. Share this M-Pesa code with support via WhatsApp: +254 708674665
 3. Your subscription will be verified and activated within 24 hours
 
 ## Important Notes
@@ -31,9 +31,9 @@
 
 ## Support Contact
 
-**WhatsApp:** +254 710 450 640  
+**WhatsApp:** +254 708674665  
 **Available:** 24/7 for payment verification and support
 
 ---
 
-*Last Updated: November 25, 2025*
+_Last Updated: November 25, 2025_
