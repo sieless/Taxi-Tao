@@ -191,13 +191,16 @@ export default function AdminPanel() {
           `Pending ride from ${request.pickupLocation} to ${request.destination} on ${request.pickupDate} at ${request.pickupTime}. Customer: ${request.customerName} (${request.customerPhone}). This ride is not confirmed and needs a driver!`,
           user?.uid || "admin",
           {
+            rejectionReason: undefined,
             bookingId: request.id,
             pickupLocation: request.pickupLocation,
-            destination: request.destination,
+            dropoffLocation: request.destination,
             pickupDate: request.pickupDate,
             pickupTime: request.pickupTime,
             customerName: request.customerName,
             customerPhone: request.customerPhone,
+            fareEstimate: request.fareEstimate,
+            action: "view_booking",
           }
         )
       );
@@ -215,11 +218,16 @@ export default function AdminPanel() {
         `Pending ride from ${request.pickupLocation} to ${request.destination} on ${request.pickupDate} at ${request.pickupTime}. This ride is not confirmed and needs a driver!`,
         user?.uid || "admin",
         {
+          rejectionReason: undefined,
           bookingId: request.id,
           pickupLocation: request.pickupLocation,
-          destination: request.destination,
+          dropoffLocation: request.destination,
           pickupDate: request.pickupDate,
           pickupTime: request.pickupTime,
+          customerName: request.customerName,
+          customerPhone: request.customerPhone,
+          fareEstimate: request.fareEstimate,
+          action: "view_booking",
         }
       );
 

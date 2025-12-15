@@ -133,6 +133,7 @@ export interface BookingRequest {
   earnings?: number; // Driver earnings from this ride
   notes?: string; // Add this property
   fareEstimate?: number; // Estimated fare
+  estimatedPrice?: number; // Add this as an alias
 }
 
 export interface RideRequest {
@@ -192,6 +193,17 @@ export interface User {
   createdAt?: FirestoreTimestamp;
 }
 
+export interface AppUser {
+  id: string;
+  email: string;
+  name?: string;
+  phone?: string;
+  role: "driver" | "admin" | "customer";
+  driverId?: string;
+  savedDrivers?: string[];
+  createdAt?: any; // Changed from FirestoreTimestamp to any
+}
+
 export interface Notification {
   id: string;
   recipientId: string; // Driver user ID
@@ -222,6 +234,9 @@ export interface Notification {
     bookingId?: string;
     pickupLocation?: string;
     dropoffLocation?: string;
+    pickupDate?: string; // Add this
+    pickupTime?: string; // Add this
+    customerName?: string; // Add this
     fareEstimate?: number;
     customerPhone?: string;
     action?: string;

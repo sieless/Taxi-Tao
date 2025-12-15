@@ -108,9 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } else {
         // Auto-create profile if missing
-        const newProfile: Partial<AppUser> = {
-          email: targetUser.email || "",
-          role: "customer",
+        const newProfile: any = {
           name:
             targetUser.displayName || targetUser.email?.split("@")[0] || "User",
           createdAt: serverTimestamp(),
@@ -172,7 +170,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return role;
       } else {
         // If no doc, auto-create
-        const newProfile: Partial<AppUser> = {
+        const newProfile: any = {
           email: userCredential.user.email || "",
           role: "customer",
           name:

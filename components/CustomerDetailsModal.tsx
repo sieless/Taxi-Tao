@@ -189,13 +189,13 @@ export default function CustomerDetailsModal({
                       </p>
                     </div>
                   </div>
-                  {booking.estimatedPrice && (
+                  {booking.fareEstimate && (
                     <div className="pt-2 border-t border-gray-200">
                       <p className="text-xs text-gray-500 mb-1">
                         Estimated Price
                       </p>
-                      <p className="font-bold text-green-600 text-lg">
-                        KES {booking.estimatedPrice.toLocaleString()}
+                      <p className="text-lg font-bold text-gray-900">
+                        KSH {booking.fareEstimate.toLocaleString()}
                       </p>
                     </div>
                   )}
