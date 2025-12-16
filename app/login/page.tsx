@@ -28,7 +28,7 @@ export default function DriverLoginPage() {
 
     try {
       const role = await signIn(email, password);
-      
+
       // Redirect based on user role
       if (role === "admin") {
         router.push("/admin/panel");
@@ -38,7 +38,9 @@ export default function DriverLoginPage() {
         router.push("/"); // Customers go to homepage
       }
     } catch (err: any) {
-      setError(err.message || "Failed to sign in. Please check your credentials.");
+      setError(
+        err.message || "Failed to sign in. Please check your credentials."
+      );
     } finally {
       setLoading(false);
     }
@@ -58,7 +60,10 @@ export default function DriverLoginPage() {
         setSuccess("");
       }, 3000);
     } catch (err: any) {
-      setError(err.message || "Failed to send reset email. Please check your email address.");
+      setError(
+        err.message ||
+          "Failed to send reset email. Please check your email address."
+      );
     } finally {
       setLoading(false);
     }
@@ -67,20 +72,30 @@ export default function DriverLoginPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 md:px-6">
       <div className="max-w-md w-full">
-        <Link href="/" className="text-green-600 hover:underline font-semibold mb-6 inline-block">
+        <Link
+          href="/"
+          className="text-green-600 hover:underline font-semibold mb-6 inline-block"
+        >
           ← Back to Home
         </Link>
 
         <div className="bg-white rounded-xl shadow-lg p-8">
           <div className="text-center mb-8">
             <div className="mb-4 flex justify-center">
-              <Logo variant="full" size="md" layout="vertical" clickable={false} />
+              <Logo
+                variant="full"
+                size="md"
+                layout="vertical"
+                clickable={false}
+              />
             </div>
             <h1 className="text-3xl font-bold text-gray-800 mb-2">
               {resetMode ? "Reset Password" : "Sign In"}
             </h1>
             <p className="text-gray-600">
-              {resetMode ? "Enter your email to receive a reset link" : "Access your account"}
+              {resetMode
+                ? "Enter your email to receive a reset link"
+                : "Access your account"}
             </p>
           </div>
 
@@ -101,7 +116,10 @@ export default function DriverLoginPage() {
           {resetMode ? (
             <form onSubmit={handlePasswordReset} className="space-y-6">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Email Address
                 </label>
                 <input
@@ -138,7 +156,10 @@ export default function DriverLoginPage() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Email Address
                 </label>
                 <input
@@ -154,7 +175,10 @@ export default function DriverLoginPage() {
 
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="password"
+                    className="block text-sm font-medium text-gray-700"
+                  >
                     Password
                   </label>
                   <button
@@ -182,7 +206,9 @@ export default function DriverLoginPage() {
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
                   >
                     {showPassword ? (
                       <EyeOff className="w-5 h-5" />
@@ -206,7 +232,10 @@ export default function DriverLoginPage() {
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               Need an account?{" "}
-              <Link href="/signup" className="text-green-600 hover:underline font-semibold">
+              <Link
+                href="/signup"
+                className="text-green-600 hover:underline font-semibold"
+              >
                 Sign up here
               </Link>
             </p>
