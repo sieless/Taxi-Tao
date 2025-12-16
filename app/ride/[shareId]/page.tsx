@@ -196,7 +196,7 @@ export default function RideSharePage() {
     for (const pattern of datePatterns) {
       const match = message.match(pattern);
       if (match) {
-        let [, day, month, year, hour, minute, ampm] = match;
+        const [, day, month, year, hour, minute, ampm] = match;
         let y = parseInt(year);
         if (y < 100) y += 2000; // Convert 25 -> 2025
 
@@ -204,7 +204,13 @@ export default function RideSharePage() {
         if (ampm?.toUpperCase() === "PM" && h < 12) h += 12;
         if (ampm?.toUpperCase() === "AM" && h === 12) h = 0;
 
-        return new Date(y, parseInt(month) - 1, parseInt(day), h, parseInt(minute));
+        return new Date(
+          y,
+          parseInt(month) - 1,
+          parseInt(day),
+          h,
+          parseInt(minute)
+        );
       }
     }
     return null;
@@ -300,7 +306,9 @@ export default function RideSharePage() {
       }, 1500);
     } catch (err: any) {
       console.error("Error submitting payment:", err);
-      setError("Failed to verify payment. Please try again or contact support.");
+      setError(
+        "Failed to verify payment. Please try again or contact support."
+      );
     } finally {
       setSubmitting(false);
     }
@@ -345,12 +353,7 @@ export default function RideSharePage() {
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-gray-100 flex items-center justify-center px-4">
         <div className="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden">
           <div className="bg-green-600 text-white p-6 text-center">
-            <Logo
-              variant="icon"
-              size="sm"
-              layout="horizontal"
-              clickable={false}
-            />
+            <Logo variant="icon-only" size="sm" clickable={false} />
             <h1 className="text-xl font-bold mt-3">Ride Request Available</h1>
             <p className="text-green-100 text-sm mt-1">
               Sign in as a driver to view and accept this ride
@@ -665,7 +668,10 @@ export default function RideSharePage() {
                     Call
                   </a>
                   <a
-                    href={`https://wa.me/${privateData.customerPhone?.replace(/\D/g, "")}`}
+                    href={`https://wa.me/${privateData.customerPhone?.replace(
+                      /\D/g,
+                      ""
+                    )}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex-1 bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg transition text-center flex items-center justify-center gap-2"
@@ -752,4 +758,3 @@ export default function RideSharePage() {
     </div>
   );
 }
-

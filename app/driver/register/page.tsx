@@ -243,12 +243,7 @@ export default function DriverRegisterPage() {
           {/* Header */}
           <div className="bg-green-600 text-white p-6 text-center">
             <div className="mb-3 flex justify-center">
-              <Logo
-                variant="icon"
-                size="md"
-                layout="horizontal"
-                clickable={false}
-              />
+              <Logo variant="icon-only" size="md" clickable={false} />
             </div>
             <h1 className="text-2xl font-bold">Become a TaxiTao Driver</h1>
             <p className="text-green-100 mt-1">
@@ -633,4 +628,3 @@ export default function DriverRegisterPage() {
     </div>
   );
 }
-
