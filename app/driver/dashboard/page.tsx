@@ -1264,7 +1264,7 @@ export default function DriverDashboard() {
               <p className="text-xs font-semibold text-gray-500 uppercase mb-1">
                 Monthly Amount
               </p>
-              <p className="text-xl font-bold text-gray-800">KES 2,000</p>
+              <p className="text-xl font-bold text-gray-800">KES 500</p>
             </div>
 
             {/* Visibility */}
@@ -1307,7 +1307,7 @@ export default function DriverDashboard() {
               </a>
             </div>
             <p className="text-xs text-gray-600 mt-2">
-              Send KES 2,000 to till number{" "}
+              Send KES 500 to till number{" "}
               <span className="font-semibold">7323090</span> and share the
               M-Pesa code with support for verification.
             </p>
