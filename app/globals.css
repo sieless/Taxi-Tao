@@ -53,3 +53,15 @@ img, video {
   height: auto;
   display: block;
 }
+
+/* Form inputs: ensure dark, readable text everywhere */
+input,
+textarea,
+select {
+  color: #111827; /* gray-900 */
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #9ca3af; /* gray-400 */
+}

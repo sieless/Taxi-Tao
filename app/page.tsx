@@ -554,13 +554,15 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col lg:flex-row items-center gap-12">
             <div className="lg:w-1/2">
-              {/* Placeholder for About Image */}
+              {/* About Image */}
               <div className="w-full h-[400px] relative rounded-xl overflow-hidden shadow-lg">
                 <Image
                   src="/images/about-us.png"
                   alt="About TaxiTao"
                   fill
-                  className="object-cover"
+                  priority
+                  unoptimized
+                  className="object-cover object-center"
                 />
               </div>
             </div>

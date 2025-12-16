@@ -20,6 +20,7 @@ export default function SignUpPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const router = useRouter();
 
   // Common fields
@@ -42,6 +43,11 @@ export default function SignUpPage() {
     e.preventDefault();
     setError("");
     setSuccess("");
+
+    if (!agreedToTerms) {
+      setError("You must agree to the Terms of Use and Privacy Policy to create an account.");
+      return;
+    }
 
     // Validation
     if (password !== confirmPassword) {
@@ -441,6 +447,33 @@ export default function SignUpPage() {
                     )}
                   </button>
                 </div>
+              </div>
+
+              <div className="flex items-start gap-2 bg-gray-50 border border-gray-200 rounded-lg p-3">
+                <input
+                  id="agree"
+                  type="checkbox"
+                  checked={agreedToTerms}
+                  onChange={(e) => setAgreedToTerms(e.target.checked)}
+                  className="mt-1 h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                />
+                <label htmlFor="agree" className="text-sm text-gray-700">
+                  I have read and agree to the{" "}
+                  <Link
+                    href="/terms"
+                    className="text-green-600 hover:underline font-semibold"
+                  >
+                    Terms of Use
+                  </Link>{" "}
+                  and{" "}
+                  <Link
+                    href="/privacy"
+                    className="text-green-600 hover:underline font-semibold"
+                  >
+                    Privacy Policy
+                  </Link>
+                  .
+                </label>
               </div>
 
               {userType === "driver" && (

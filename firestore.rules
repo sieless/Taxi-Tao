@@ -1,269 +1,301 @@
 /**
- * @fileoverview Firestore Security Rules for Taxitao Application
- *
- * Core Philosophy:
- * This ruleset enforces a strict ownership model for private user and driver data,
- * while allowing public, read-only access to driver profiles for marketing purposes.
- *
- * Data Structure:
- * - /users/{userId}: Private user data (role, etc.). Only accessible by the owner.
- * - /drivers/{driverId}: Public-facing driver profile data. Writable by the owner, readable by anyone.
- * - /drivers/{driverId}/vehicles/{vehicleId}: Private vehicle data. Only accessible by the owner.
- * - /users/{userId}/bookings/{bookingId}: Private booking data. Only accessible by the owner.
- * - /drivers/{driverId}/payments/{paymentId}: Private payment data. Only accessible by the owner.
- *
- * Key Security Decisions:
- * - User and driver listing is disallowed to protect privacy.
- * - Driver profiles in `/drivers` are public to allow marketing.
- * - All other subcollections are private and enforce owner-only access.
- * - Admins have elevated permissions to manage drivers and verify payments.
+ * @fileoverview Firestore Security Rules for TaxiTao Application
+ * 
+ * SECURITY MODEL: Split-Data Architecture
+ * ========================================
+ * This ruleset implements a split-data model where:
+ * - Public booking data (areas, times, fares) is readable by any driver
+ * - Private customer data (phone, exact addresses) requires active subscription
+ * 
+ * COLLECTIONS:
+ * - /users/{userId}: Private user profiles (role, driverId)
+ * - /drivers/{driverId}: Public driver profiles (readable by anyone)
+ * - /vehicles/{vehicleId}: Public vehicle info (readable by anyone)
+ * - /bookingRequests/{id}: PUBLIC ride data (areas, date/time, fare estimate)
+ * - /bookingRequestPrivate/{id}: PRIVATE customer data (phone, exact addresses) - SUBSCRIPTION REQUIRED
+ * - /rideShares/{shareId}: Shared link metadata with timestamps for ±3 min verification
+ * - /paymentVerifications/{id}: M-Pesa confirmation tracking
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * @description Secure root access. No direct reads or writes to the root of the database are allowed.
-     */
-    match /{document=**} {
-      allow read, write: if false;
-    }
-
-    // Helper functions
+    // ============================================================
+    // HELPER FUNCTIONS
+    // ============================================================
+    
+    // Check if user is authenticated
     function isSignedIn() {
       return request.auth != null;
     }
     
+    // Check if user owns this resource
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
     
+    // Get current user's profile data
     function getUserData() {
-      return isSignedIn() ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data : null;
+      return isSignedIn() 
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data 
+        : null;
     }
     
+    // Check if user is admin
     function isAdmin() {
-      return isSignedIn() && getUserData() != null && getUserData().role == 'admin';
+      return isSignedIn() && 
+             getUserData() != null && 
+             getUserData().role == 'admin';
     }
     
+    // Check if user is a driver
     function isDriver() {
-      return isSignedIn() && getUserData() != null && getUserData().role == 'driver';
+      return isSignedIn() && 
+             getUserData() != null && 
+             getUserData().role == 'driver';
+    }
+    
+    // Get driver's subscription data (only for drivers)
+    function getDriverSubscription() {
+      return isDriver() && getUserData().driverId != null 
+        ? get(/databases/$(database)/documents/drivers/$(getUserData().driverId)).data 
+        : null;
+    }
+    
+    // Check if driver has ACTIVE subscription (critical for private data access)
+    function isSubscribedDriver() {
+      return isDriver() && 
+             getUserData().driverId != null &&
+             getDriverSubscription() != null &&
+             getDriverSubscription().subscriptionStatus == 'active' && 
+             getDriverSubscription().isVisibleToPublic == true;
     }
 
-    /**
-     * @description Manages access to private user data. Users can read their own profile.
-     * Admins can read all user profiles. Authenticated users can read for driver matching.
-     */
-    /**
-     * @description Manages access to private user data. Users can read their own profile.
-     * Admins can read all user profiles. Authenticated users can read for driver matching.
-     */
+    // ============================================================
+    // DEFAULT: Block all access unless explicitly allowed
+    // ============================================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ============================================================
+    // USER PROFILES
+    // ============================================================
     match /users/{userId} {
-      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null;
+      // Users can read/update/delete their own profile
+      allow read, update, delete: if isSignedIn() && isOwner(userId);
+      // Any authenticated user can create their profile
+      allow create: if isSignedIn();
+      // Admins can list all users
       allow list: if isAdmin();
     }
-    
-    /**
-     * @description Manages access to public driver data. Drivers can write their own data. Anyone can read it.
-     * Admins can update driver documents for payment verification and subscription management.
-     */
+
+    // ============================================================
+    // DRIVER PROFILES (Public for marketing)
+    // ============================================================
     match /drivers/{driverId} {
-      allow read: if true; // Allow read (get and list) for everyone
+      // Anyone can read driver profiles (for booking UI)
+      allow read: if true;
+      // Drivers can create/update their own profile
       allow create: if isSignedIn() && (isOwner(driverId) || isAdmin());
       allow update: if isSignedIn() && (isOwner(driverId) || isAdmin());
-      allow delete: if isSignedIn() && isAdmin();
+      // Only admins can delete
+      allow delete: if isAdmin();
+      
+      // Nested vehicles subcollection
+      match /vehicles/{vehicleId} {
+        allow read, write: if isSignedIn() && (isOwner(driverId) || isAdmin());
+      }
+      
+      // Nested payments subcollection
+      match /payments/{paymentId} {
+        allow read: if isSignedIn() && (isOwner(driverId) || isAdmin());
+        allow write: if isSignedIn() && isOwner(driverId);
+      }
     }
 
-    /**
-     * @description Manages access to vehicle data. Only the owning driver can manage their vehicles.
-     */
-    match /drivers/{driverId}/vehicles/{vehicleId} {
-      allow read, write: if isSignedIn() && (isOwner(driverId) || isAdmin());
+    // ============================================================
+    // VEHICLES (Top-level, public read for booking display)
+    // ============================================================
+    match /vehicles/{vehicleId} {
+      allow read: if true;
+      allow create: if isSignedIn() && (
+        request.resource.data.driverId == request.auth.uid || isAdmin()
+      );
+      allow update, delete: if isSignedIn() && (
+        resource.data.driverId == request.auth.uid || isAdmin()
+      );
     }
 
-    /**
-     * @description Manages access to payment data. Only the owning driver can manage their payments.
-     * Admins can read payment data for verification purposes.
-     */
-    match /drivers/{driverId}/payments/{paymentId} {
-      allow read: if isSignedIn() && (isOwner(driverId) || isAdmin());
-      allow write: if isSignedIn() && isOwner(driverId);
+    // ============================================================
+    // BOOKING REQUESTS - PUBLIC DATA ONLY
+    // Contains: pickupArea, dropoffArea, pickupDate, pickupTime, 
+    //           estimatedFare, status, passengers
+    // Does NOT contain: customerPhone, customerName, exact addresses
+    // ============================================================
+    match /bookingRequests/{bookingId} {
+      // Anyone can create bookings (guest customers)
+      allow create: if true;
+      
+      // Reading: All signed-in drivers can see public booking info
+      allow get: if isSignedIn() && (
+        isDriver() || 
+        isAdmin() ||
+        resource.data.acceptedBy == request.auth.uid ||
+        resource.data.customerId == request.auth.uid
+      );
+      
+      allow list: if isSignedIn() && (isDriver() || isAdmin() || true);
+      
+      // Updates: Drivers can accept/update, customers can rate
+      allow update: if isSignedIn() && (
+        // Driver accepting pending booking
+        (isDriver() && resource.data.status == 'pending') ||
+        // Driver updating their accepted booking
+        (isDriver() && resource.data.acceptedBy == request.auth.uid) || 
+        // Customer rating completed ride
+        (resource.data.customerId == request.auth.uid && 
+         resource.data.rideStatus == 'completed' &&
+         resource.data.rating == null) ||
+        isAdmin()
+      );
+      
+      allow delete: if isAdmin();
     }
 
-    /**
-     * @description Manages access to booking data for a specific user. Users can only manage their own bookings.
-     */
+    // ============================================================
+    // BOOKING REQUESTS - PRIVATE DATA (SUBSCRIPTION REQUIRED)
+    // Contains: customerName, customerPhone, exactPickup, exactDropoff
+    // ============================================================
+    match /bookingRequestPrivate/{bookingId} {
+      // CRITICAL: Only subscribed drivers OR admins can read private data
+      allow read: if isSignedIn() && (isSubscribedDriver() || isAdmin());
+      
+      // System creates during booking flow
+      allow create: if true;
+      
+      // Only admins can modify
+      allow update, delete: if isAdmin();
+    }
+
+    // ============================================================
+    // RIDE SHARES (Time-gated link verification)
+    // Used for ±3 minute payment verification
+    // ============================================================
+    match /rideShares/{shareId} {
+      // Anyone can read (to validate share link exists)
+      allow read: if true;
+      
+      // Only admins/system can create share links
+      allow create: if isSignedIn() && (isAdmin() || isDriver());
+      
+      // Drivers can claim (update) share links
+      allow update: if isSignedIn() && isDriver();
+      
+      allow delete: if isAdmin();
+    }
+
+    // ============================================================
+    // PAYMENT VERIFICATIONS (M-Pesa confirmation tracking)
+    // ============================================================
+    match /paymentVerifications/{verificationId} {
+      // Drivers can create verification requests
+      allow create: if isSignedIn() && isDriver();
+      
+      // Drivers can read their own, admins can read all
+      allow read: if isSignedIn() && (
+        resource.data.driverId == request.auth.uid || isAdmin()
+      );
+      
+      // Only admins can verify/reject
+      allow update, delete: if isAdmin();
+    }
+
+    // ============================================================
+    // USER BOOKINGS (Private user data)
+    // ============================================================
     match /users/{userId}/bookings/{bookingId} {
       allow read, write: if isSignedIn() && isOwner(userId);
     }
 
-    /**
-     * @description Manages access to booking requests. 
-     * - Anyone can create booking requests (customers without accounts can book)
-     * - Drivers can read booking requests in their area
-     * - Customers can read their own bookings by customerId
-     * - Drivers can accept pending bookings OR update their own accepted bookings
-     * - Drivers can update location during active rides
-     * - Customers can submit ratings for completed rides
-     * - Admins can read and update all booking requests
-     */
-    match /bookingRequests/{bookingId} {
-      allow create: if true; // Allow anyone to create booking requests
-      
-      // Allow reading individual booking documents
-      allow get: if isSignedIn() && (
-        isDriver() || 
-        isAdmin() ||
-        // Allow drivers to read bookings they accepted (for earnings)
-        resource.data.acceptedBy == request.auth.uid ||
-        // Allow customers to read their own bookings by customerId
-        resource.data.customerId == request.auth.uid ||
-        // Fallback: Allow customers to read by phone (for legacy bookings)
-        request.auth.token.phone_number == resource.data.customerPhone
-      );
-      
-      // Allow listing/querying bookings
-      allow list: if isSignedIn() && (
-        isDriver() || 
-        isAdmin() ||
-        // Allow customers to query their bookings - Firestore will filter client-side
-        // Note: Client must query with where('customerId', '==', request.auth.uid) 
-        // or where('customerPhone', '==', request.auth.token.phone_number)
-        true  // Allow list but Firestore filters by query constraints
-      );
-      
-      allow update: if isSignedIn() && (
-        // Driver can accept a pending booking
-        (isDriver() && resource.data.status == 'pending') ||
-        // Driver can update their own accepted booking (status, location, etc.)
-        (isDriver() && resource.data.acceptedBy == request.auth.uid) || 
-        // Customer can rate their completed booking
-        (resource.data.customerId == request.auth.uid && 
-         resource.data.rideStatus == 'completed' &&
-         !resource.data.rating) ||
-        // Fallback: Customer can rate by phone
-        (resource.data.status == 'completed' && 
-         request.auth.token.phone_number == resource.data.customerPhone &&
-         !resource.data.rating) ||
-        // Admin can do anything
-        isAdmin()
-      );
-      allow delete: if isSignedIn() && isAdmin();
-    }
-
-    /**
-     * @description Manages access to driver pricing configuration.
-     * - Anyone can read pricing (needed for guest customers to search drivers).
-     * - Drivers can write their own pricing (matched by driverId field in users collection).
-     */
+    // ============================================================
+    // DRIVER PRICING
+    // ============================================================
     match /driverPricing/{driverId} {
-      allow read: if true; // Allow anyone to read pricing for driver search
+      allow read: if true;
       allow write: if isSignedIn() && (
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.driverId == driverId ||
-        isAdmin()
+        getUserData().driverId == driverId || isAdmin()
       );
     }
 
-    /**
-     * @description Manages access to standard pricing configuration.
-     * - Anyone can read standard pricing.
-     * - Only admins can manage standard pricing.
-     */
+    // ============================================================
+    // STANDARD PRICING
+    // ============================================================
     match /pricing/{priceId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    /**
-     * @description Manages access to price negotiations.
-     * - Anyone can create negotiations (for guest customers).
-     * - Drivers can list negotiations (client-side filters by driverId).
-     * - Only the customer and driver involved can read/update specific negotiations.
-     */
+    // ============================================================
+    // NEGOTIATIONS
+    // ============================================================
     match /negotiations/{negotiationId} {
-      allow create: if true; // Allow anyone to create (for guest customers)
-      
-      // Single document read - strict access control
+      allow create: if true;
       allow get: if isSignedIn() && (
         request.auth.uid == resource.data.customerId ||
-        (isDriver() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.driverId == resource.data.driverId) ||
+        (isDriver() && getUserData().driverId == resource.data.driverId) ||
         isAdmin()
       );
-      
-      // List/query operations - allow all drivers and admins
-      // Client-side query filters by driverId for security
       allow list: if isSignedIn() && (isDriver() || isAdmin());
-      
       allow update: if isSignedIn() && (
         request.auth.uid == resource.data.customerId ||
-        (isDriver() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.driverId == resource.data.driverId)
+        (isDriver() && getUserData().driverId == resource.data.driverId)
       );
     }
 
-    /**
-     * @description Manages access to ride requests (fallback when no drivers found).
-     * - Anyone can create ride requests (customers without accounts can post).
-     * - Drivers can read all pending requests to find opportunities.
-     * - Only the accepting driver can update the request they accepted.
-     * - Admins can manage all requests.
-     */
+    // ============================================================
+    // RIDE REQUESTS (Legacy fallback)
+    // ============================================================
     match /rideRequests/{requestId} {
-      allow create: if true; // Allow anyone to create ride requests
-      allow read: if isSignedIn() && (
-        isDriver() || 
-        isAdmin()
-      );
+      allow create: if true;
+      allow read: if isSignedIn() && (isDriver() || isAdmin());
       allow update: if isSignedIn() && (
-        // Driver can accept a pending request
         (isDriver() && resource.data.status == 'pending') ||
-        // Driver can update their own accepted request
-        (isDriver() && resource.data.driverId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.driverId) ||
-        // Admin can do anything
+        (isDriver() && resource.data.driverId == getUserData().driverId) ||
         isAdmin()
       );
-      allow delete: if isSignedIn() && isAdmin();
+      allow delete: if isAdmin();
     }
 
-    /**
-     * @description Manages access to notifications. Recipients can read and update their own notifications.
-     * Admins can create and delete notifications.
-     */
-    /**
-     * @description Manages access to notifications. Recipients can read, update, and delete their own notifications.
-     * Admins can manage all notifications.
-     */
+    // ============================================================
+    // NOTIFICATIONS
+    // ============================================================
     match /notifications/{notificationId} {
-      allow read: if isSignedIn() && 
-                     (request.auth.uid == resource.data.recipientId || 
-                      resource.data.recipientId == 'system_broadcast' || 
-                      isAdmin());
-      allow create: if true; // Allow system/anyone to create notifications (needed for booking flow)
+      allow read: if isSignedIn() && (
+        request.auth.uid == resource.data.recipientId || 
+        resource.data.recipientId == 'system_broadcast' || 
+        isAdmin()
+      );
+      allow create: if true;
       allow update: if isSignedIn() && request.auth.uid == resource.data.recipientId;
-      allow delete: if isSignedIn() && (request.auth.uid == resource.data.recipientId || isAdmin());
+      allow delete: if isSignedIn() && (
+        request.auth.uid == resource.data.recipientId || isAdmin()
+      );
     }
 
-    /**
-     * @description Manages access to driver notifications.
-     * - Anyone can create notifications (customers create them when booking).
-     * - Only the recipient driver can read/update/delete their notifications.
-     */
     match /driverNotifications/{notificationId} {
-      allow create: if true; // Allow customers to create notifications for drivers
-      allow read: if isSignedIn() && (request.auth.uid == resource.data.driverId || isAdmin());
-      allow update: if isSignedIn() && (request.auth.uid == resource.data.driverId || isAdmin());
-      allow delete: if isSignedIn() && (request.auth.uid == resource.data.driverId || isAdmin());
+      allow create: if true;
+      allow read, update, delete: if isSignedIn() && (
+        request.auth.uid == resource.data.driverId || isAdmin()
+      );
     }
 
-    /**
-     * @description Manages access to client issues.
-     * - Authenticated users can create issues.
-     * - Admins can read and manage issues.
-     */
+    // ============================================================
+    // CLIENT ISSUES
+    // ============================================================
     match /client_issues/{issueId} {
       allow create: if isSignedIn();
-      allow get, list: if isAdmin(); // Explicitly allow both get and list
-      allow update, delete: if isAdmin();
+      allow get, list, update, delete: if isAdmin();
     }
   }
 }

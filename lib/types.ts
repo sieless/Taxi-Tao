@@ -274,3 +274,51 @@ export interface ComplianceAlert {
   daysUntilExpiry: number;
   severity: "critical" | "warning" | "info";
 }
+
+// Split-data model for subscription gating
+export interface BookingRequestPublic {
+  id: string;
+  pickupArea: string; // General area only (e.g., "Westlands")
+  dropoffArea: string; // General area only (e.g., "CBD")
+  pickupDate: string;
+  pickupTime: string;
+  estimatedFare?: number;
+  status: "pending" | "accepted" | "assigned" | "expired" | "cancelled" | "completed";
+  createdAt: any;
+  expiresAt?: any;
+  vehicleType?: string;
+  passengers?: number;
+}
+
+export interface BookingRequestPrivate {
+  id: string; // Same as BookingRequestPublic.id
+  customerName: string;
+  customerPhone: string;
+  exactPickup: string; // Full address
+  exactDropoff: string; // Full address
+  customerId?: string;
+  notes?: string;
+}
+
+export interface RideShare {
+  id: string; // shareId (UUID)
+  bookingRequestId: string;
+  sharedAt: any; // serverTimestamp - when link was created
+  sharedBy: string; // userId who shared (admin or driver)
+  expiresAt: any; // sharedAt + 24 hours
+  used: boolean; // whether share has been claimed
+  claimedBy?: string; // driverId who claimed
+  claimedAt?: any;
+}
+
+export interface PaymentVerification {
+  id: string;
+  driverId: string;
+  shareId?: string; // optional - if related to a specific share
+  mpesaMessage: string; // pasted M-Pesa confirmation
+  submittedAt: any;
+  verifiedAt?: any;
+  status: "pending" | "verified" | "rejected";
+  amount?: number;
+  rejectionReason?: string;
+}
