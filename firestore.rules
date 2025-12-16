@@ -141,6 +141,8 @@ service cloud.firestore {
       allow get: if isSignedIn() && (
         isDriver() || 
         isAdmin() ||
+        // Check if acceptedBy matches user's driverId OR user.uid
+        (isDriver() && resource.data.acceptedBy == getUserData().driverId) ||
         resource.data.acceptedBy == request.auth.uid ||
         resource.data.customerId == request.auth.uid
       );
@@ -151,8 +153,11 @@ service cloud.firestore {
       allow update: if isSignedIn() && (
         // Driver accepting pending booking
         (isDriver() && resource.data.status == 'pending') ||
-        // Driver updating their accepted booking
-        (isDriver() && resource.data.acceptedBy == request.auth.uid) || 
+        // Driver updating their accepted booking (check both driverId and user.uid)
+        (isDriver() && (
+          resource.data.acceptedBy == getUserData().driverId ||
+          resource.data.acceptedBy == request.auth.uid
+        )) || 
         // Customer rating completed ride
         (resource.data.customerId == request.auth.uid && 
          resource.data.rideStatus == 'completed' &&
@@ -243,13 +248,19 @@ service cloud.firestore {
       allow create: if true;
       allow get: if isSignedIn() && (
         request.auth.uid == resource.data.customerId ||
-        (isDriver() && getUserData().driverId == resource.data.driverId) ||
+        (isDriver() && (
+          getUserData().driverId == resource.data.driverId ||
+          request.auth.uid == resource.data.driverId
+        )) ||
         isAdmin()
       );
       allow list: if isSignedIn() && (isDriver() || isAdmin());
       allow update: if isSignedIn() && (
         request.auth.uid == resource.data.customerId ||
-        (isDriver() && getUserData().driverId == resource.data.driverId)
+        (isDriver() && (
+          getUserData().driverId == resource.data.driverId ||
+          request.auth.uid == resource.data.driverId
+        ))
       );
     }
 
@@ -286,7 +297,10 @@ service cloud.firestore {
     match /driverNotifications/{notificationId} {
       allow create: if true;
       allow read, update, delete: if isSignedIn() && (
-        request.auth.uid == resource.data.driverId || isAdmin()
+        // Check if driverId matches user's driverId from profile OR matches user.uid directly
+        (isDriver() && getUserData().driverId == resource.data.driverId) ||
+        request.auth.uid == resource.data.driverId || 
+        isAdmin()
       );
     }
 
