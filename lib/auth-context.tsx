@@ -186,7 +186,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (err: any) {
       console.error("Sign in failed:", err);
       setError(err.message || "Sign in failed");
-      return err.code || "signin-failed";
+      // Throw the error so the login page can handle it properly
+      throw err;
     }
   };
 

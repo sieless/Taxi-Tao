@@ -1,15 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import Link from "next/link";
 import Logo from "@/components/Logo";
-import { LogIn, AlertCircle, Eye, EyeOff, CheckCircle } from "lucide-react";
+import {
+  LogIn,
+  AlertCircle,
+  Eye,
+  EyeOff,
+  CheckCircle,
+  Loader2,
+} from "lucide-react";
 
-export default function DriverLoginPage() {
+function LoginContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -19,6 +26,8 @@ export default function DriverLoginPage() {
   const [resetMode, setResetMode] = useState(false);
   const { signIn } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get("redirect");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,9 +37,32 @@ export default function DriverLoginPage() {
 
     try {
       const role = await signIn(email, password);
-      
-      // Redirect based on user role
-      if (role === "admin") {
+
+      // Check if signIn returned an error code instead of a role
+      if (
+        role &&
+        typeof role === "string" &&
+        !["admin", "driver", "customer"].includes(role)
+      ) {
+        // This is an error code, not a role
+        if (
+          role === "auth/invalid-credential" ||
+          role.includes("invalid-credential")
+        ) {
+          setError(
+            "Invalid email or password. Please check your credentials and try again."
+          );
+        } else {
+          setError("Failed to sign in. Please check your credentials.");
+        }
+        setLoading(false);
+        return;
+      }
+
+      // If there's a redirect URL, use it; otherwise redirect based on role
+      if (redirectUrl) {
+        router.push(redirectUrl);
+      } else if (role === "admin") {
         router.push("/admin/panel");
       } else if (role === "driver") {
         router.push("/driver/dashboard");
@@ -38,7 +70,28 @@ export default function DriverLoginPage() {
         router.push("/"); // Customers go to homepage
       }
     } catch (err: any) {
-      setError(err.message || "Failed to sign in. Please check your credentials.");
+      // Handle Firebase auth errors with user-friendly messages
+      if (
+        err.code === "auth/invalid-credential" ||
+        err.code === "auth/wrong-password" ||
+        err.code === "auth/user-not-found"
+      ) {
+        setError(
+          "Invalid email or password. Please check your credentials and try again."
+        );
+      } else if (err.code === "auth/user-disabled") {
+        setError("This account has been disabled. Please contact support.");
+      } else if (err.code === "auth/too-many-requests") {
+        setError("Too many failed login attempts. Please try again later.");
+      } else if (err.code === "auth/network-request-failed") {
+        setError(
+          "Network error. Please check your internet connection and try again."
+        );
+      } else {
+        setError(
+          err.message || "Failed to sign in. Please check your credentials."
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -58,7 +111,10 @@ export default function DriverLoginPage() {
         setSuccess("");
       }, 3000);
     } catch (err: any) {
-      setError(err.message || "Failed to send reset email. Please check your email address.");
+      setError(
+        err.message ||
+          "Failed to send reset email. Please check your email address."
+      );
     } finally {
       setLoading(false);
     }
@@ -67,20 +123,30 @@ export default function DriverLoginPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 md:px-6">
       <div className="max-w-md w-full">
-        <Link href="/" className="text-green-600 hover:underline font-semibold mb-6 inline-block">
+        <Link
+          href="/"
+          className="text-green-600 hover:underline font-semibold mb-6 inline-block"
+        >
           ← Back to Home
         </Link>
 
         <div className="bg-white rounded-xl shadow-lg p-8">
           <div className="text-center mb-8">
             <div className="mb-4 flex justify-center">
-              <Logo variant="full" size="md" layout="vertical" clickable={false} />
+              <Logo
+                variant="full"
+                size="md"
+                layout="vertical"
+                clickable={false}
+              />
             </div>
             <h1 className="text-3xl font-bold text-gray-800 mb-2">
               {resetMode ? "Reset Password" : "Sign In"}
             </h1>
             <p className="text-gray-600">
-              {resetMode ? "Enter your email to receive a reset link" : "Access your account"}
+              {resetMode
+                ? "Enter your email to receive a reset link"
+                : "Access your account"}
             </p>
           </div>
 
@@ -101,7 +167,10 @@ export default function DriverLoginPage() {
           {resetMode ? (
             <form onSubmit={handlePasswordReset} className="space-y-6">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Email Address
                 </label>
                 <input
@@ -138,7 +207,10 @@ export default function DriverLoginPage() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Email Address
                 </label>
                 <input
@@ -154,7 +226,10 @@ export default function DriverLoginPage() {
 
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="password"
+                    className="block text-sm font-medium text-gray-700"
+                  >
                     Password
                   </label>
                   <button
@@ -182,7 +257,9 @@ export default function DriverLoginPage() {
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
                   >
                     {showPassword ? (
                       <EyeOff className="w-5 h-5" />
@@ -206,7 +283,10 @@ export default function DriverLoginPage() {
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               Need an account?{" "}
-              <Link href="/signup" className="text-green-600 hover:underline font-semibold">
+              <Link
+                href="/signup"
+                className="text-green-600 hover:underline font-semibold"
+              >
                 Sign up here
               </Link>
             </p>
@@ -214,5 +294,19 @@ export default function DriverLoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function DriverLoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+        </div>
+      }
+    >
+      <LoginContent />
+    </Suspense>
   );
 }

@@ -39,19 +39,21 @@ const MOCK_DRIVERS: { driver: Driver; vehicle: Vehicle }[] = [
       email: "james@taxitao.co.ke",
       active: true,
       rating: 4.9,
-      vehicles: [{
-        id: "v1",
-        driverId: "demo-1",
-        make: "Toyota",
-        model: "Fielder",
-        year: 2019,
-        plate: "KCD 123X",
-        images: [],
-        seats: 4,
-        type: "sedan",
-        active: true,
-        baseFare: 450,
-      }],
+      vehicles: [
+        {
+          id: "v1",
+          driverId: "demo-1",
+          make: "Toyota",
+          model: "Fielder",
+          year: 2019,
+          plate: "KCD 123X",
+          images: [],
+          seats: 4,
+          type: "sedan",
+          active: true,
+          baseFare: 450,
+        },
+      ],
       createdAt: Timestamp.now(), // Use Firebase's Timestamp
       subscriptionStatus: "active",
       lastPaymentDate: Timestamp.fromDate(new Date()), // Convert Date to Timestamp
@@ -90,19 +92,21 @@ const MOCK_DRIVERS: { driver: Driver; vehicle: Vehicle }[] = [
       email: "ann@taxitao.co.ke",
       active: true,
       rating: 4.8,
-      vehicles: [{
-        id: "v2",
-        driverId: "demo-2",
-        make: "Mercedes",
-        model: "C200",
-        year: 2016,
-        plate: "KDA 456Y",
-        images: [],
-        seats: 4,
-        type: "sedan",
-        active: true,
-        baseFare: 1200,
-      }],
+      vehicles: [
+        {
+          id: "v2",
+          driverId: "demo-2",
+          make: "Mercedes",
+          model: "C200",
+          year: 2016,
+          plate: "KDA 456Y",
+          images: [],
+          seats: 4,
+          type: "sedan",
+          active: true,
+          baseFare: 1200,
+        },
+      ],
       createdAt: Timestamp.now(), // Use Firebase's Timestamp
       subscriptionStatus: "active",
       lastPaymentDate: Timestamp.fromDate(new Date()), // Convert Date to Timestamp
@@ -141,19 +145,21 @@ const MOCK_DRIVERS: { driver: Driver; vehicle: Vehicle }[] = [
       email: "david@taxitao.co.ke",
       active: false,
       rating: 4.7,
-      vehicles: [{
-        id: "v3",
-        driverId: "demo-3",
-        make: "Toyota",
-        model: "HiAce",
-        year: 2020,
-        plate: "KDB 789Z",
-        images: [],
-        seats: 14,
-        type: "van",
-        active: true,
-        baseFare: 2500,
-      }],
+      vehicles: [
+        {
+          id: "v3",
+          driverId: "demo-3",
+          make: "Toyota",
+          model: "HiAce",
+          year: 2020,
+          plate: "KDB 789Z",
+          images: [],
+          seats: 14,
+          type: "van",
+          active: true,
+          baseFare: 2500,
+        },
+      ],
       createdAt: Timestamp.now(), // Use Firebase's Timestamp
       subscriptionStatus: "expired",
       lastPaymentDate: Timestamp.fromDate(
@@ -198,6 +204,17 @@ export default function Home() {
       router.push("/login");
     } else {
       router.push(`/booking?type=${type}`);
+    }
+  };
+
+  const handleStartNegotiating = () => {
+    // Check if user is logged in
+    if (user && userProfile) {
+      // User is logged in - go directly to negotiation page
+      router.push("/book-with-price");
+    } else {
+      // User is not logged in - redirect to login page
+      router.push("/login?redirect=/book-with-price");
     }
   };
 
@@ -259,108 +276,54 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Negotiate Price CTA - Eye-Catching Marketing Banner */}
-      <section className="relative bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 py-12 px-4 md:px-6 overflow-hidden">
-        {/* Animated Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `repeating-linear-gradient(
-              45deg,
-              transparent,
-              transparent 35px,
-              rgba(255,255,255,0.1) 35px,
-              rgba(255,255,255,0.1) 70px
-            )`
-          }}></div>
-        </div>
-
-        <div className="max-w-6xl mx-auto relative z-10">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
+      {/* Negotiate Price CTA - Compact Banner */}
+      <section className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 py-6 px-4 md:px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             {/* Left Content */}
-            <div className="text-white text-center lg:text-left flex-1">
-              <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full mb-4 text-sm font-semibold">
-                <MessageSquare className="w-4 h-4" />
-                <span>NEW FEATURE</span>
-              </div>
-              
-              <h2 className="text-3xl md:text-5xl font-black mb-4 drop-shadow-lg">
-                Negotiate Your Price 
-                <br />
-                <span className="text-yellow-300">with the Driver!</span>
+            <div className="text-white text-center sm:text-left flex-1">
+              <h2 className="text-xl md:text-2xl font-bold mb-2">
+                Negotiate Your Price{" "}
+                <span className="text-yellow-300">with Drivers</span>
               </h2>
-              
-              <p className="text-lg md:text-xl text-white/90 mb-6 max-w-2xl">
-                Don&apos;t like the quote? Make your own offer! Chat directly with drivers and agree on a fair price that works for both of you.
+              <p className="text-sm md:text-base text-white/90">
+                Don&apos;t like the quote? Make your own offer and agree on a
+                fair price.
               </p>
-
-              <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
-                <Link
-                  href="/book-with-price"
-                  className="group bg-white text-red-600 hover:bg-yellow-300 hover:text-red-700 px-8 py-4 rounded-full font-bold text-lg shadow-2xl transition-all transform hover:scale-105 hover:shadow-3xl flex items-center gap-2"
-                >
-                  <MessageSquare className="w-6 h-6 group-hover:animate-bounce" />
-                  Start Negotiating Now
-                  <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </Link>
-                
-                <Link
-                  href="/booking"
-                  className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-red-600 px-8 py-4 rounded-full font-bold text-lg shadow-xl transition-all transform hover:scale-105"
-                >
-                  Regular Booking
-                </Link>
-              </div>
             </div>
 
-            {/* Right Visual - Animated Icon */}
-            <div className="hidden lg:block flex-shrink-0">
-              <div className="relative w-48 h-48">
-                {/* Pulsing Circle Background */}
-                <div className="absolute inset-0 bg-white/20 rounded-full animate-ping"></div>
-                <div className="absolute inset-0 bg-white/30 rounded-full animate-pulse"></div>
-                
-                {/* Icon */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="bg-white rounded-full p-8 shadow-2xl transform hover:rotate-12 transition-transform">
-                    <MessageSquare className="w-24 h-24 text-red-500" strokeWidth={2.5} />
-                  </div>
-                </div>
-
-                {/* Floating Dollar Signs */}
-                <div className="absolute -top-4 -right-4 text-4xl animate-bounce">💰</div>
-                <div className="absolute -bottom-4 -left-4 text-4xl animate-bounce" style={{ animationDelay: '0.2s' }}>💬</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Trust Indicators */}
-          <div className="mt-8 pt-8 border-t border-white/20">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-              <div className="text-white">
-                <div className="text-3xl font-bold">100%</div>
-                <div className="text-sm text-white/80">Transparent</div>
-              </div>
-              <div className="text-white">
-                <div className="text-3xl font-bold">Real-Time</div>
-                <div className="text-sm text-white/80">Chat</div>
-              </div>
-              <div className="text-white">
-                <div className="text-3xl font-bold">Fair</div>
-                <div className="text-sm text-white/80">Pricing</div>
-              </div>
-              <div className="text-white">
-                <div className="text-3xl font-bold">Save</div>
-                <div className="text-sm text-white/80">Money</div>
-              </div>
+            {/* Right Button */}
+            <div className="flex-shrink-0">
+              <button
+                onClick={handleStartNegotiating}
+                className="group bg-white text-red-600 hover:bg-yellow-300 hover:text-red-700 px-6 py-3 rounded-full font-bold text-sm md:text-base shadow-lg transition-all transform hover:scale-105 flex items-center gap-2"
+              >
+                <MessageSquare className="w-4 h-4 md:w-5 md:h-5" />
+                Start Negotiating
+                <svg
+                  className="w-4 h-4 group-hover:translate-x-1 transition-transform"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 7l5 5m0 0l-5 5m5-5H6"
+                  />
+                </svg>
+              </button>
             </div>
           </div>
         </div>
       </section>
 
       {/* Booking Section */}
-      <section id="booking" className="bg-white py-16 px-4 md:px-6 scroll-mt-24 md:scroll-mt-28">
+      <section
+        id="booking"
+        className="bg-white py-16 px-4 md:px-6 scroll-mt-24 md:scroll-mt-28"
+      >
         <div className="max-w-7xl mx-auto">
           <div className="max-w-4xl mx-auto bg-green-50 rounded-xl shadow-lg overflow-hidden">
             <div className="p-6 md:p-8">
@@ -399,7 +362,10 @@ export default function Home() {
       {showAvailableDrivers && <AvailableDrivers />}
 
       {/* Services Section */}
-      <section id="services" className="py-16 bg-white px-4 md:px-6 scroll-mt-24 md:scroll-mt-28">
+      <section
+        id="services"
+        className="py-16 bg-white px-4 md:px-6 scroll-mt-24 md:scroll-mt-28"
+      >
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <span className="inline-block bg-green-100 text-green-700 px-4 py-1 rounded-full text-sm font-semibold mb-3">
@@ -585,7 +551,10 @@ export default function Home() {
       </section>
 
       {/* Testimonials Section */}
-      <section id="testimonials" className="py-16 bg-gray-50 px-4 md:px-6 scroll-mt-24 md:scroll-mt-28">
+      <section
+        id="testimonials"
+        className="py-16 bg-gray-50 px-4 md:px-6 scroll-mt-24 md:scroll-mt-28"
+      >
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <span className="inline-block bg-green-100 text-green-700 px-4 py-1 rounded-full text-sm font-semibold mb-3">
@@ -651,7 +620,10 @@ export default function Home() {
       </section>
 
       {/* About Section */}
-      <section id="about" className="py-16 bg-white px-4 md:px-6 scroll-mt-24 md:scroll-mt-28">
+      <section
+        id="about"
+        className="py-16 bg-white px-4 md:px-6 scroll-mt-24 md:scroll-mt-28"
+      >
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col lg:flex-row items-center gap-12">
             <div className="lg:w-1/2">
@@ -719,7 +691,10 @@ export default function Home() {
       </section>
 
       {/* Contact Section */}
-      <section id="contact" className="py-16 bg-gray-50 px-4 md:px-6 scroll-mt-24 md:scroll-mt-28">
+      <section
+        id="contact"
+        className="py-16 bg-gray-50 px-4 md:px-6 scroll-mt-24 md:scroll-mt-28"
+      >
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <span className="inline-block bg-green-100 text-green-700 px-4 py-1 rounded-full text-sm font-semibold mb-3">
