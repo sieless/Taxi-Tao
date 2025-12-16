@@ -13,6 +13,7 @@ import {
   Headset,
   MapPin,
   Mail,
+  MessageSquare,
 } from "lucide-react";
 import BookingForm from "@/components/BookingForm";
 import DriverCard from "@/components/DriverCard";
@@ -253,6 +254,106 @@ export default function Home() {
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20 text-center w-32">
               <Wallet className="w-8 h-8 mb-2 mx-auto text-green-300" />
               <p className="font-semibold text-sm">Affordable Prices</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Negotiate Price CTA - Eye-Catching Marketing Banner */}
+      <section className="relative bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 py-12 px-4 md:px-6 overflow-hidden">
+        {/* Animated Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `repeating-linear-gradient(
+              45deg,
+              transparent,
+              transparent 35px,
+              rgba(255,255,255,0.1) 35px,
+              rgba(255,255,255,0.1) 70px
+            )`
+          }}></div>
+        </div>
+
+        <div className="max-w-6xl mx-auto relative z-10">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
+            {/* Left Content */}
+            <div className="text-white text-center lg:text-left flex-1">
+              <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full mb-4 text-sm font-semibold">
+                <MessageSquare className="w-4 h-4" />
+                <span>NEW FEATURE</span>
+              </div>
+              
+              <h2 className="text-3xl md:text-5xl font-black mb-4 drop-shadow-lg">
+                Negotiate Your Price 
+                <br />
+                <span className="text-yellow-300">with the Driver!</span>
+              </h2>
+              
+              <p className="text-lg md:text-xl text-white/90 mb-6 max-w-2xl">
+                Don&apos;t like the quote? Make your own offer! Chat directly with drivers and agree on a fair price that works for both of you.
+              </p>
+
+              <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
+                <Link
+                  href="/book-with-price"
+                  className="group bg-white text-red-600 hover:bg-yellow-300 hover:text-red-700 px-8 py-4 rounded-full font-bold text-lg shadow-2xl transition-all transform hover:scale-105 hover:shadow-3xl flex items-center gap-2"
+                >
+                  <MessageSquare className="w-6 h-6 group-hover:animate-bounce" />
+                  Start Negotiating Now
+                  <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </Link>
+                
+                <Link
+                  href="/booking"
+                  className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-red-600 px-8 py-4 rounded-full font-bold text-lg shadow-xl transition-all transform hover:scale-105"
+                >
+                  Regular Booking
+                </Link>
+              </div>
+            </div>
+
+            {/* Right Visual - Animated Icon */}
+            <div className="hidden lg:block flex-shrink-0">
+              <div className="relative w-48 h-48">
+                {/* Pulsing Circle Background */}
+                <div className="absolute inset-0 bg-white/20 rounded-full animate-ping"></div>
+                <div className="absolute inset-0 bg-white/30 rounded-full animate-pulse"></div>
+                
+                {/* Icon */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="bg-white rounded-full p-8 shadow-2xl transform hover:rotate-12 transition-transform">
+                    <MessageSquare className="w-24 h-24 text-red-500" strokeWidth={2.5} />
+                  </div>
+                </div>
+
+                {/* Floating Dollar Signs */}
+                <div className="absolute -top-4 -right-4 text-4xl animate-bounce">💰</div>
+                <div className="absolute -bottom-4 -left-4 text-4xl animate-bounce" style={{ animationDelay: '0.2s' }}>💬</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Trust Indicators */}
+          <div className="mt-8 pt-8 border-t border-white/20">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+              <div className="text-white">
+                <div className="text-3xl font-bold">100%</div>
+                <div className="text-sm text-white/80">Transparent</div>
+              </div>
+              <div className="text-white">
+                <div className="text-3xl font-bold">Real-Time</div>
+                <div className="text-sm text-white/80">Chat</div>
+              </div>
+              <div className="text-white">
+                <div className="text-3xl font-bold">Fair</div>
+                <div className="text-sm text-white/80">Pricing</div>
+              </div>
+              <div className="text-white">
+                <div className="text-3xl font-bold">Save</div>
+                <div className="text-sm text-white/80">Money</div>
+              </div>
             </div>
           </div>
         </div>

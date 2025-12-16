@@ -1,10 +1,28 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, query, where, onSnapshot, doc, updateDoc, arrayUnion, arrayRemove, setDoc } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  doc,
+  updateDoc,
+  arrayUnion,
+  arrayRemove,
+  setDoc,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Driver } from "@/lib/types";
-import { Star, Car, MapPin, Briefcase, Loader2, Phone, Heart } from "lucide-react";
+import {
+  Star,
+  Car,
+  MapPin,
+  Briefcase,
+  Loader2,
+  Phone,
+  Heart,
+} from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
@@ -35,10 +53,12 @@ export default function AvailableDrivers() {
       snapshot.forEach((doc) => {
         availableDrivers.push({ id: doc.id, ...doc.data() } as Driver);
       });
-      
+
       // Sort by rating (highest first)
-      availableDrivers.sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0));
-      
+      availableDrivers.sort(
+        (a, b) => (b.averageRating || 0) - (a.averageRating || 0)
+      );
+
       setDrivers(availableDrivers.slice(0, 6)); // Show max 6 drivers
       setLoading(false);
     });
@@ -57,15 +77,23 @@ export default function AvailableDrivers() {
 
     try {
       if (isSaved) {
-        await setDoc(userRef, {
-          savedDrivers: arrayRemove(driverId)
-        }, { merge: true });
-        setSavedDriverIds(prev => prev.filter(id => id !== driverId));
+        await setDoc(
+          userRef,
+          {
+            savedDrivers: arrayRemove(driverId),
+          },
+          { merge: true }
+        );
+        setSavedDriverIds((prev) => prev.filter((id) => id !== driverId));
       } else {
-        await setDoc(userRef, {
-          savedDrivers: arrayUnion(driverId)
-        }, { merge: true });
-        setSavedDriverIds(prev => [...prev, driverId]);
+        await setDoc(
+          userRef,
+          {
+            savedDrivers: arrayUnion(driverId),
+          },
+          { merge: true }
+        );
+        setSavedDriverIds((prev) => [...prev, driverId]);
       }
     } catch (error) {
       console.error("Error toggling saved driver:", error);
@@ -79,7 +107,9 @@ export default function AvailableDrivers() {
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 bg-green-100 px-4 py-2 rounded-full mb-4">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-green-700 font-semibold">Loading Available Drivers...</span>
+              <span className="text-green-700 font-semibold">
+                Loading Available Drivers...
+              </span>
             </div>
           </div>
           <div className="flex items-center justify-center">
@@ -107,7 +137,8 @@ export default function AvailableDrivers() {
             Available Drivers
           </h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Book instantly with one of our {drivers.length} online drivers ready to serve you
+            Book instantly with one of our {drivers.length} online drivers ready
+            to serve you
           </p>
         </div>
 
@@ -117,7 +148,7 @@ export default function AvailableDrivers() {
             <div
               key={driver.id}
               className="bg-white rounded-2xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 overflow-visible group relative"
-              style={{ boxShadow: '0 10px 40px rgba(0,0,0,0.1)' }}
+              style={{ boxShadow: "0 10px 40px rgba(0,0,0,0.1)" }}
             >
               {/* Profile Picture - Fully Visible at Top Left */}
               <div className="absolute -top-6 left-4 z-20">
@@ -140,20 +171,20 @@ export default function AvailableDrivers() {
                 <div className="absolute bottom-1 right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white shadow-lg"></div>
               </div>
 
-              {/* Car Photo Header - Compact */}
-              <div className="relative h-32 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden rounded-t-2xl mt-6">
+              {/* Car Photo Header - Full Vehicle Visible */}
+              <div className="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden rounded-t-2xl mt-6">
                 {driver.vehicles?.[0]?.images?.[0] ? (
                   <img
                     src={driver.vehicles[0].images[0]}
                     alt={`${driver.vehicles[0].make} ${driver.vehicles[0].model}`}
-                    className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-500"
+                    className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-500 p-2"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-green-400 to-green-600">
                     <Car className="w-16 h-16 text-white/50" />
                   </div>
                 )}
-                
+
                 {/* Online Badge - Top Right */}
                 <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
                   <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
@@ -178,8 +209,12 @@ export default function AvailableDrivers() {
                     onClick={() => toggleSaveDriver(driver.id)}
                     className="text-gray-400 hover:text-red-500 transition-colors"
                   >
-                    <Heart 
-                      className={`w-5 h-5 ${savedDriverIds.includes(driver.id) ? "fill-red-500 text-red-500" : ""}`} 
+                    <Heart
+                      className={`w-5 h-5 ${
+                        savedDriverIds.includes(driver.id)
+                          ? "fill-red-500 text-red-500"
+                          : ""
+                      }`}
                     />
                   </button>
                 </div>
@@ -199,7 +234,9 @@ export default function AvailableDrivers() {
                     ))}
                   </div>
                   <span className="text-xs font-semibold text-gray-700">
-                    {driver.averageRating ? driver.averageRating.toFixed(1) : "New"}
+                    {driver.averageRating
+                      ? driver.averageRating.toFixed(1)
+                      : "New"}
                   </span>
                   <span className="text-xs text-gray-500">
                     ({driver.totalRides || 0})
@@ -261,8 +298,18 @@ export default function AvailableDrivers() {
             className="inline-flex items-center gap-2 text-green-600 hover:text-green-700 font-semibold"
           >
             View All Drivers
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
             </svg>
           </Link>
         </div>

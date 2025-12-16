@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth-context';
 import { MapPin, Search, Loader2, Phone, Info, Send, Car, Star, MessageSquare } from 'lucide-react';
 import PriceRecommendations from '@/components/PriceRecommendations';
 import { getRecommendations, DriverMatch } from '@/lib/matching-service';
@@ -13,6 +14,8 @@ import Logo from "@/components/Logo";
 
 // Simple Ride Request Form Component
 function RideRequestForm({ from, to }: { from: string; to: string }) {
+  const { user } = useAuth();
+  const router = useRouter();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [date, setDate] = useState('');
@@ -23,6 +26,16 @@ function RideRequestForm({ from, to }: { from: string; to: string }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check if user is logged in
+    if (!user) {
+      const shouldLogin = confirm('You must be logged in to send ride requests. Would you like to log in now?');
+      if (shouldLogin) {
+        router.push('/login');
+      }
+      return;
+    }
+
     if (!name || !phone || !date || !time) {
       alert('Please fill in all fields');
       return;

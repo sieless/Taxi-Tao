@@ -30,6 +30,7 @@ import {
   Flag,
   Calendar,
   Trash2,
+  Pause,
 } from "lucide-react";
 import { getNextPaymentDueDate } from "@/lib/subscription-utils";
 import { createNotification } from "@/lib/notifications";
@@ -275,17 +276,59 @@ export default function AdminPanel() {
   }
 
   async function resolveClientIssue(issueId: string) {
-    if (!confirm("Mark this client issue as solved?")) return;
+    if (!confirm("Mark this client issue as completed?")) return;
     try {
       await updateDoc(doc(db, "client_issues", issueId), {
-        status: "solved",
+        status: "completed",
+        resolvedAt: new Date(),
       });
       setClientIssues((prev) =>
-        prev.map((i) => (i.id === issueId ? { ...i, status: "solved" } : i))
+        prev.map((i) => (i.id === issueId ? { ...i, status: "completed" } : i))
       );
     } catch (error) {
       console.error("Error resolving client issue:", error);
-      alert("Failed to resolve client issue");
+      alert("Failed to mark issue as completed");
+    }
+  }
+
+  async function pauseClientIssue(issueId: string) {
+    if (!confirm("Pause this issue?")) return;
+    try {
+      await updateDoc(doc(db, "client_issues", issueId), {
+        status: "paused",
+        pausedAt: new Date(),
+      });
+      setClientIssues((prev) =>
+        prev.map((i) => (i.id === issueId ? { ...i, status: "paused" } : i))
+      );
+    } catch (error) {
+      console.error("Error pausing issue:", error);
+      alert("Failed to pause issue");
+    }
+  }
+
+  function respondToClientIssue(issue: any) {
+    const email = issue.contactEmail || issue.userEmail;
+    const phone = issue.contactPhone;
+    const name = issue.contactName;
+    
+    // Create response options
+    const emailLink = email ? `mailto:${email}?subject=Re: ${issue.issueType} - TaxiTao Support&body=Hello ${name},%0D%0A%0D%0ARegarding your issue: ${encodeURIComponent(issue.description)}%0D%0A%0D%0A` : null;
+    const whatsappLink = phone ? `https://wa.me/${phone.replace(/\D/g, '')}?text=Hello ${name}, this is TaxiTao Support regarding your ${issue.issueType}...` : null;
+    
+    if (emailLink && whatsappLink) {
+      const choice = confirm("Click OK to respond via Email, or Cancel to use WhatsApp");
+      if (choice) {
+        window.open(emailLink, '_blank');
+      } else {
+        window.open(whatsappLink, '_blank');
+      }
+    } else if (emailLink) {
+      window.open(emailLink, '_blank');
+    } else if (whatsappLink) {
+      window.open(whatsappLink, '_blank');
+    } else {
+      alert("No contact information available for this issue");
     }
   }
 
@@ -873,7 +916,7 @@ export default function AdminPanel() {
                   <span className="bg-white text-gray-600 text-xs font-bold px-2 py-1 rounded-full shadow-sm">
                     {bookingRequests.filter((r) => r.status === "issue")
                       .length +
-                      clientIssues.filter((i) => i.status !== "solved").length}
+                      clientIssues.filter((i) => i.status !== "completed").length}
                   </span>
                 </div>
                 <div className="space-y-3">
@@ -903,44 +946,72 @@ export default function AdminPanel() {
 
                   {/* Client Reported Issues */}
                   {clientIssues
-                    .filter((i) => i.status !== "solved")
+                    .filter((i) => i.status !== "completed")
                     .map((issue) => (
                       <div
                         key={issue.id}
                         className="bg-white rounded-lg shadow-sm p-3 border border-orange-200"
                       >
-                        <div className="flex justify-between items-start">
-                          <p className="text-sm font-medium text-gray-800">
-                            Client Report
-                          </p>
-                          <span className="text-[10px] bg-orange-100 text-orange-800 px-1.5 py-0.5 rounded uppercase font-bold">
-                            {issue.issueType}
-                          </span>
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <p className="text-sm font-medium text-gray-800">
+                              {issue.contactName || "Client Report"}
+                            </p>
+                            {(issue.contactEmail || issue.contactPhone) && (
+                              <p className="text-[10px] text-gray-500">
+                                {issue.contactEmail || issue.contactPhone}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex flex-col gap-1 items-end">
+                            <span className="text-[10px] bg-orange-100 text-orange-800 px-1.5 py-0.5 rounded uppercase font-bold">
+                              {issue.issueType}
+                            </span>
+                            {issue.status === "paused" && (
+                              <span className="text-[10px] bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded uppercase font-bold">
+                                Paused
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <p
-                          className="text-xs text-gray-600 mt-1 mb-2 line-clamp-2"
+                          className="text-xs text-gray-600 mt-1 mb-3 line-clamp-2"
                           title={issue.description}
                         >
                           {issue.description}
                         </p>
-                        {issue.driverId && (
-                          <p className="text-xs text-gray-500 mb-2">
-                            Driver ID: {issue.driverId}
-                          </p>
-                        )}
-                        <button
-                          onClick={() => resolveClientIssue(issue.id)}
-                          className="w-full bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-1.5 rounded transition flex items-center justify-center gap-1"
-                        >
-                          <CheckCircle className="w-3 h-3" />
-                          Mark Solved
-                        </button>
+                        <div className="grid grid-cols-3 gap-1">
+                          <button
+                            onClick={() => respondToClientIssue(issue)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold py-1.5 rounded transition flex items-center justify-center gap-1"
+                            title="Respond via email or WhatsApp"
+                          >
+                            <MessageSquare className="w-3 h-3" />
+                            Respond
+                          </button>
+                          <button
+                            onClick={() => resolveClientIssue(issue.id)}
+                            className="bg-green-600 hover:bg-green-700 text-white text-[10px] font-bold py-1.5 rounded transition flex items-center justify-center gap-1"
+                            title="Mark as completed"
+                          >
+                            <CheckCircle className="w-3 h-3" />
+                            Complete
+                          </button>
+                          <button
+                            onClick={() => pauseClientIssue(issue.id)}
+                            className="bg-yellow-600 hover:bg-yellow-700 text-white text-[10px] font-bold py-1.5 rounded transition flex items-center justify-center gap-1"
+                            title="Pause for later"
+                          >
+                            <Pause className="w-3 h-3" />
+                            Pause
+                          </button>
+                        </div>
                       </div>
                     ))}
 
                   {bookingRequests.filter((r) => r.status === "issue")
                     .length === 0 &&
-                    clientIssues.filter((i) => i.status !== "solved").length ===
+                    clientIssues.filter((i) => i.status !== "completed").length ===
                       0 && (
                       <p className="text-center text-gray-400 text-sm py-8">
                         No reported issues

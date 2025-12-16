@@ -10,12 +10,12 @@ interface DriverCardProps {
 export default function DriverCard({ driver, vehicle }: DriverCardProps) {
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col transition hover:-translate-y-1 hover:shadow-xl">
-      <div className="h-48 bg-gray-200 relative">
+      <div className="h-56 bg-gray-200 relative">
         {vehicle?.images?.[0] ? (
           <img
             src={vehicle.images[0]}
             alt={`${vehicle.make} ${vehicle.model}`}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain object-center p-3"
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-gray-500">
@@ -53,16 +53,20 @@ export default function DriverCard({ driver, vehicle }: DriverCardProps) {
               }`}
             />
           ))}
-          <span className="ml-2 text-gray-600">({driver.rating.toFixed(1)})</span>
+          <span className="ml-2 text-gray-600">
+            ({driver.rating.toFixed(1)})
+          </span>
         </div>
 
         {vehicle && (
           <>
             <p className="text-gray-600 mb-1 text-sm">
-              Capacity: <span className="font-medium">{vehicle.seats} Passengers</span>
+              Capacity:{" "}
+              <span className="font-medium">{vehicle.seats} Passengers</span>
             </p>
             <p className="text-gray-600 mb-4 text-sm">
-              Base Fare: <span className="font-medium">KES {vehicle.baseFare}</span>
+              Base Fare:{" "}
+              <span className="font-medium">KES {vehicle.baseFare}</span>
             </p>
           </>
         )}
