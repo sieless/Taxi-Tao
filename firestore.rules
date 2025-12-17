@@ -71,6 +71,33 @@ service cloud.firestore {
              getDriverSubscription().isVisibleToPublic == true;
     }
 
+    // Check if current user matches the driver for a resource
+    function driverMatches(driverId) {
+      // Allow match by auth uid OR driverId stored on profile (even if role not set yet)
+      return isSignedIn() && (
+        request.auth.uid == driverId ||
+        (getUserData() != null && getUserData().driverId == driverId)
+      );
+    }
+
+    // Check if requester is allowed to see/update a negotiation
+    function negotiationParticipant(driverId, customerId) {
+      return isAdmin() ||
+             driverMatches(driverId) ||
+             (isSignedIn() && customerId != null && request.auth.uid == customerId);
+    }
+
+    // Prevent mutation of immutable negotiation fields on updates
+    function negotiationImmutableFieldsUnchanged() {
+      return request.resource.data.driverId == resource.data.driverId &&
+             request.resource.data.customerId == resource.data.customerId &&
+             request.resource.data.bookingRequestId == resource.data.bookingRequestId &&
+             request.resource.data.customerName == resource.data.customerName &&
+             request.resource.data.customerPhone == resource.data.customerPhone &&
+             request.resource.data.initialPrice == resource.data.initialPrice &&
+             request.resource.data.proposedPrice == resource.data.proposedPrice;
+    }
+
     // ============================================================
     // DEFAULT: Block all access unless explicitly allowed
     // ============================================================
@@ -115,6 +142,28 @@ service cloud.firestore {
     }
 
     // ============================================================
+    // DRIVER ROUTES (TaxiTao Mobile compatibility)
+    // ============================================================
+    match /driverRoutes/{routeId} {
+      // Drivers can create their own routes with required fields
+      allow create: if isSignedIn()
+        && request.resource.data.driverId == request.auth.uid
+        && request.resource.data.price is number
+        && request.resource.data.fromLocation is string
+        && request.resource.data.toLocation is string;
+
+      // Only route owner can update/delete
+      allow update, delete: if isSignedIn()
+        && resource.data.driverId == request.auth.uid;
+
+      // Reads: driver can read own, customers can read active routes
+      allow get, list: if isSignedIn() && (
+        resource.data.driverId == request.auth.uid ||
+        resource.data.active == true
+      );
+    }
+
+    // ============================================================
     // VEHICLES (Top-level, public read for booking display)
     // ============================================================
     match /vehicles/{vehicleId} {
@@ -147,7 +196,14 @@ service cloud.firestore {
         resource.data.customerId == request.auth.uid
       );
       
-      allow list: if isSignedIn() && (isDriver() || isAdmin() || true);
+      // Drivers/admins can list; customers can list their own; drivers can list their accepted bookings even if profile role is missing
+      allow list: if isSignedIn() && (
+        isDriver() || 
+        isAdmin() ||
+        resource.data.customerId == request.auth.uid ||
+        resource.data.acceptedBy == request.auth.uid ||
+        (getUserData() != null && resource.data.acceptedBy == getUserData().driverId)
+      );
       
       // Updates: Drivers can accept/update, customers can rate
       allow update: if isSignedIn() && (
@@ -245,23 +301,26 @@ service cloud.firestore {
     // NEGOTIATIONS
     // ============================================================
     match /negotiations/{negotiationId} {
+      // Anyone can start a negotiation (guest customers allowed)
       allow create: if true;
-      allow get: if isSignedIn() && (
-        request.auth.uid == resource.data.customerId ||
-        (isDriver() && (
-          getUserData().driverId == resource.data.driverId ||
-          request.auth.uid == resource.data.driverId
-        )) ||
-        isAdmin()
+
+      // Read: participants (customer or driver) or admin.
+      // For guest negotiations (customerId == null), allow read by possession of the link/id.
+      allow get: if negotiationParticipant(resource.data.driverId, resource.data.customerId) ||
+                 resource.data.customerId == null;
+
+      // List: only participants (customer/driver) or admin to avoid broad enumeration
+      allow list: if negotiationParticipant(resource.data.driverId, resource.data.customerId);
+
+      // Updates: participants or admin, and guests when customerId is null,
+      // while keeping immutable fields locked.
+      allow update: if negotiationImmutableFieldsUnchanged() && (
+        negotiationParticipant(resource.data.driverId, resource.data.customerId) ||
+        (resource.data.customerId == null && request.resource.data.customerId == null)
       );
-      allow list: if isSignedIn() && (isDriver() || isAdmin());
-      allow update: if isSignedIn() && (
-        request.auth.uid == resource.data.customerId ||
-        (isDriver() && (
-          getUserData().driverId == resource.data.driverId ||
-          request.auth.uid == resource.data.driverId
-        ))
-      );
+
+      // Delete restricted to admins
+      allow delete: if isAdmin();
     }
 
     // ============================================================
@@ -282,15 +341,23 @@ service cloud.firestore {
     // NOTIFICATIONS
     // ============================================================
     match /notifications/{notificationId} {
+      // Allow customers, drivers (via driverId), system broadcast, or admin
       allow read: if isSignedIn() && (
-        request.auth.uid == resource.data.recipientId || 
-        resource.data.recipientId == 'system_broadcast' || 
+        request.auth.uid == resource.data.recipientId ||
+        driverMatches(resource.data.recipientId) ||
+        resource.data.recipientId == 'system_broadcast' ||
         isAdmin()
       );
       allow create: if true;
-      allow update: if isSignedIn() && request.auth.uid == resource.data.recipientId;
+      allow update: if isSignedIn() && (
+        request.auth.uid == resource.data.recipientId ||
+        driverMatches(resource.data.recipientId) ||
+        isAdmin()
+      );
       allow delete: if isSignedIn() && (
-        request.auth.uid == resource.data.recipientId || isAdmin()
+        request.auth.uid == resource.data.recipientId ||
+        driverMatches(resource.data.recipientId) ||
+        isAdmin()
       );
     }
 
