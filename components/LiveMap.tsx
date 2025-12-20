@@ -14,7 +14,7 @@ type GoogleMarker = any;
 import MapBanner from './MapBanner';
 
 interface LiveMapProps {
-  center: { lat: number; lng: number };
+  center?: { lat: number; lng: number };
   zoom?: number;
   pickupLocation?: { lat: number; lng: number };
   destinationLocation?: { lat: number; lng: number };
@@ -23,7 +23,7 @@ interface LiveMapProps {
 }
 
 export default function LiveMap({ 
-  center, 
+  center = { lat: -1.286389, lng: 36.817223 }, 
   zoom = 14, 
   pickupLocation, 
   destinationLocation, 

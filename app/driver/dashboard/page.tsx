@@ -514,22 +514,6 @@ export default function DriverDashboard() {
                     )}
                   </button>
                 </div>
-                <button
-                  onClick={() => {
-                    const isMock = localStorage.getItem('use_mock_location') === 'true';
-                    localStorage.setItem('use_mock_location', isMock ? 'false' : 'true');
-                    window.location.reload();
-                  }}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all ${
-                    typeof window !== 'undefined' && localStorage.getItem('use_mock_location') === 'true'
-                      ? "bg-orange-50 border-orange-200 text-orange-700 font-bold"
-                      : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100"
-                  }`}
-                  title="Toggle Mock Location (for testing)"
-                >
-                  <MapPin className={`w-4 h-4 ${typeof window !== 'undefined' && localStorage.getItem('use_mock_location') === 'true' ? "animate-pulse" : ""}`} />
-                  <span className="text-xs">{typeof window !== 'undefined' && localStorage.getItem('use_mock_location') === 'true' ? "Mock GPS ON" : "Mock GPS"}</span>
-                </button>
 
                 <NotificationBell
                   driverId={

@@ -106,15 +106,6 @@ export async function calculateETA(
  */
 export function getCurrentLocation(): Promise<{ lat: number; lng: number }> {
   return new Promise((resolve, reject) => {
-    // --- MOCK LOCATION FOR DEVELOPMENT ---
-    if (typeof window !== 'undefined' && localStorage.getItem('use_mock_location') === 'true') {
-      console.log('[Maps] Using MOCK location (Nairobi CBD)');
-      // Default to Nairobi CBD or a set coordinate
-      resolve({ lat: -1.286389, lng: 36.817223 });
-      return;
-    }
-    // --------------------------------------
-
     if (typeof window === 'undefined' || !navigator.geolocation) {
       reject(new Error('Geolocation is not supported by this browser'));
       return;

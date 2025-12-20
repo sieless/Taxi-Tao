@@ -5,46 +5,6 @@ import Link from "next/link";
 import BookingForm from "@/components/BookingForm";
 import { Timestamp } from "firebase/firestore";
 
-// Mock data for fallback
-const MOCK_VEHICLE: Vehicle = {
-  id: "mock-vehicle",
-  driverId: "mock-driver",
-  make: "Toyota",
-  model: "Corolla",
-  year: 2020,
-  plate: "KAA 123B",
-  images: [],
-  seats: 4,
-  type: "sedan",
-  active: true,
-  baseFare: 500,
-};
-
-const MOCK_DRIVER: Driver = {
-  id: "mock-driver",
-  name: "Mock Driver",
-  slug: "mock-driver",
-  bio: "This is a mock driver for testing purposes.",
-  phone: "+254712345678",
-  whatsapp: "254712345678",
-  email: "mock@taxitao.co.ke",
-  active: true,
-  rating: 4.8,
-  totalRides: 150,
-  averageRating: 4.8,
-  totalRatings: 120,
-  vehicles: [MOCK_VEHICLE],
-  createdAt: Timestamp.fromDate(new Date()),
-  subscriptionStatus: "active",
-  lastPaymentDate: Timestamp.fromDate(new Date()),
-  nextPaymentDue: Timestamp.fromDate(
-    new Date(new Date().getFullYear(), new Date().getMonth() + 1, 5)
-  ),
-  paymentHistory: [],
-  isVisibleToPublic: true,
-  status: "available",
-};
-
 export default async function DriverPage({
   params,
 }: {
@@ -52,15 +12,9 @@ export default async function DriverPage({
 }) {
   const { driverId } = await params;
 
-  // Try to fetch real data
-  let driver = await getDriver(driverId);
-  let vehicles = await getDriverVehicles(driverId);
-
-  // Fallback to mock if not found (for demo purposes)
-  if (!driver && driverId === "demo") {
-    driver = MOCK_DRIVER;
-    vehicles = [MOCK_VEHICLE];
-  }
+  // Fetch real data
+  const driver = await getDriver(driverId);
+  const vehicles = await getDriverVehicles(driverId);
 
   if (!driver) {
     return (
