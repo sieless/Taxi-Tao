@@ -49,7 +49,7 @@ import Logo from "@/components/Logo";
 import DriverPricingManager from "@/components/DriverPricingManager";
 import ServicePackagesConfig from "@/components/ServicePackagesConfig";
 import CustomerDetailsModal from "@/components/CustomerDetailsModal";
-import { DollarSign, TrendingUp, Briefcase, Settings } from "lucide-react";
+import { DollarSign, TrendingUp, Briefcase, Settings, Banana } from "lucide-react";
 
 export default function DriverDashboard() {
   const { user, userProfile, logout, loading: authLoading } = useAuth();
@@ -514,6 +514,23 @@ export default function DriverDashboard() {
                     )}
                   </button>
                 </div>
+                <button
+                  onClick={() => {
+                    const isMock = localStorage.getItem('use_mock_location') === 'true';
+                    localStorage.setItem('use_mock_location', isMock ? 'false' : 'true');
+                    window.location.reload();
+                  }}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all ${
+                    typeof window !== 'undefined' && localStorage.getItem('use_mock_location') === 'true'
+                      ? "bg-orange-50 border-orange-200 text-orange-700 font-bold"
+                      : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100"
+                  }`}
+                  title="Toggle Mock Location (for testing)"
+                >
+                  <MapPin className={`w-4 h-4 ${typeof window !== 'undefined' && localStorage.getItem('use_mock_location') === 'true' ? "animate-pulse" : ""}`} />
+                  <span className="text-xs">{typeof window !== 'undefined' && localStorage.getItem('use_mock_location') === 'true' ? "Mock GPS ON" : "Mock GPS"}</span>
+                </button>
+
                 <NotificationBell
                   driverId={
                     driver?.id || userProfile?.driverId || user?.uid || ""
@@ -1080,6 +1097,13 @@ export default function DriverDashboard() {
             >
               <DollarSign className="w-6 h-6 text-indigo-600" />
               <span className="text-sm font-medium text-gray-700">Pricing</span>
+            </button>
+            <button
+              onClick={() => router.push("/driver/marketing-poster")}
+              className="flex flex-col items-center gap-2 p-4 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition border border-yellow-200"
+            >
+              <Banana className="w-6 h-6 text-yellow-600" />
+              <span className="text-sm font-medium text-gray-700">Poster</span>
             </button>
             <button
               onClick={() => router.push("/driver/history")}

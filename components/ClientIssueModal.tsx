@@ -27,9 +27,10 @@ export default function ClientIssueModal({ isOpen, onClose, bookingId, driverId 
 
     setLoading(true);
     try {
-      await addDoc(collection(db, "client_issues"), {
-        userId: user?.uid || "anonymous",
-        userEmail: user?.email || "anonymous",
+      await addDoc(collection(db, "issues"), {
+        userId: user?.uid,
+        userEmail: user?.email,
+        userType: "customer",
         bookingId: bookingId || null,
         driverId: driverId || null,
         subject,

@@ -11,6 +11,10 @@ import { KENYA_COUNTIES, COMMON_LOCATIONS } from '@/lib/kenya-locations';
 import Link from 'next/link';
 import NegotiationModal from '@/components/NegotiationModal';
 import Logo from "@/components/Logo";
+import LiveMap from '@/components/LiveMap';
+
+// We'll use a mock center for Nairobi/Machakos area
+const DEFAULT_CENTER = { lat: -1.5177, lng: 37.2634 }; // Machakos Town
 
 // Simple Ride Request Form Component
 function RideRequestForm({ from, to }: { from: string; to: string }) {
@@ -174,6 +178,11 @@ export default function PricedBookingPage() {
   const [negotiationModalOpen, setNegotiationModalOpen] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState<DriverMatch | null>(null);
 
+  // Map state
+  const [showMap, setShowMap] = useState(false);
+  const [pickupCoords, setPickupCoords] = useState<{lat: number, lng: number} | undefined>(undefined);
+  const [destCoords, setDestCoords] = useState<{lat: number, lng: number} | undefined>(undefined);
+
   // Combine counties and common locations for dropdown
   const allLocations = [...KENYA_COUNTIES, ...COMMON_LOCATIONS].sort();
 
@@ -187,6 +196,14 @@ export default function PricedBookingPage() {
     }
 
     setLoading(true);
+    // Show map when searching
+    setShowMap(true);
+    
+    // Mock coordinates for the demo (in a real app, we'd use Geocoding API)
+    // We'll just offset from Machakos center slightly for visual effect
+    setPickupCoords({ lat: DEFAULT_CENTER.lat + 0.01, lng: DEFAULT_CENTER.lng + 0.01 });
+    setDestCoords({ lat: DEFAULT_CENTER.lat - 0.01, lng: DEFAULT_CENTER.lng - 0.01 });
+
     try {
       const results = await getRecommendations(from, to);
       setRecommendations(results);
@@ -236,6 +253,16 @@ export default function PricedBookingPage() {
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Compare prices from top-rated drivers and book instantly
           </p>
+        </div>
+
+        {/* Map / Banner Section */}
+        <div className="mb-12 h-[400px] rounded-2xl overflow-hidden shadow-2xl border-4 border-white">
+          <LiveMap 
+            center={DEFAULT_CENTER}
+            pickupLocation={pickupCoords}
+            destinationLocation={destCoords}
+            showPlaceholder={!showMap}
+          />
         </div>
 
         {/* Route Selection Card */}

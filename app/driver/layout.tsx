@@ -1,9 +1,7 @@
-import { AuthProvider } from "@/lib/auth-context";
-
 export default function DriverLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <AuthProvider>{children}</AuthProvider>;
+  return <>{children}</>;
 }

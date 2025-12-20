@@ -11,15 +11,25 @@ declare const google: any;
 type GoogleMap = any;
 type GoogleMarker = any;
 
+import MapBanner from './MapBanner';
+
 interface LiveMapProps {
   center: { lat: number; lng: number };
   zoom?: number;
   pickupLocation?: { lat: number; lng: number };
   destinationLocation?: { lat: number; lng: number };
   driverLocation?: { lat: number; lng: number };
+  showPlaceholder?: boolean;
 }
 
-export default function LiveMap({ center, zoom = 14, pickupLocation, destinationLocation, driverLocation }: LiveMapProps) {
+export default function LiveMap({ 
+  center, 
+  zoom = 14, 
+  pickupLocation, 
+  destinationLocation, 
+  driverLocation,
+  showPlaceholder = false
+}: LiveMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const googleMapRef = useRef<GoogleMap | null>(null);
   const pickupMarkerRef = useRef<GoogleMarker | null>(null);
@@ -198,33 +208,45 @@ export default function LiveMap({ center, zoom = 14, pickupLocation, destination
     }
   }
 
-  if (loading) {
-    return (
-      <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-xl">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 text-green-600 animate-spin mx-auto mb-2" />
-          <p className="text-sm text-gray-600">Loading map...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="w-full h-full flex items-center justify-center bg-red-50 rounded-xl border border-red-200">
-        <div className="text-center p-6">
-          <p className="text-red-600 font-medium mb-2">Map Error</p>
-          <p className="text-sm text-red-500">{error}</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div 
-      ref={mapRef} 
-      className="w-full h-full rounded-xl"
-      style={{ minHeight: '400px' }}
-    />
+    <div className="relative w-full h-full min-h-[400px]">
+      {/* Placeholder / Banner View */}
+      {showPlaceholder && (
+        <div className="absolute inset-0 z-20">
+          <MapBanner />
+        </div>
+      )}
+
+      {/* Loading State */}
+      {loading && !showPlaceholder && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-gray-50 rounded-xl">
+          <div className="text-center">
+            <div className="relative mb-4">
+              <Loader2 className="w-12 h-12 text-green-600 animate-spin mx-auto" />
+              <div className="absolute inset-0 w-12 h-12 border-4 border-green-100 rounded-full mx-auto"></div>
+            </div>
+            <p className="text-lg font-bold text-gray-800">Preparing Map</p>
+            <p className="text-sm text-gray-500">Securing your route...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div className="absolute inset-0 z-30 flex items-center justify-center bg-red-50 rounded-xl border border-red-200 p-6">
+          <div className="text-center">
+            <p className="text-red-600 font-medium mb-2">Map Error</p>
+            <p className="text-sm text-red-500">{error}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Actual Map */}
+      <div 
+        ref={mapRef} 
+        className={`w-full h-full rounded-xl transition-opacity duration-700 bg-gray-50 ${loading || showPlaceholder ? 'opacity-0' : 'opacity-100'}`}
+        style={{ minHeight: '400px' }}
+      />
+    </div>
   );
 }

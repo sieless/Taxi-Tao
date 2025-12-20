@@ -9,6 +9,9 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { useEffect, Suspense } from "react";
 import Logo from "@/components/Logo";
+import LiveMap from "@/components/LiveMap";
+
+const DEFAULT_CENTER = { lat: -1.5177, lng: 37.2634 }; // Machakos Town
 
 function BookingContent() {
   const { user, loading } = useAuth();
@@ -75,9 +78,16 @@ function BookingContent() {
             </div>
           </div>
 
-          {/* Right Column - Live Driver Carousel */}
-          <div>
+          {/* Right Column - Live Driver Carousel & Map */}
+          <div className="space-y-8">
             <LiveDriverCarousel vehicleType={vehicleType} />
+            
+            <div className="bg-white rounded-2xl shadow-lg overflow-hidden h-[400px] border-4 border-white">
+              <LiveMap 
+                center={DEFAULT_CENTER}
+                showPlaceholder={true} // Always show placeholder initially on this page
+              />
+            </div>
           </div>
         </div>
             

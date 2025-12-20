@@ -9,11 +9,12 @@ import {
   Mail, 
   MapPin, 
   Car, 
-  Calendar, 
   Edit, 
   CheckCircle, 
   AlertTriangle,
-  ArrowLeft
+  ArrowLeft,
+  Share2,
+  Sparkles
 } from "lucide-react";
 import Link from "next/link";
 
@@ -55,6 +56,30 @@ export default function DriverProfilePage() {
       </div>
 
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+        {/* Marketing Callout - Enhanced */}
+        <div className="bg-gradient-to-r from-yellow-50 via-orange-50 to-amber-50 border-2 border-yellow-300 rounded-xl p-5 shadow-md">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                <Sparkles className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <h4 className="font-black text-gray-900 text-lg mb-1">Grow Your Business! 🚀</h4>
+                <p className="text-sm text-gray-700 font-medium">Create professional marketing posters for WhatsApp, Instagram & Facebook</p>
+                <p className="text-xs text-gray-600 mt-1">✨ 3 stunning templates • Ready in seconds • Free forever</p>
+              </div>
+            </div>
+            <Link
+              href="/driver/marketing-poster"
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-bold transition-all shadow-md hover:shadow-lg flex-shrink-0"
+            >
+              <Share2 className="w-5 h-5" />
+              <span className="hidden sm:inline">Create Poster</span>
+              <span className="sm:hidden">Create</span>
+            </Link>
+          </div>
+        </div>
+
         {/* Profile Card */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="bg-gradient-to-r from-green-600 to-green-700 h-32 relative">
@@ -212,7 +237,7 @@ export default function DriverProfilePage() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-              <Calendar className="w-5 h-5 text-purple-600" />
+              <CheckCircle className="w-5 h-5 text-purple-600" />
             </div>
             <div>
               <h3 className="text-lg font-bold text-gray-900">Subscription Status</h3>

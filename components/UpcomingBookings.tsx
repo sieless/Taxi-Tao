@@ -270,15 +270,30 @@ export default function UpcomingBookings({ driverId, driverProfile, maxItems = 5
           bookingId,
           (booking as any).destinationCoords,
           (error) => {
-            const errMsg = (error as any)?.message || error?.toString?.() || 'Unknown error';
-            const errCode = (error as any)?.code;
-            console.error("Location tracking error:", { message: errMsg, code: errCode });
+            const err = error as any;
+            const errCode = err?.code;
+            let errMsg = err?.message || '';
+            
+            if (!errMsg || errMsg.includes('GeolocationPositionError')) {
+              if (errCode === 1) errMsg = 'Permission denied';
+              else if (errCode === 2) errMsg = 'Position unavailable';
+              else if (errCode === 3) errMsg = 'Timeout';
+              else errMsg = 'Unknown location error';
+            }
+            
+            console.error(`[UpcomingBookings] Location tracking failed. Code: ${errCode}, Message: ${errMsg}`);
             
             // User-friendly message based on error code
             let userMessage = "Location tracking failed (non-critical).";
-            if (errCode === 1) userMessage = "Location permission denied. Please enable GPS.";
-            else if (errCode === 2) userMessage = "Location unavailable. Check device settings.";
-            else if (errCode === 3) userMessage = "Location timeout. Please try again.";
+            if (errCode === 1) {
+              userMessage = "Location permission denied. Please enable GPS and allow browser access.";
+            } else if (errCode === 2) {
+              userMessage = "GPS signal lost or unavailable. Check your device location settings.";
+            } else if (errCode === 3) {
+              userMessage = "Location request timed out. Retrying...";
+            } else if (errMsg && typeof errMsg === 'string' && errMsg.toLowerCase().includes('permission')) {
+              userMessage = "Location permission denied.";
+            }
             
             push({ message: userMessage, type: "info" });
           }

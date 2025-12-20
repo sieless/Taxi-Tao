@@ -61,6 +61,9 @@ export default function AvailableDrivers() {
 
       setDrivers(availableDrivers.slice(0, 6)); // Show max 6 drivers
       setLoading(false);
+    }, (error) => {
+      console.error("AvailableDrivers listener error:", error);
+      setLoading(false);
     });
 
     return () => unsubscribe();

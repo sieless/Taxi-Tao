@@ -79,7 +79,7 @@ export default function AdminPanel() {
 
     // Also fetch client issues
     try {
-      const q = query(collection(db, "client_issues"));
+      const q = query(collection(db, "issues"));
       const querySnapshot = await getDocs(q);
       const issues = querySnapshot.docs.map((doc) => ({
         id: doc.id,
@@ -278,7 +278,7 @@ export default function AdminPanel() {
   async function resolveClientIssue(issueId: string) {
     if (!confirm("Mark this client issue as completed?")) return;
     try {
-      await updateDoc(doc(db, "client_issues", issueId), {
+      await updateDoc(doc(db, "issues", issueId), {
         status: "completed",
         resolvedAt: new Date(),
       });
@@ -294,7 +294,7 @@ export default function AdminPanel() {
   async function pauseClientIssue(issueId: string) {
     if (!confirm("Pause this issue?")) return;
     try {
-      await updateDoc(doc(db, "client_issues", issueId), {
+      await updateDoc(doc(db, "issues", issueId), {
         status: "paused",
         pausedAt: new Date(),
       });

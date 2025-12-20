@@ -9,7 +9,7 @@ import { Driver } from "@/lib/types";
 import { ArrowLeft, User, Bell, Clock, CreditCard, Shield, Globe, Save, Loader2, Phone } from "lucide-react";
 
 export default function DriverSettings() {
-  const { user, userProfile, loading: authLoading } = useAuth();
+  const { user, userProfile, loading: authLoading, refreshUserProfile } = useAuth();
   const router = useRouter();
   const [driver, setDriver] = useState<Driver | null>(null);
   const [loading, setLoading] = useState(true);
@@ -115,7 +115,17 @@ export default function DriverSettings() {
         bio: profileForm.bio,
       });
 
+      // Also update the main user profile to keep names in sync
+      if (user?.uid) {
+        const userRef = doc(db, "users", user.uid);
+        await updateDoc(userRef, {
+          name: profileForm.name,
+          phone: profileForm.phone,
+        });
+      }
+
       setDriver(prev => prev ? { ...prev, ...profileForm } : null);
+      await refreshUserProfile();
       alert("Profile updated successfully!");
     } catch (error) {
       console.error("Error updating profile:", error);

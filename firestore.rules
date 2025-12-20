@@ -109,24 +109,42 @@ service cloud.firestore {
     // USER PROFILES
     // ============================================================
     match /users/{userId} {
-      // Users can read/update/delete their own profile
-      allow read, update, delete: if isSignedIn() && isOwner(userId);
-      // Any authenticated user can create their profile
-      allow create: if isSignedIn();
+      // Any authenticated user can read (needed for customer/driver lookups)
+      allow read: if isSignedIn();
+      
+      // Users can create their own profile, or admins can create any
+      allow create: if isSignedIn() && (
+        isOwner(userId) ||
+        (getUserData() != null && getUserData().role == 'admin')
+      );
+      
+      // Users can update their own profile, or admins can update any
+      allow update: if isSignedIn() && (
+        isOwner(userId) ||
+        (getUserData() != null && getUserData().role == 'admin')
+      );
+      
+      // Only admins can delete users
+      allow delete: if isSignedIn() && (getUserData() != null && getUserData().role == 'admin');
+      
       // Admins can list all users
       allow list: if isAdmin();
     }
 
     // ============================================================
-    // DRIVER PROFILES (Public for marketing)
+    // DRIVER PROFILES (Mobile: auth read, self write)
     // ============================================================
     match /drivers/{driverId} {
-      // Anyone can read driver profiles (for booking UI)
-      allow read: if true;
-      // Drivers can create/update their own profile
-      allow create: if isSignedIn() && (isOwner(driverId) || isAdmin());
-      allow update: if isSignedIn() && (isOwner(driverId) || isAdmin());
-      // Only admins can delete
+      // Anyone authenticated can read driver profiles (for booking flow)
+      allow read: if isSignedIn();
+      // Only the driver themselves can create/update their profile; admins can assist
+      allow create: if isSignedIn() && (
+        isOwner(driverId) || isAdmin()
+      );
+      allow update: if isSignedIn() && (
+        isOwner(driverId) || isAdmin()
+      );
+      // Drivers cannot delete their profile via app (admin only)
       allow delete: if isAdmin();
       
       // Nested vehicles subcollection
@@ -156,11 +174,8 @@ service cloud.firestore {
       allow update, delete: if isSignedIn()
         && resource.data.driverId == request.auth.uid;
 
-      // Reads: driver can read own, customers can read active routes
-      allow get, list: if isSignedIn() && (
-        resource.data.driverId == request.auth.uid ||
-        resource.data.active == true
-      );
+      // Reads: mobile allows any authenticated read
+      allow get, list: if isSignedIn();
     }
 
     // ============================================================
@@ -183,45 +198,45 @@ service cloud.firestore {
     // Does NOT contain: customerPhone, customerName, exact addresses
     // ============================================================
     match /bookingRequests/{bookingId} {
-      // Anyone can create bookings (guest customers)
-      allow create: if true;
+      // Any authenticated user can create a booking request
+      allow create: if isSignedIn();
       
-      // Reading: All signed-in drivers can see public booking info
-      allow get: if isSignedIn() && (
-        isDriver() || 
-        isAdmin() ||
-        // Check if acceptedBy matches user's driverId OR user.uid
-        (isDriver() && resource.data.acceptedBy == getUserData().driverId) ||
-        resource.data.acceptedBy == request.auth.uid ||
-        resource.data.customerId == request.auth.uid
-      );
+      // Any authenticated user can read/list (drivers scan for rides in area)
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
       
-      // Drivers/admins can list; customers can list their own; drivers can list their accepted bookings even if profile role is missing
-      allow list: if isSignedIn() && (
-        isDriver() || 
-        isAdmin() ||
-        resource.data.customerId == request.auth.uid ||
-        resource.data.acceptedBy == request.auth.uid ||
-        (getUserData() != null && resource.data.acceptedBy == getUserData().driverId)
-      );
-      
-      // Updates: Drivers can accept/update, customers can rate
+      // Update logic - multi-party access
       allow update: if isSignedIn() && (
-        // Driver accepting pending booking
-        (isDriver() && resource.data.status == 'pending') ||
-        // Driver updating their accepted booking (check both driverId and user.uid)
-        (isDriver() && (
-          resource.data.acceptedBy == getUserData().driverId ||
-          resource.data.acceptedBy == request.auth.uid
-        )) || 
-        // Customer rating completed ride
-        (resource.data.customerId == request.auth.uid && 
-         resource.data.rideStatus == 'completed' &&
-         resource.data.rating == null) ||
-        isAdmin()
+        // Customer who created the booking (can cancel, negotiate, confirm)
+        request.auth.uid == resource.data.customerId || 
+        
+        // Driver who accepted the booking (can update status)
+        request.auth.uid == resource.data.acceptedBy ||
+        
+        // Targeted driver (can accept/reject specifically-assigned ride)
+        request.auth.uid == resource.data.targetDriverId ||
+        
+        // Any driver can accept a PENDING broadcast ride (no targetDriverId set)
+        resource.data.status == 'pending'
       );
       
-      allow delete: if isAdmin();
+      // Allow deletion of rides under specific conditions:
+      // 1. Driver can delete expired rides they accepted (for cleanup)
+      // 2. Driver can delete expired rides where they were chosen by customer (for cleanup)
+      // 3. Customer can delete their own cancelled rides (for cleanup)
+      allow delete: if request.auth != null && (
+        // Driver can delete expired rides they accepted
+        (request.auth.uid == resource.data.acceptedBy &&
+         resource.data.expiresAt != null &&
+         (resource.data.expiresAt.toMillis ? resource.data.expiresAt.toMillis() : resource.data.expiresAt) < request.time.toMillis()) ||
+        // Driver can delete expired rides where they were targeted by customer
+        (request.auth.uid == resource.data.targetDriverId &&
+         resource.data.expiresAt != null &&
+         (resource.data.expiresAt.toMillis ? resource.data.expiresAt.toMillis() : resource.data.expiresAt) < request.time.toMillis()) ||
+        // Customer can delete their own cancelled rides
+        (request.auth.uid == resource.data.customerId &&
+         resource.data.status == 'cancelled')
+      );
     }
 
     // ============================================================
@@ -341,42 +356,68 @@ service cloud.firestore {
     // NOTIFICATIONS
     // ============================================================
     match /notifications/{notificationId} {
-      // Allow customers, drivers (via driverId), system broadcast, or admin
+      // Only the recipient can read their notifications (matches auth UID or driverId)
       allow read: if isSignedIn() && (
         request.auth.uid == resource.data.recipientId ||
-        driverMatches(resource.data.recipientId) ||
-        resource.data.recipientId == 'system_broadcast' ||
-        isAdmin()
+        (getUserData() != null && getUserData().driverId == resource.data.recipientId)
       );
-      allow create: if true;
-      allow update: if isSignedIn() && (
-        request.auth.uid == resource.data.recipientId ||
-        driverMatches(resource.data.recipientId) ||
-        isAdmin()
-      );
-      allow delete: if isSignedIn() && (
-        request.auth.uid == resource.data.recipientId ||
-        driverMatches(resource.data.recipientId) ||
-        isAdmin()
-      );
+      
+      // Anyone authenticated can create notifications (cross-party alerts)
+      allow create: if isSignedIn();
+      
+      // Only recipient can update (e.g., mark as read)
+      allow update: if isSignedIn() && request.auth.uid == resource.data.recipientId;
+      
+      // No deletion
+      allow delete: if false;
     }
 
     match /driverNotifications/{notificationId} {
-      allow create: if true;
-      allow read, update, delete: if isSignedIn() && (
-        // Check if driverId matches user's driverId from profile OR matches user.uid directly
-        (isDriver() && getUserData().driverId == resource.data.driverId) ||
-        request.auth.uid == resource.data.driverId || 
-        isAdmin()
+      // Only the driver can read their notifications (matches auth UID or driverId)
+      allow read: if isSignedIn() && (
+        request.auth.uid == resource.data.driverId ||
+        (getUserData() != null && getUserData().driverId == resource.data.driverId)
       );
+      
+      // Anyone authenticated can create (customer confirms, system alerts)
+      allow create: if isSignedIn();
+      
+      // Only driver can update (e.g., mark as read)
+      allow update: if isSignedIn() && request.auth.uid == resource.data.driverId;
+      
+      // No deletion
+      allow delete: if false;
     }
 
     // ============================================================
-    // CLIENT ISSUES
+    // ISSUES COLLECTION (Issue reports from customers and drivers)
     // ============================================================
-    match /client_issues/{issueId} {
-      allow create: if isSignedIn();
-      allow get, list, update, delete: if isAdmin();
+    match /issues/{issueId} {
+      // Users can read their own issues, admins can read all
+      allow read: if isSignedIn() && (
+        request.auth.uid == resource.data.userId ||
+        isAdmin()
+      );
+
+      // Any authenticated user can create their own issue report
+      // Must match userId and have valid userType (customer or driver)
+      allow create: if isSignedIn() &&
+        request.auth.uid == request.resource.data.userId &&
+        request.resource.data.userType in ['customer', 'driver'];
+
+      // Only admins can update issue status
+      allow update: if isAdmin();
+
+      // No deletion
+      allow delete: if false;
+    }
+
+    // APP SETTINGS (global)
+    // ============================================================
+    match /appSettings/{settingId} {
+      allow read: if isSignedIn();
+      allow create, update: if isAdmin();
+      allow delete: if false;
     }
   }
 }

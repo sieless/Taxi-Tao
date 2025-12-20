@@ -23,7 +23,7 @@ interface AuthContextType {
   refreshUserProfile: (currentUser?: FirebaseUser | null) => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType>({
+export const AuthContext = createContext<AuthContextType>({
   user: null,
   userProfile: null,
   driverProfile: null,
@@ -38,7 +38,7 @@ export function useAuth() {
   return useContext(AuthContext);
 }
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [userProfile, setUserProfile] = useState<AppUser | null>(null);
   const [driverProfile, setDriverProfile] = useState<AppDriver | null>(null);
@@ -226,4 +226,4 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       {children}
     </AuthContext.Provider>
   );
-}
+};

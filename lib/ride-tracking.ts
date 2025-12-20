@@ -84,6 +84,13 @@ export async function startLocationTracking(
     // Stop existing tracking session
     stopLocationTracking();
 
+    if (typeof window !== 'undefined' && !navigator.geolocation) {
+      const noGeoErr = new Error('Geolocation is not supported by this browser or environment.');
+      console.error('[RideTracking] Geolocation missing:', noGeoErr);
+      if (onError) onError(noGeoErr);
+      return;
+    }
+
     // Initial location update
     const initialLocation = await getCurrentLocation();
     await updateDriverLocation(bookingId, initialLocation);
@@ -91,6 +98,8 @@ export async function startLocationTracking(
     if (destinationCoords) {
       await checkAndAutoComplete(bookingId, initialLocation, destinationCoords);
     }
+
+    let lastErrCode: number | string | null = null;
 
     // Start 30-second interval tracking
     locationUpdateInterval = setInterval(async () => {
@@ -101,26 +110,56 @@ export async function startLocationTracking(
         if (destinationCoords) {
           await checkAndAutoComplete(bookingId, currentLocation, destinationCoords);
         }
+        lastErrCode = null; // Clear error on success
       } catch (e) {
         const err = e as any;
-        const errMsg = err?.message || err?.toString?.() || 'Unknown location error';
-        console.error('Error updating location:', errMsg, err?.code ? `(code: ${err.code})` : '');
-        onError?.(err);
+        const errCode = err?.code || err?.message;
+        
+        // Only notify if it's a NEW error to avoid spamming the UI
+        if (errCode !== lastErrCode) {
+          const errMsg = err?.message || err?.toString?.() || 'Unknown location error';
+          console.error('[RideTracking] Interval update failed:', {
+            message: errMsg,
+            code: err?.code,
+            originalError: e
+          });
+          if (onError) onError(e instanceof Error ? e : new Error(errMsg));
+          lastErrCode = errCode;
+        }
       }
     }, 30_000);
 
   } catch (e) {
     const err = e as any;
-    // GeolocationPositionError has code & message properties
-    const errorDetails = {
-      message: err?.message || 'Unknown error',
-      code: err?.code,
-      name: err?.name,
-    };
-    console.error('Error starting location tracking:', errorDetails);
-    onError?.(err);
+    let errMsg = err?.message || '';
+    const errCode = err?.code;
 
-    // Do NOT throw—tracking isn't critical to continue ride flow
+    // Aggressively sanitize the error message
+    if (!errMsg || 
+        errMsg === '[object GeolocationPositionError]' || 
+        errMsg.includes('GeolocationPositionError')) {
+      if (errCode === 1) errMsg = 'Location permission denied.';
+      else if (errCode === 2) errMsg = 'Position unavailable (GPS/Signal lost).';
+      else if (errCode === 3) errMsg = 'Location request timed out.';
+      else errMsg = 'Unknown location error';
+    }
+    
+    console.error('[RideTracking] Failed to start tracking:', {
+      message: errMsg,
+      code: errCode,
+      name: err?.name,
+      originalError: e
+    });
+    
+    if (onError) {
+      // GeolocationPositionError properties are not enumerable.
+      // We pass a plain object to ensure UpcomingBookings can read it.
+      onError({
+        message: errMsg,
+        code: errCode,
+        name: err?.name || 'GeolocationError'
+      } as any);
+    }
   }
 }
 

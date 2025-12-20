@@ -1,4 +1,5 @@
-// MobileMenu.tsx
+"use client";
+
 import {
   User,
   LogOut,
@@ -8,6 +9,7 @@ import {
   ChevronRight,
   ToggleLeft,
   ToggleRight,
+  Share2
 } from "lucide-react";
 import { Driver } from "@/lib/types";
 import { useRouter } from "next/navigation";
@@ -100,6 +102,25 @@ export default function MobileMenu({
 
         {/* Navigation Links */}
         <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+          <button
+            onClick={() => {
+              onClose();
+              router.push("/driver/marketing-poster");
+            }}
+            className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 active:bg-gray-100 transition-colors group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-50 to-orange-50 flex items-center justify-center group-hover:from-yellow-100 group-hover:to-orange-100 transition-colors border border-yellow-200">
+                <Share2 className="w-5 h-5 text-orange-600" />
+              </div>
+              <div className="text-left">
+                <span className="font-medium text-gray-700 block">Marketing Poster</span>
+                <span className="text-xs text-gray-500">Create & share</span>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gray-400" />
+          </button>
+
           <button
             onClick={() => {
               onClose();

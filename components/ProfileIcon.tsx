@@ -15,6 +15,7 @@ import {
   MapPin,
   Wallet,
   Users,
+  Banana
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
@@ -98,6 +99,7 @@ export default function ProfileIcon() {
     } else if (role === "driver") {
       return [
         { icon: LayoutDashboard, label: "Dashboard", path: "/driver/dashboard" },
+        { icon: Banana, label: "Marketing Poster", path: "/driver/marketing-poster" },
         { icon: Calendar, label: "Bookings", path: "/driver/bookings" },
         { icon: MapPin, label: "Route Pricing", path: "/driver/pricing" },
         { icon: Bell, label: "Notifications", path: "/driver/notifications" },

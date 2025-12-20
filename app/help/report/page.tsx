@@ -66,14 +66,15 @@ export default function ReportIssuePage() {
 
     try {
       // Create issue in Firestore
-      await addDoc(collection(db, "client_issues"), {
+      await addDoc(collection(db, "issues"), {
         issueType,
         description,
         contactName,
         contactEmail: contactEmail || null,
         contactPhone: contactPhone || null,
-        userId: user?.uid || null,
+        userId: user?.uid,
         userEmail: user?.email || null,
+        userType: "customer", // Default to customer for help page
         status: "pending",
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),

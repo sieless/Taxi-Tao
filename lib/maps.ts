@@ -102,30 +102,66 @@ export async function calculateETA(
 
 /**
  * Get current device location using browser Geolocation API (FREE)
+ * Now includes a fallback to low accuracy if high accuracy fails.
  */
 export function getCurrentLocation(): Promise<{ lat: number; lng: number }> {
   return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) {
+    // --- MOCK LOCATION FOR DEVELOPMENT ---
+    if (typeof window !== 'undefined' && localStorage.getItem('use_mock_location') === 'true') {
+      console.log('[Maps] Using MOCK location (Nairobi CBD)');
+      // Default to Nairobi CBD or a set coordinate
+      resolve({ lat: -1.286389, lng: 36.817223 });
+      return;
+    }
+    // --------------------------------------
+
+    if (typeof window === 'undefined' || !navigator.geolocation) {
       reject(new Error('Geolocation is not supported by this browser'));
       return;
     }
-    
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        resolve({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        });
-      },
-      (error) => {
-        reject(error);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
+
+    const options = {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    };
+
+    const success = (position: GeolocationPosition) => {
+      resolve({
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
+      });
+    };
+
+    const error = (err: GeolocationPositionError) => {
+      const code = err.code;
+      const message = err.message || (
+        code === 1 ? 'Permission denied' :
+        code === 2 ? 'Position unavailable' :
+        code === 3 ? 'Timeout' : 'Unknown error'
+      );
+
+      // If high accuracy failed, try one more time with low accuracy
+      if (options.enableHighAccuracy) {
+        console.warn(`[Maps] High accuracy failed (Code: ${code}, Msg: ${message}). Retrying with low accuracy...`);
+        options.enableHighAccuracy = false;
+        options.timeout = 15000; // Give it more time
+        navigator.geolocation.getCurrentPosition(success, (err2) => {
+          const code2 = err2.code;
+          const message2 = err2.message || (
+            code2 === 1 ? 'Permission denied' :
+            code2 === 2 ? 'Position unavailable' :
+            code2 === 3 ? 'Timeout' : 'Unknown error'
+          );
+          console.error(`[Maps] Geolocation failed completely (Code: ${code2}, Msg: ${message2})`);
+          reject(err2);
+        }, options);
+      } else {
+        reject(err);
       }
-    );
+    };
+
+    navigator.geolocation.getCurrentPosition(success, error, options);
   });
 }
 

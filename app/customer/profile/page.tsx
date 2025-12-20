@@ -9,7 +9,7 @@ import { User, Phone, Save, Loader2, Heart, Trash2, History } from "lucide-react
 import Link from "next/link";
 
 export default function ClientProfilePage() {
-  const { user, userProfile, loading: authLoading } = useAuth();
+  const { user, userProfile, loading: authLoading, refreshUserProfile } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -73,6 +73,7 @@ export default function ClientProfilePage() {
         role: 'customer', // Default to customer if creating new
         createdAt: userProfile?.createdAt || new Date(),
       }, { merge: true });
+      await refreshUserProfile();
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (error) {

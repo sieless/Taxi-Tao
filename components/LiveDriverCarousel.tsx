@@ -40,6 +40,9 @@ export default function LiveDriverCarousel({ vehicleType }: LiveDriverCarouselPr
       availableDrivers.sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0));
       setDrivers(availableDrivers);
       setLoading(false);
+    }, (error) => {
+      console.error("LiveDriverCarousel listener error:", error);
+      setLoading(false);
     });
 
     return () => unsubscribe();
