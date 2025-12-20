@@ -248,7 +248,11 @@ export async function completeRide(
   try {
     return await runTransaction(db, async (transaction) => {
       const ref = doc(db, COLLECTION_NAME, bookingId);
+      const driverRef = doc(db, "drivers", driverId);
+
+      // Perform all reads first
       const snap = await transaction.get(ref);
+      const driverSnap = await transaction.get(driverRef);
 
       if (!snap.exists()) {
         return { success: false, message: "Booking not found." };
@@ -264,14 +268,12 @@ export async function completeRide(
         return { success: false, message: "Unauthorized completion." };
       }
 
+      // Perform all writes after reads
       transaction.update(ref, {
         status: "completed",
         completedAt: Timestamp.now(),
         fare,
       });
-
-      const driverRef = doc(db, "drivers", driverId);
-      const driverSnap = await transaction.get(driverRef);
 
       if (driverSnap.exists()) {
         const currentTotal = driverSnap.data().totalRides || 0;
@@ -297,8 +299,9 @@ export async function rateRide(bookingId: string, rating: number, review?: strin
 
     return await runTransaction(db, async (transaction) => {
       const ref = doc(db, COLLECTION_NAME, bookingId);
+      
+      // Perform initial read for booking
       const snap = await transaction.get(ref);
-
       if (!snap.exists()) return { success: false, message: "Booking not found" };
 
       const booking = snap.data() as BookingRequest;
@@ -316,10 +319,12 @@ export async function rateRide(bookingId: string, rating: number, review?: strin
         return { success: false, message: "No driver assigned" };
       }
 
-      transaction.update(ref, { rating, review: review || null });
-
+      // Perform read for driver BEFORE any updates
       const driverRef = doc(db, "drivers", driverId);
       const driverSnap = await transaction.get(driverRef);
+
+      // Now perform all updates
+      transaction.update(ref, { rating, review: review || null });
 
       if (driverSnap.exists()) {
         const d = driverSnap.data();
