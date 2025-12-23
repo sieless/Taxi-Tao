@@ -14,6 +14,9 @@ import {
   MapPin,
   Mail,
   MessageSquare,
+  Download,
+  Zap,
+  Smartphone,
 } from "lucide-react";
 import BookingForm from "@/components/BookingForm";
 import DriverCard from "@/components/DriverCard";
@@ -809,6 +812,70 @@ export default function Home() {
               <p className="text-sm text-gray-500 mt-2">
                 Find us easily in Machakos Town.
               </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Mobile App Download Section */}
+      <section className="bg-gradient-to-r from-green-600 to-blue-600 py-16 px-4 md:px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
+            {/* Left Content */}
+            <div className="text-white text-center lg:text-left flex-1">
+              <div className="inline-block bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-semibold mb-4">
+                📱 Now Available
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                Download Our Mobile App
+              </h2>
+              <p className="text-xl text-white/90 mb-6 max-w-2xl">
+                Experience seamless taxi booking on the go. Get real-time tracking, 
+                instant notifications, and manage your rides from anywhere.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                <Link
+                  href="/download"
+                  className="group bg-white text-green-600 hover:bg-green-50 px-8 py-4 rounded-full font-bold text-lg shadow-lg transition-all transform hover:scale-105 flex items-center justify-center gap-3"
+                >
+                  <Download className="w-6 h-6" />
+                  Download Now
+                  <svg
+                    className="w-5 h-5 group-hover:translate-x-1 transition-transform"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 7l5 5m0 0l-5 5m5-5H6"
+                    />
+                  </svg>
+                </Link>
+              </div>
+              <div className="mt-6 flex flex-wrap justify-center lg:justify-start gap-6 text-sm text-white/80">
+                <div className="flex items-center gap-2">
+                  <Smartphone className="w-5 h-5" />
+                  <span>Android App</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Shield className="w-5 h-5" />
+                  <span>Safe & Secure</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Zap className="w-5 h-5" />
+                  <span>Fast & Easy</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Image/Icon */}
+            <div className="flex-shrink-0">
+              <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-8 border border-white/20">
+                <Smartphone className="w-32 h-32 md:w-40 md:h-40 text-white" />
+              </div>
             </div>
           </div>
         </div>

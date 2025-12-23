@@ -412,6 +412,34 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // ============================================================
+    // TESTING PHASE COLLECTIONS
+    // ============================================================
+    
+    // Testing Questions Collection
+    match /testingQuestions/{questionId} {
+      // TEMPORARY: Allow all authenticated users full access (for development)
+      allow read, write: if request.auth != null;
+    }
+
+    // Testing Config Collection
+    match /testingConfig/{configId} {
+      // TEMPORARY: Allow all authenticated users full access (for development)
+      allow read, write: if request.auth != null;
+    }
+
+    // Testing Feedback Collection
+    match /testingFeedback/{feedbackId} {
+      // TEMPORARY: Allow all authenticated users full access (for development)
+      allow read, write: if request.auth != null;
+    }
+
+    // Crash Reports Collection
+    match /crashReports/{crashId} {
+      // TEMPORARY: Allow all authenticated users full access (for development)
+      allow read, write: if request.auth != null;
+    }
+
     // APP SETTINGS (global)
     // ============================================================
     match /appSettings/{settingId} {

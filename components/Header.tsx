@@ -27,6 +27,9 @@ export default function Header() {
           <Link href="/#drivers" className="text-gray-600 hover:text-green-600 transition">
             Drivers
           </Link>
+          <Link href="/download" className="text-gray-600 hover:text-green-600 transition">
+            Download App
+          </Link>
           <Link href="/#contact" className="text-gray-600 hover:text-green-600 transition">
             Contact
           </Link>

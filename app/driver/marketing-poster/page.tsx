@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import QRCode from "qrcode";
+import { getDriverPricing } from "@/lib/pricing-service";
 import {
   ArrowLeft,
   Download,
@@ -146,11 +147,36 @@ export default function DriverMarketingPosterPage() {
     qrCode: "",
   });
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const [routePrices, setRoutePrices] = useState<Array<{ route: string; price: number }>>([]);
 
   useEffect(() => {
     if (!loading && !user) router.push("/login");
     if (!loading && user && !driverProfile) router.push("/");
   }, [user, driverProfile, loading, router]);
+
+  // Fetch route pricing data
+  useEffect(() => {
+    async function fetchPricing() {
+      if (!driverProfile?.id) return;
+      try {
+        const pricing = await getDriverPricing(driverProfile.id);
+        if (pricing?.routePricing) {
+          // Convert routePricing object to array and take top 4
+          const routes = Object.entries(pricing.routePricing)
+            .map(([key, data]: [string, any]) => ({
+              route: key.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' → '),
+              price: data.price || 0
+            }))
+            .filter(r => r.price > 0)
+            .slice(0, 4);
+          setRoutePrices(routes);
+        }
+      } catch (error) {
+        console.error('Error fetching pricing:', error);
+      }
+    }
+    fetchPricing();
+  }, [driverProfile?.id]);
 
   const posterData = useMemo(() => {
     if (!driverProfile) return null;
@@ -266,6 +292,38 @@ export default function DriverMarketingPosterPage() {
     const vehicleImg = embeddedImages.vehiclePhoto;
     const qrImg = embeddedImages.qrCode;
 
+    // Dynamic layout calculations based on poster height
+    const isSquare = h === 1080;
+    const isStory = h === 1920;
+    
+    // Limit routes based on available space
+    const maxRoutes = isSquare ? 3 : 4;
+    const displayRoutes = routePrices.slice(0, maxRoutes);
+    
+    // Calculate section heights
+    const headerHeight = 160;
+    const ctaHeight = isSquare ? 200 : 280;
+    const driverCardHeight = isSquare ? 280 : 320;
+    const vehicleCardHeight = isSquare ? 220 : 250;
+    const routeRowHeight = isSquare ? 45 : 50;
+    const routeCardHeight = displayRoutes.length > 0 ? (displayRoutes.length * routeRowHeight + 80) : 0;
+    const bottomBarHeight = 180;
+    
+    // Calculate Y positions
+    const ctaY = headerHeight + 80;
+    const driverCardY = ctaY + ctaHeight + 40;
+    const vehicleCardY = driverCardY + driverCardHeight + 30;
+    const routeCardY = vehicleCardY + vehicleCardHeight + 30;
+    const bottomBarY = h - bottomBarHeight;
+    
+    // Adjust font sizes for square
+    const titleSize = isSquare ? 48 : 56;
+    const ctaSize = isSquare ? 72 : 88;
+    const nameSize = isSquare ? 40 : 48;
+    const ratingSize = isSquare ? 24 : 28;
+    const locationSize = isSquare ? 20 : 24;
+    const phoneSize = isSquare ? 22 : 26;
+
     return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
   <defs>
@@ -277,10 +335,10 @@ export default function DriverMarketingPosterPage() {
       <feDropShadow dx="0" dy="10" stdDeviation="20" flood-color="#000000" flood-opacity="0.2"/>
     </filter>
     <clipPath id="photoClip">
-      <circle cx="240" cy="660" r="80"/>
+      <circle cx="240" cy="${driverCardY + 160}" r="80"/>
     </clipPath>
     <clipPath id="vehicleClip">
-      <rect x="180" y="915" width="160" height="120" rx="15"/>
+      <rect x="180" y="${vehicleCardY + 65}" width="160" height="120" rx="15"/>
     </clipPath>
   </defs>
 
@@ -289,55 +347,70 @@ export default function DriverMarketingPosterPage() {
   
   <!-- Decorative circles -->
   <circle cx="900" cy="300" r="200" fill="#ffffff" opacity="0.1"/>
-  <circle cx="200" cy="1100" r="250" fill="#ffffff" opacity="0.1"/>
+  <circle cx="200" cy="${h - 250}" r="250" fill="#ffffff" opacity="0.1"/>
   
   <!-- Top Branding -->
-  <rect x="0" y="0" width="${w}" height="160" fill="#16a34a"/>
+  <rect x="0" y="0" width="${w}" height="${headerHeight}" fill="#16a34a"/>
   <text x="60" y="100" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="900" fill="#ffffff">TaxiTao</text>
   <text x="${w - 60}" y="100" text-anchor="end" font-family="system-ui, sans-serif" font-size="32" font-weight="600" fill="#dcfce7">#RideWithTrust</text>
 
   <!-- Main Content Area -->
-  <text x="540" y="320" text-anchor="middle" font-family="system-ui, sans-serif" font-size="56" font-weight="900" fill="#1f2937">Need a Reliable Ride?</text>
-  <text x="540" y="400" text-anchor="middle" font-family="system-ui, sans-serif" font-size="88" font-weight="900" fill="#16a34a">BOOK NOW</text>
+  <text x="540" y="${ctaY + 60}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="${titleSize}" font-weight="900" fill="#1f2937">Need a Reliable Ride?</text>
+  <text x="540" y="${ctaY + 160}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="${ctaSize}" font-weight="900" fill="#16a34a">BOOK NOW</text>
 
   <!-- === UPPER CONTAINER: DRIVER DETAILS === -->
-  <rect x="140" y="500" width="800" height="320" rx="30" fill="#ffffff" filter="url(#shadow)"/>
+  <rect x="140" y="${driverCardY}" width="800" height="${driverCardHeight}" rx="30" fill="#ffffff" filter="url(#shadow)"/>
   
   <!-- Profile Photo -->
-  <circle cx="240" cy="660" r="85" fill="#16a34a"/>
-  <image xlink:href="${profileImg}" x="160" y="580" width="160" height="160" clip-path="url(#photoClip)" preserveAspectRatio="xMidYMid slice"/>
+  <circle cx="240" cy="${driverCardY + 160}" r="85" fill="#16a34a"/>
+  <image xlink:href="${profileImg}" x="160" y="${driverCardY + 80}" width="160" height="160" clip-path="url(#photoClip)" preserveAspectRatio="xMidYMid slice"/>
   
   <!-- Driver Info Text -->
-  <text x="360" y="610" font-family="system-ui, sans-serif" font-size="48" font-weight="900" fill="#1f2937">${safeName}</text>
-  <text x="360" y="660" font-family="system-ui, sans-serif" font-size="28" font-weight="700" fill="#16a34a">★★★★★ ${posterData.rating.toFixed(1)}</text>
-  <text x="360" y="710" font-family="system-ui, sans-serif" font-size="24" font-weight="600" fill="#6b7280">📍 ${safeLoc}</text>
-  <text x="360" y="760" font-family="system-ui, sans-serif" font-size="26" font-weight="700" fill="#1f2937">📞 ${safePhone}</text>
+  <text x="360" y="${driverCardY + 110}" font-family="system-ui, sans-serif" font-size="${nameSize}" font-weight="900" fill="#1f2937">${safeName}</text>
+  <text x="360" y="${driverCardY + 160}" font-family="system-ui, sans-serif" font-size="${ratingSize}" font-weight="700" fill="#16a34a">★★★★★ ${posterData.rating.toFixed(1)}</text>
+  <text x="360" y="${driverCardY + 210}" font-family="system-ui, sans-serif" font-size="${locationSize}" font-weight="600" fill="#6b7280">📍 ${safeLoc}</text>
+  <text x="360" y="${driverCardY + 260}" font-family="system-ui, sans-serif" font-size="${phoneSize}" font-weight="700" fill="#1f2937">📞 ${safePhone}</text>
 
   <!-- === LOWER CONTAINER: VEHICLE & QR === -->
-  <rect x="140" y="850" width="800" height="250" rx="30" fill="#ffffff" filter="url(#shadow)"/>
+  <rect x="140" y="${vehicleCardY}" width="800" height="${vehicleCardHeight}" rx="30" fill="#ffffff" filter="url(#shadow)"/>
   
   <!-- Vehicle Image -->
   ${vehicleImg ? `
-    <rect x="180" y="915" width="160" height="120" rx="15" fill="#f3f4f6"/>
-    <image xlink:href="${vehicleImg}" x="180" y="915" width="160" height="120" clip-path="url(#vehicleClip)" preserveAspectRatio="xMidYMid slice"/>
+    <rect x="180" y="${vehicleCardY + 65}" width="160" height="120" rx="15" fill="#f3f4f6"/>
+    <image xlink:href="${vehicleImg}" x="180" y="${vehicleCardY + 65}" width="160" height="120" clip-path="url(#vehicleClip)" preserveAspectRatio="xMidYMid slice"/>
   ` : `
-    <rect x="180" y="915" width="160" height="120" rx="15" fill="#f3f4f6"/>
-    <text x="260" y="985" text-anchor="middle" font-size="40">🚗</text>
+    <rect x="180" y="${vehicleCardY + 65}" width="160" height="120" rx="15" fill="#f3f4f6"/>
+    <text x="260" y="${vehicleCardY + 135}" text-anchor="middle" font-size="40">🚗</text>
   `}
 
   <!-- Vehicle Details -->
-  <text x="370" y="960" font-family="system-ui, sans-serif" font-size="28" font-weight="700" fill="#1f2937">🚗 ${safeVehicle}</text>
-  <text x="370" y="1000" font-family="system-ui, sans-serif" font-size="24" font-weight="600" fill="#6b7280">${safePlate}</text>
+  <text x="370" y="${vehicleCardY + 110}" font-family="system-ui, sans-serif" font-size="${ratingSize}" font-weight="700" fill="#1f2937">🚗 ${safeVehicle}</text>
+  <text x="370" y="${vehicleCardY + 150}" font-family="system-ui, sans-serif" font-size="${locationSize}" font-weight="600" fill="#6b7280">${safePlate}</text>
 
   <!-- QR Code (Right Side) -->
-  <rect x="730" y="895" width="160" height="160" rx="15" fill="#ffffff" stroke="#e5e7eb" stroke-width="2"/>
-  <image xlink:href="${qrImg}" x="740" y="905" width="140" height="140" preserveAspectRatio="xMidYMid meet"/>
-  <text x="810" y="1080" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" font-weight="700" fill="#16a34a">SCAN ME</text>
+  <rect x="730" y="${vehicleCardY + 45}" width="160" height="160" rx="15" fill="#ffffff" stroke="#e5e7eb" stroke-width="2"/>
+  <image xlink:href="${qrImg}" x="740" y="${vehicleCardY + 55}" width="140" height="140" preserveAspectRatio="xMidYMid meet"/>
+  <text x="810" y="${vehicleCardY + 220}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" font-weight="700" fill="#16a34a">SCAN ME</text>
+
+  ${displayRoutes.length > 0 ? `
+  <!-- === ROUTE PRICES SECTION === -->
+  <rect x="140" y="${routeCardY}" width="800" height="${routeCardHeight}" rx="30" fill="#ffffff" filter="url(#shadow)"/>
+  
+  <text x="540" y="${routeCardY + 50}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="${isSquare ? 28 : 32}" font-weight="900" fill="#16a34a">💰 Popular Routes</text>
+  
+  ${displayRoutes.map((rp, idx) => `
+    <g>
+      <rect x="180" y="${routeCardY + 80 + idx * routeRowHeight}" width="720" height="${routeRowHeight - 5}" rx="8" fill="${idx % 2 === 0 ? '#f9fafb' : '#ffffff'}"/>
+      <text x="200" y="${routeCardY + 108 + idx * routeRowHeight}" font-family="system-ui, sans-serif" font-size="${isSquare ? 18 : 20}" font-weight="600" fill="#374151">${escapeXml(rp.route)}</text>
+      <text x="880" y="${routeCardY + 108 + idx * routeRowHeight}" text-anchor="end" font-family="system-ui, sans-serif" font-size="${isSquare ? 20 : 24}" font-weight="900" fill="#16a34a">KES ${rp.price.toLocaleString()}</text>
+    </g>
+  `).join('')}
+  ` : ''}
 
   <!-- Bottom Bar -->
-  <rect x="0" y="${h - 180}" width="${w}" height="180" fill="#1f2937"/>
-  <text x="540" y="${h - 110}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="36" font-weight="900" fill="#ffffff">💬 WhatsApp: wa.me/${safeWa}</text>
-  <text x="540" y="${h - 60}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" font-weight="600" fill="#10b981">Scan QR or Visit: taxitao.co.ke</text>
+  <rect x="0" y="${bottomBarY}" width="${w}" height="${bottomBarHeight}" fill="#1f2937"/>
+  <text x="540" y="${bottomBarY + 70}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="36" font-weight="900" fill="#ffffff">💬 WhatsApp: wa.me/${safeWa}</text>
+  <text x="540" y="${bottomBarY + 120}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" font-weight="600" fill="#10b981">Scan QR or Visit: taxitao.co.ke</text>
 </svg>`;
   };
 
@@ -347,6 +420,27 @@ export default function DriverMarketingPosterPage() {
     const qrImg = embeddedImages.qrCode;
     const vehicleImg = embeddedImages.vehiclePhoto;
 
+    // Dynamic layout calculations
+    const isSquare = h === 1080;
+    const maxRoutes = isSquare ? 2 : 4;
+    const displayRoutes = routePrices.slice(0, maxRoutes);
+    
+    // Calculate heights
+    const headerHeight = 290;
+    const contentCardHeight = isSquare ? 600 : 700;
+    const routeRowHeight = 45;
+    const routeCardHeight = displayRoutes.length > 0 ? (displayRoutes.length * routeRowHeight + 70) : 0;
+    const bottomBarHeight = 150;
+    
+    // Calculate Y positions
+    const contentCardY = isSquare ? 320 : 400;
+    const routeCardY = contentCardY + contentCardHeight + 30;
+    const bottomBarY = h - bottomBarHeight;
+    
+    // Font sizes
+    const nameSize = isSquare ? 60 : 72;
+    const titleSize = isSquare ? 44 : 52;
+
     return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
   <defs>
@@ -354,46 +448,53 @@ export default function DriverMarketingPosterPage() {
       <stop offset="0%" stop-color="#059669"/>
       <stop offset="100%" stop-color="#047857"/>
     </linearGradient>
-    <clipPath id="boldVehicleClip">
-      <rect x="440" y="740" width="200" height="60" rx="8"/>
-    </clipPath>
   </defs>
 
   <rect fill="url(#boldGrad)" width="${w}" height="${h}"/>
   
   <!-- Geometric patterns -->
   <circle cx="900" cy="200" r="250" fill="#ffffff" opacity="0.05"/>
-  <circle cx="200" cy="1100" r="300" fill="#ffffff" opacity="0.05"/>
+  <circle cx="200" cy="${h - 300}" r="300" fill="#ffffff" opacity="0.05"/>
   
   <!-- TaxiTao Branding -->
   <text x="540" y="220" text-anchor="middle" font-family="system-ui, sans-serif" font-size="96" font-weight="900" fill="#ffffff">TaxiTao</text>
   <text x="540" y="290" text-anchor="middle" font-family="system-ui, sans-serif" font-size="32" font-weight="700" fill="#d1fae5">YOUR TRUSTED RIDE PARTNER</text>
 
   <!-- Main Message -->
-  <rect x="100" y="400" width="880" height="700" rx="40" fill="#ffffff" opacity="0.98"/>
+  <rect x="100" y="${contentCardY}" width="880" height="${contentCardHeight}" rx="40" fill="#ffffff" opacity="0.98"/>
   
-  <text x="540" y="520" text-anchor="middle" font-family="system-ui, sans-serif" font-size="52" font-weight="900" fill="#1f2937">BOOK YOUR RIDE</text>
-  <text x="540" y="600" text-anchor="middle" font-family="system-ui, sans-serif" font-size="72" font-weight="900" fill="#059669">${safeName}</text>
+  <text x="540" y="${contentCardY + 120}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="${titleSize}" font-weight="900" fill="#1f2937">BOOK YOUR RIDE</text>
+  <text x="540" y="${contentCardY + 200}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="${nameSize}" font-weight="900" fill="#059669">${safeName}</text>
   
-  <text x="540" y="700" text-anchor="middle" font-family="system-ui, sans-serif" font-size="36" font-weight="700" fill="#4b5563">⭐ ${posterData.rating.toFixed(1)} Rating • 📍 ${escapeXml(posterData.baseLocation)}</text>
+  <text x="540" y="${contentCardY + 300}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="36" font-weight="700" fill="#4b5563">⭐ ${posterData.rating.toFixed(1)} Rating • 📍 ${escapeXml(posterData.baseLocation)}</text>
   
   ${vehicleImg ? `
-    <image xlink:href="${vehicleImg}" x="390" y="730" width="100" height="75" rx="8" preserveAspectRatio="xMidYMid slice"/>
-    <text x="500" y="760" text-anchor="start" font-family="system-ui, sans-serif" font-size="32" font-weight="600" fill="#6b7280">🚗 ${escapeXml(posterData.vehicleLine)}</text>
-    <text x="500" y="800" text-anchor="start" font-family="system-ui, sans-serif" font-size="28" font-weight="600" fill="#9ca3af">${escapeXml(posterData.plate)}</text>
+    <image xlink:href="${vehicleImg}" x="390" y="${contentCardY + 330}" width="100" height="75" rx="8" preserveAspectRatio="xMidYMid slice"/>
+    <text x="500" y="${contentCardY + 360}" text-anchor="start" font-family="system-ui, sans-serif" font-size="32" font-weight="600" fill="#6b7280">🚗 ${escapeXml(posterData.vehicleLine)}</text>
+    <text x="500" y="${contentCardY + 400}" text-anchor="start" font-family="system-ui, sans-serif" font-size="28" font-weight="600" fill="#9ca3af">${escapeXml(posterData.plate)}</text>
   ` : `
-    <text x="540" y="780" text-anchor="middle" font-family="system-ui, sans-serif" font-size="32" font-weight="600" fill="#6b7280">🚗 ${escapeXml(posterData.vehicleLine)} • ${escapeXml(posterData.plate)}</text>
+    <text x="540" y="${contentCardY + 380}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="32" font-weight="600" fill="#6b7280">🚗 ${escapeXml(posterData.vehicleLine)} • ${escapeXml(posterData.plate)}</text>
   `}
 
-  <rect x="340" y="840" width="400" height="180" rx="20" fill="#f0fdf4" stroke="#16a34a" stroke-width="4"/>
-  <image xlink:href="${qrImg}" x="380" y="870" width="120" height="120" preserveAspectRatio="xMidYMid meet"/>
-  <text x="530" y="920" font-family="system-ui, sans-serif" font-size="26" font-weight="800" fill="#1f2937">SCAN TO</text>
-  <text x="530" y="960" font-family="system-ui, sans-serif" font-size="26" font-weight="800" fill="#059669">BOOK NOW</text>
+  <rect x="340" y="${contentCardY + 440}" width="400" height="180" rx="20" fill="#f0fdf4" stroke="#16a34a" stroke-width="4"/>
+  <image xlink:href="${qrImg}" x="380" y="${contentCardY + 470}" width="120" height="120" preserveAspectRatio="xMidYMid meet"/>
+  <text x="530" y="${contentCardY + 520}" font-family="system-ui, sans-serif" font-size="26" font-weight="800" fill="#1f2937">SCAN TO</text>
+  <text x="530" y="${contentCardY + 560}" font-family="system-ui, sans-serif" font-size="26" font-weight="800" fill="#059669">BOOK NOW</text>
 
-  <text x="540" y="1050" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" font-weight="700" fill="#1f2937">📞 ${escapeXml(posterData.phone)}</text>
+  <text x="540" y="${contentCardY + 650}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" font-weight="700" fill="#1f2937">📞 ${escapeXml(posterData.phone)}</text>
 
-  <rect x="0" y="${h - 150}" width="${w}" height="150" fill="#1f2937"/>
-  <text x="540" y="${h - 75}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="32" font-weight="700" fill="#10b981">💬 wa.me/${escapeXml(posterData.whatsapp)}</text>
+  ${displayRoutes.length > 0 ? `
+  <!-- Route Prices Section -->
+  <rect x="150" y="${routeCardY}" width="780" height="${routeCardHeight}" rx="20" fill="#f0fdf4" stroke="#16a34a" stroke-width="3"/>
+  <text x="540" y="${routeCardY + 45}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" font-weight="900" fill="#059669">💰 POPULAR ROUTES</text>
+  ${displayRoutes.map((rp, idx) => `
+    <text x="180" y="${routeCardY + 85 + idx * routeRowHeight}" font-family="system-ui, sans-serif" font-size="20" font-weight="600" fill="#1f2937">${escapeXml(rp.route)}</text>
+    <text x="900" y="${routeCardY + 85 + idx * routeRowHeight}" text-anchor="end" font-family="system-ui, sans-serif" font-size="24" font-weight="900" fill="#059669">KES ${rp.price.toLocaleString()}</text>
+  `).join('')}
+  ` : ''}
+
+  <rect x="0" y="${bottomBarY}" width="${w}" height="${bottomBarHeight}" fill="#1f2937"/>
+  <text x="540" y="${bottomBarY + 75}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="32" font-weight="700" fill="#10b981">💬 wa.me/${escapeXml(posterData.whatsapp)}</text>
 </svg>`;
   };
 
@@ -403,45 +504,83 @@ export default function DriverMarketingPosterPage() {
     const qrImg = embeddedImages.qrCode;
     const vehicleImg = embeddedImages.vehiclePhoto;
 
+    // Dynamic layout calculations
+    const isSquare = h === 1080;
+    const maxRoutes = isSquare ? 3 : 4;
+    const displayRoutes = routePrices.slice(0, maxRoutes);
+    
+    // Calculate heights and positions
+    const headerHeight = 200;
+    const contentCardHeight = isSquare ? 700 : 900;
+    const routeRowHeight = 45;
+    const routeCardHeight = displayRoutes.length > 0 ? (displayRoutes.length * routeRowHeight + 70) : 0;
+    const bottomBarHeight = 100;
+    
+    // Y positions
+    const contentCardY = 280;
+    const photoY = contentCardY + 60;
+    const nameY = photoY + (isSquare ? 280 : 300) + 80;
+    const vehicleY = nameY + 140;
+    const phoneY = vehicleY + 100;
+    const qrY = phoneY + 60;
+    const routeCardY = contentCardY + contentCardHeight + 30;
+    const bottomBarY = h - bottomBarHeight;
+    
+    // Font sizes
+    const nameSize = isSquare ? 44 : 52;
+    const ratingSize = isSquare ? 28 : 32;
+
     return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
   <defs>
-    <clipPath id="minPhoto"><rect x="390" y="340" width="300" height="300" rx="20"/></clipPath>
-    <clipPath id="minVehicle"><rect x="490" y="880" width="100" height="75" rx="8"/></clipPath>
+    <clipPath id="minPhoto"><rect x="390" y="${photoY}" width="${isSquare ? 280 : 300}" height="${isSquare ? 280 : 300}" rx="20"/></clipPath>
   </defs>
   
   <rect fill="#f8fafc" width="${w}" height="${h}"/>
   
   <!-- Header -->
-  <rect x="0" y="0" width="${w}" height="200" fill="#16a34a"/>
+  <rect x="0" y="0" width="${w}" height="${headerHeight}" fill="#16a34a"/>
   <text x="540" y="130" text-anchor="middle" font-family="system-ui, sans-serif" font-size="84" font-weight="900" fill="#ffffff">TaxiTao</text>
 
   <!-- Content Card -->
-  <rect x="120" y="280" width="840" height="900" rx="30" fill="#ffffff" stroke="#e2e8f0" stroke-width="3"/>
+  <rect x="120" y="${contentCardY}" width="840" height="${contentCardHeight}" rx="30" fill="#ffffff" stroke="#e2e8f0" stroke-width="3"/>
   
   <!-- Driver Photo (EMBEDDED) -->
-  <image xlink:href="${profileImg}" x="390" y="340" width="300" height="300" clip-path="url(#minPhoto)" preserveAspectRatio="xMidYMid slice"/>
+  <image xlink:href="${profileImg}" x="390" y="${photoY}" width="${isSquare ? 280 : 300}" height="${isSquare ? 280 : 300}" clip-path="url(#minPhoto)" preserveAspectRatio="xMidYMid slice"/>
   
-  <text x="540" y="720" text-anchor="middle" font-family="system-ui, sans-serif" font-size="52" font-weight="900" fill="#1f2937">${escapeXml(posterData.name)}</text>
-  <text x="540" y="780" text-anchor="middle" font-family="system-ui, sans-serif" font-size="32" font-weight="600" fill="#16a34a">★ ${posterData.rating.toFixed(1)} • ${escapeXml(posterData.baseLocation)}</text>
+  <text x="540" y="${nameY}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="${nameSize}" font-weight="900" fill="#1f2937">${escapeXml(posterData.name)}</text>
+  <text x="540" y="${nameY + 60}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="${ratingSize}" font-weight="600" fill="#16a34a">★ ${posterData.rating.toFixed(1)} • ${escapeXml(posterData.baseLocation)}</text>
   
-  <line x1="220" y1="840" x2="860" y2="840" stroke="#e5e7eb" stroke-width="2"/>
+  <line x1="220" y1="${vehicleY - 20}" x2="860" y2="${vehicleY - 20}" stroke="#e5e7eb" stroke-width="2"/>
   
   ${vehicleImg ? `
-    <image xlink:href="${vehicleImg}" x="220" y="880" width="120" height="90" rx="8" preserveAspectRatio="xMidYMid slice"/>
-    <text x="360" y="920" font-family="system-ui, sans-serif" font-size="28" font-weight="700" fill="#4b5563">🚗 ${escapeXml(posterData.vehicleLine)}</text>
-    <text x="360" y="960" font-family="system-ui, sans-serif" font-size="24" font-weight="600" fill="#9ca3af">${escapeXml(posterData.plate)}</text>
+    <image xlink:href="${vehicleImg}" x="220" y="${vehicleY + 20}" width="120" height="90" rx="8" preserveAspectRatio="xMidYMid slice"/>
+    <text x="360" y="${vehicleY + 60}" font-family="system-ui, sans-serif" font-size="28" font-weight="700" fill="#4b5563">🚗 ${escapeXml(posterData.vehicleLine)}</text>
+    <text x="360" y="${vehicleY + 100}" font-family="system-ui, sans-serif" font-size="24" font-weight="600" fill="#9ca3af">${escapeXml(posterData.plate)}</text>
   ` : `
-    <text x="540" y="920" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" font-weight="700" fill="#4b5563">🚗 ${escapeXml(posterData.vehicleLine)}</text>
+    <text x="540" y="${vehicleY + 60}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" font-weight="700" fill="#4b5563">🚗 ${escapeXml(posterData.vehicleLine)}</text>
   `}
   
-  <text x="540" y="1020" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" font-weight="700" fill="#16a34a">📞 ${escapeXml(posterData.phone)}</text>
+  <text x="540" y="${phoneY}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" font-weight="700" fill="#16a34a">📞 ${escapeXml(posterData.phone)}</text>
 
-  <rect x="440" y="1060" width="200" height="200" rx="15" fill="#ffffff" stroke="#16a34a" stroke-width="3"/>
-  <image xlink:href="${qrImg}" x="450" y="1070" width="180" height="180" preserveAspectRatio="xMidYMid meet"/>
+  <rect x="440" y="${qrY}" width="200" height="200" rx="15" fill="#ffffff" stroke="#16a34a" stroke-width="3"/>
+  <image xlink:href="${qrImg}" x="450" y="${qrY + 10}" width="180" height="180" preserveAspectRatio="xMidYMid meet"/>
   
-  <rect x="0" y="${h - 100}" width="${w}" height="100" fill="#1f2937"/>
-  <text x="540" y="${h - 40}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" font-weight="700" fill="#10b981">taxitao.co.ke</text>
+  ${displayRoutes.length > 0 ? `
+  <!-- Route Prices Section -->
+  <rect x="180" y="${routeCardY}" width="720" height="${routeCardHeight}" rx="15" fill="#ffffff" stroke="#e5e7eb" stroke-width="2"/>
+  <text x="540" y="${routeCardY + 45}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="26" font-weight="900" fill="#16a34a">💰 Popular Routes</text>
+  ${displayRoutes.map((rp, idx) => `
+    <g>
+      <line x1="200" y1="${routeCardY + 70 + idx * routeRowHeight}" x2="880" y2="${routeCardY + 70 + idx * routeRowHeight}" stroke="#f3f4f6" stroke-width="1"/>
+      <text x="200" y="${routeCardY + 95 + idx * routeRowHeight}" font-family="system-ui, sans-serif" font-size="18" font-weight="600" fill="#4b5563">${escapeXml(rp.route)}</text>
+      <text x="880" y="${routeCardY + 95 + idx * routeRowHeight}" text-anchor="end" font-family="system-ui, sans-serif" font-size="22" font-weight="900" fill="#16a34a">KES ${rp.price.toLocaleString()}</text>
+    </g>
+  `).join('')}
+  ` : ''}
+  
+  <rect x="0" y="${bottomBarY}" width="${w}" height="${bottomBarHeight}" fill="#1f2937"/>
+  <text x="540" y="${bottomBarY + 60}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" font-weight="700" fill="#10b981">taxitao.co.ke</text>
 </svg>`;
   };
 
