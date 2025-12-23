@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^1.16.6",
+    "@vercel/analytics": "^1.6.1",
     "cloudinary": "^2.8.0",
     "clsx": "^2.1.1",
     "firebase": "^12.6.0",
