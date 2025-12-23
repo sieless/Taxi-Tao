@@ -1,60 +1,24 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Download, Smartphone, CheckCircle, AlertTriangle, Shield, Zap } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { getDownloadInfo, trackDownload } from "@/lib/download-analytics";
 
 export default function DownloadPage() {
-  const router = useRouter();
-  const [downloadCount, setDownloadCount] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [apkUrl, setApkUrl] = useState("https://expo.dev/artifacts/eas/s7y3KG1583xbKYZDen2XSG.apk");
-  const [appVersion, setAppVersion] = useState("1.0.0 (Preview)");
+  
+  // Static configuration - update these values when you have a new APK
+  const apkUrl = "https://expo.dev/artifacts/eas/s7y3KG1583xbKYZDen2XSG.apk";
+  const appVersion = "1.0.0 (Preview)";
 
-  useEffect(() => {
-    // Load download info from Firebase
-    const loadDownloadInfo = async () => {
-      const downloadInfo = await getDownloadInfo();
-      if (downloadInfo) {
-        setApkUrl(downloadInfo.downloadUrl);
-        setAppVersion(downloadInfo.version);
-        setDownloadCount(downloadInfo.downloadCount);
-      }
-
-      setLoading(false);
-    };
-
-    loadDownloadInfo();
-  }, [router]);
-
-  const handleDownload = async () => {
+  const handleDownload = () => {
     setIsDownloading(true);
-    
-    // Track the download
-    await trackDownload();
     
     // Initiate download
     window.location.href = apkUrl;
     
-    // Update local count
-    setDownloadCount((prev) => prev + 1);
-    
     setTimeout(() => setIsDownloading(false), 2000);
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
@@ -111,10 +75,6 @@ export default function DownloadPage() {
               <div className="flex items-center gap-2">
                 <Smartphone className="w-4 h-4" />
                 <span>Version {appVersion}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Download className="w-4 h-4" />
-                <span>{downloadCount} downloads</span>
               </div>
             </div>
 
@@ -253,9 +213,23 @@ export default function DownloadPage() {
               Your feedback is invaluable! Report issues directly in the app by tapping the 
               "Report Issue" banner on your dashboard.
             </p>
-            <p className="text-sm text-green-100">
-              Contact: <a href="mailto:support@taxitao.co.ke" className="underline">support@taxitao.co.ke</a>
-            </p>
+            <div className="text-sm text-green-100 space-y-2">
+              <p className="flex items-center gap-2">
+                <span>Email:</span>
+                <a href="mailto:support@taxitao.co.ke" className="underline">support@taxitao.co.ke</a>
+              </p>
+              <p className="flex items-center gap-2">
+                <span>WhatsApp:</span>
+                <a 
+                  href="https://wa.me/254708674665" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="underline hover:text-white transition-colors"
+                >
+                  +254 708 674 665
+                </a>
+              </p>
+            </div>
           </div>
         </div>
 
