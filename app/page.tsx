@@ -295,9 +295,9 @@ export default function Home() {
               </p>
               <Link
                 href="/download"
-                className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors border border-white/30"
+                className="inline-flex items-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-black px-6 py-3 rounded-lg text-base font-bold transition-all transform hover:scale-105 shadow-lg border-2 border-yellow-500"
               >
-                <Download className="w-4 h-4" />
+                <Download className="w-5 h-5" />
                 Download Our App
               </Link>
             </div>
