@@ -289,10 +289,17 @@ export default function Home() {
                 Negotiate Your Price{" "}
                 <span className="text-yellow-300">with Drivers</span>
               </h2>
-              <p className="text-sm md:text-base text-white/90">
+              <p className="text-sm md:text-base text-white/90 mb-4">
                 Don&apos;t like the quote? Make your own offer and agree on a
                 fair price.
               </p>
+              <Link
+                href="/download"
+                className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors border border-white/30"
+              >
+                <Download className="w-4 h-4" />
+                Download Our App
+              </Link>
             </div>
 
             {/* Right Button */}
