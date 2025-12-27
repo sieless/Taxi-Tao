@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { getNextPaymentDueDate } from "@/lib/subscription-utils";
 import { createNotification } from "@/lib/notifications";
+import { createDriverNotification } from "@/lib/driver-notification-service";
 import Logo from "@/components/Logo";
 
 const docs = [
@@ -52,42 +53,60 @@ export default function AdminPanel() {
   );
   const [bookingRequests, setBookingRequests] = useState<any[]>([]);
   const [clientIssues, setClientIssues] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<"drivers" | "dispatch" | "docs">(
+  const [activeTab, setActiveTab] = useState<"drivers" | "dispatch" | "docs" | "users">(
     "drivers"
   );
   const [selectedDoc, setSelectedDoc] = useState<string>("readme");
+  const [issueFilter, setIssueFilter] = useState<"open" | "completed">("open");
 
-  // Fetch booking requests when dispatch tab is active
+  // Real-time listener for booking requests and issues
   useEffect(() => {
     if (activeTab === "dispatch") {
-      fetchBookingRequests();
+      const bookingsQuery = query(collection(db, "bookingRequests"));
+      const unsubscribeBookings = onSnapshot(bookingsQuery, (snapshot) => {
+        const requests = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setBookingRequests(requests);
+      }, (error) => {
+        console.error("Error syncing booking requests:", error);
+      });
+
+      const issuesQuery = query(collection(db, "issues"));
+      const unsubscribeIssues = onSnapshot(issuesQuery, (snapshot) => {
+        const issues = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setClientIssues(issues);
+      }, (error) => {
+        console.error("Error syncing client issues:", error);
+      });
+
+      return () => {
+        unsubscribeBookings();
+        unsubscribeIssues();
+      };
     }
   }, [activeTab]);
 
   async function fetchBookingRequests() {
+    // This function is now mostly for manual refresh if needed, 
+    // but onSnapshot handles the real-time sync.
+    setLoading(true);
     try {
-      const q = query(collection(db, "bookingRequests"));
-      const querySnapshot = await getDocs(q);
-      const requests = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setBookingRequests(requests);
-    } catch (error) {
-      console.error("Error fetching booking requests:", error);
-    }
+      const bq = query(collection(db, "bookingRequests"));
+      const bSnapshot = await getDocs(bq);
+      setBookingRequests(bSnapshot.docs.map(d => ({ id: d.id, ...d.data() })));
 
-    // Also fetch client issues
-    try {
-      const q = query(collection(db, "issues"));
-      const querySnapshot = await getDocs(q);
-      const issues = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setClientIssues(issues);
+      const iq = query(collection(db, "issues"));
+      const iSnapshot = await getDocs(iq);
+      setClientIssues(iSnapshot.docs.map(d => ({ id: d.id, ...d.data() })));
     } catch (error) {
-      console.error("Error fetching client issues:", error);
+      console.error("Error manual fetching:", error);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -126,7 +145,7 @@ export default function AdminPanel() {
     router.push("/");
   };
 
-  async function broadcastToWhatsApp(request: any) {
+  async function handleBroadcast(request: any, route: "whatsapp" | "internal" | "both" = "both") {
     const message =
       `🚖 *New Ride Request - Not Confirmed*\n\n` +
       `📍 Pickup: ${request.pickupLocation}\n` +
@@ -137,62 +156,75 @@ export default function AdminPanel() {
       `⚠️ *This ride is pending and needs a driver!*\n\n` +
       `Click here to accept: https://taxitao.co.ke/driver/dashboard`;
 
-    // 1. Open WhatsApp
-    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+    // 1. Open WhatsApp if selected
+    if (route === "whatsapp" || route === "both") {
+      window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+    }
 
-    // 2. Send internal notifications to drivers in the area
-    try {
-      // Find drivers in the pickup location area
-      const driversRef = collection(db, "drivers");
-      const locationQuery = query(
-        driversRef,
-        where("status", "==", "available"),
-        where("subscriptionStatus", "==", "active"),
-        where("isVisibleToPublic", "==", true)
-      );
-
-      const querySnapshot = await getDocs(locationQuery);
-      const allActiveDrivers: Driver[] = querySnapshot.docs.map((d) => ({
-        id: d.id,
-        ...d.data(),
-      })) as Driver[];
-
-      // Filter drivers by location (pickup area)
-      // Match drivers whose currentLocation or businessLocation matches pickup area
-      const pickupLocationLower =
-        request.pickupLocation?.toLowerCase().trim() || "";
-      const areaDrivers = allActiveDrivers.filter((driver) => {
-        const currentLoc = driver.currentLocation?.toLowerCase().trim() || "";
-        const businessLoc = driver.businessLocation?.toLowerCase().trim() || "";
-
-        // Check if driver's location matches pickup location (exact or contains)
-        return (
-          currentLoc === pickupLocationLower ||
-          businessLoc === pickupLocationLower ||
-          currentLoc.includes(pickupLocationLower) ||
-          businessLoc.includes(pickupLocationLower) ||
-          pickupLocationLower.includes(currentLoc) ||
-          pickupLocationLower.includes(businessLoc)
+    // 2. Send internal notifications if selected
+    if (route === "internal" || route === "both") {
+      try {
+        // Find drivers in the pickup location area
+        const driversRef = collection(db, "drivers");
+        const locationQuery = query(
+          driversRef,
+          where("status", "==", "available"),
+          where("subscriptionStatus", "==", "active"),
+          where("isVisibleToPublic", "==", true)
         );
-      });
 
-      // If no area-specific drivers found, fallback to all active drivers
-      const targetDrivers =
-        areaDrivers.length > 0 ? areaDrivers : allActiveDrivers;
+        const querySnapshot = await getDocs(locationQuery);
+        const allActiveDrivers: Driver[] = querySnapshot.docs.map((d) => ({
+          id: d.id,
+          ...d.data(),
+        })) as Driver[];
 
-      // Create notifications for each driver in the area
-      const notificationPromises = targetDrivers.map((driver) =>
-        createNotification(
-          driver.id,
-          driver.email || "",
-          driver.phone || "",
-          driver.name,
+        // Filter drivers by location (pickup area)
+        const pickupLocationLower = request.pickupLocation?.toLowerCase().trim() || "";
+        const areaDrivers = allActiveDrivers.filter((driver) => {
+          const currentLoc = driver.currentLocation?.toLowerCase().trim() || "";
+          const businessLoc = driver.businessLocation?.toLowerCase().trim() || "";
+          return (
+            currentLoc === pickupLocationLower ||
+            businessLoc === pickupLocationLower ||
+            currentLoc.includes(pickupLocationLower) ||
+            businessLoc.includes(pickupLocationLower) ||
+            pickupLocationLower.includes(currentLoc) ||
+            pickupLocationLower.includes(businessLoc)
+          );
+        });
+
+        const targetDrivers = areaDrivers.length > 0 ? areaDrivers : allActiveDrivers;
+
+        // Create notifications for each driver in the area using the correct service
+        const notificationPromises = targetDrivers.map((driver) =>
+          createDriverNotification({
+            driverId: driver.id,
+            type: 'new_booking',
+            title: "🚖 New Ride Request - Needs Driver",
+            message: `Pending ride from ${request.pickupLocation} to ${request.destination} on ${request.pickupDate} at ${request.pickupTime}. Customer: ${request.customerName}. This ride is not confirmed and needs a driver!`,
+            bookingId: request.id,
+            pickupLocation: request.pickupLocation,
+            destination: request.destination,
+            pickupDate: request.pickupDate,
+            pickupTime: request.pickupTime,
+          })
+        );
+
+        await Promise.all(notificationPromises);
+
+        // Also create a system broadcast notification for drivers who check system_broadcast
+        // (Using the old service for this as it might be a special case or for general logs)
+        await createNotification(
+          "system_broadcast",
+          "drivers@taxitao.co.ke",
+          "0000000000",
+          "All Drivers",
           "ride_request",
           "🚖 New Ride Request - Needs Driver",
-          `Pending ride from ${request.pickupLocation} to ${request.destination} on ${request.pickupDate} at ${request.pickupTime}. Customer: ${request.customerName} (${request.customerPhone}). This ride is not confirmed and needs a driver!`,
+          `Pending ride from ${request.pickupLocation} to ${request.destination} on ${request.pickupDate} at ${request.pickupTime}. This ride is not confirmed and needs a driver!`,
           user?.uid || "admin",
           {
-            rejectionReason: undefined,
             bookingId: request.id,
             pickupLocation: request.pickupLocation,
             dropoffLocation: request.destination,
@@ -200,59 +232,35 @@ export default function AdminPanel() {
             pickupTime: request.pickupTime,
             customerName: request.customerName,
             customerPhone: request.customerPhone,
-            fareEstimate: request.fareEstimate,
             action: "view_booking",
           }
-        )
-      );
+        );
 
-      await Promise.all(notificationPromises);
-
-      // Also create a system broadcast notification for drivers who check system_broadcast
-      await createNotification(
-        "system_broadcast",
-        "drivers@taxitao.co.ke",
-        "0000000000",
-        "All Drivers",
-        "ride_request",
-        "🚖 New Ride Request - Needs Driver",
-        `Pending ride from ${request.pickupLocation} to ${request.destination} on ${request.pickupDate} at ${request.pickupTime}. This ride is not confirmed and needs a driver!`,
-        user?.uid || "admin",
-        {
-          rejectionReason: undefined,
-          bookingId: request.id,
-          pickupLocation: request.pickupLocation,
-          dropoffLocation: request.destination,
-          pickupDate: request.pickupDate,
-          pickupTime: request.pickupTime,
-          customerName: request.customerName,
-          customerPhone: request.customerPhone,
-          fareEstimate: request.fareEstimate,
-          action: "view_booking",
-        }
-      );
-
-      const areaInfo =
-        areaDrivers.length > 0
+        const areaInfo = areaDrivers.length > 0
           ? `${areaDrivers.length} drivers in ${request.pickupLocation} area`
           : `${targetDrivers.length} active drivers (no area-specific matches found)`;
 
-      alert(
-        `✅ Broadcast sent!\n- WhatsApp message opened\n- Internal notifications sent to ${areaInfo}`
-      );
-    } catch (error) {
-      console.error("Error creating internal broadcast:", error);
-      alert(
-        "⚠️ WhatsApp opened, but failed to send internal notifications. Please try again."
-      );
+        if (route === "both") {
+          alert(`✅ Broadcast sent!\n- WhatsApp message opened\n- Internal notifications sent to ${areaInfo}`);
+        } else {
+          alert(`✅ Internal notifications sent to ${areaInfo}`);
+        }
+      } catch (error) {
+        console.error("Error creating internal broadcast:", error);
+        alert("⚠️ Failed to send internal notifications. Please try again.");
+      }
     }
   }
 
   async function deleteRequest(requestId: string) {
+    if (userProfile?.role !== "admin") {
+      alert("Permission denied: Only administrators can delete requests.");
+      return;
+    }
     if (!confirm("Are you sure you want to delete this request?")) return;
     try {
       await deleteDoc(doc(db, "bookingRequests", requestId));
-      setBookingRequests((prev) => prev.filter((r) => r.id !== requestId));
+      // State will be updated by onSnapshot
     } catch (error) {
       console.error("Error deleting request:", error);
       alert("Failed to delete request");
@@ -307,28 +315,52 @@ export default function AdminPanel() {
     }
   }
 
-  function respondToClientIssue(issue: any) {
+  async function respondToClientIssue(issue: any) {
     const email = issue.contactEmail || issue.userEmail;
     const phone = issue.contactPhone;
-    const name = issue.contactName;
+    const name = issue.contactName || "User";
+    const userId = issue.userId;
     
     // Create response options
     const emailLink = email ? `mailto:${email}?subject=Re: ${issue.issueType} - TaxiTao Support&body=Hello ${name},%0D%0A%0D%0ARegarding your issue: ${encodeURIComponent(issue.description)}%0D%0A%0D%0A` : null;
     const whatsappLink = phone ? `https://wa.me/${phone.replace(/\D/g, '')}?text=Hello ${name}, this is TaxiTao Support regarding your ${issue.issueType}...` : null;
     
-    if (emailLink && whatsappLink) {
-      const choice = confirm("Click OK to respond via Email, or Cancel to use WhatsApp");
-      if (choice) {
-        window.open(emailLink, '_blank');
-      } else {
-        window.open(whatsappLink, '_blank');
+    const responseType = prompt(
+      "Choose response method:\n1. In-App Notification (System)\n2. Email\n3. WhatsApp",
+      "1"
+    );
+
+    if (responseType === "1") {
+      if (!userId) {
+        alert("Cannot send in-app notification: No User ID found for this report.");
+        return;
       }
-    } else if (emailLink) {
+      const message = prompt(`Enter message for ${name}:`, `Hello ${name}, regarding your ${issue.issueType} report...`);
+      if (!message) return;
+
+      try {
+        await createNotification(
+          userId,
+          email || "",
+          phone || "",
+          name,
+          "system_broadcast",
+          "TaxiTao Support Response",
+          message,
+          user?.uid || "admin",
+          { issueId: issue.id }
+        );
+        alert("In-app notification sent successfully!");
+      } catch (error) {
+        console.error("Error sending in-app notification:", error);
+        alert("Failed to send in-app notification.");
+      }
+    } else if (responseType === "2" && emailLink) {
       window.open(emailLink, '_blank');
-    } else if (whatsappLink) {
+    } else if (responseType === "3" && whatsappLink) {
       window.open(whatsappLink, '_blank');
-    } else {
-      alert("No contact information available for this issue");
+    } else if (responseType) {
+      alert("Selected contact method not available for this issue.");
     }
   }
 
@@ -499,6 +531,19 @@ export default function AdminPanel() {
               <div className="flex items-center gap-2">
                 <Car className="w-5 h-5" />
                 Dispatch
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab("users")}
+              className={`px-4 py-3 font-medium transition border-b-2 ${
+                activeTab === "users"
+                  ? "border-green-600 text-green-600"
+                  : "border-transparent text-gray-600 hover:text-gray-800"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                Users Management
               </div>
             </button>
             <button
@@ -847,16 +892,32 @@ export default function AdminPanel() {
                           </div>
 
                           <div className="flex gap-2 mt-2">
-                            <button
-                              onClick={() => broadcastToWhatsApp(request)}
-                              className="flex-1 bg-[#25D366] hover:bg-[#128C7E] text-white text-xs font-bold py-2 rounded transition flex items-center justify-center gap-1.5"
-                            >
-                              <MessageSquare className="w-3 h-3" />
-                              Broadcast
-                            </button>
+                            <div className="flex flex-col gap-1 flex-1">
+                              <button
+                                onClick={() => handleBroadcast(request, "both")}
+                                className="bg-[#25D366] hover:bg-[#128C7E] text-white text-[10px] font-bold py-1.5 rounded transition flex items-center justify-center gap-1"
+                              >
+                                <MessageSquare className="w-3 h-3" />
+                                Both
+                              </button>
+                              <div className="flex gap-1">
+                                <button
+                                  onClick={() => handleBroadcast(request, "internal")}
+                                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold py-1 rounded transition"
+                                >
+                                  Internal
+                                </button>
+                                <button
+                                  onClick={() => handleBroadcast(request, "whatsapp")}
+                                  className="flex-1 bg-green-600 hover:bg-green-700 text-white text-[10px] font-bold py-1 rounded transition"
+                                >
+                                  WhatsApp
+                                </button>
+                              </div>
+                            </div>
                             <button
                               onClick={() => deleteRequest(request.id)}
-                              className="bg-red-100 hover:bg-red-200 text-red-600 p-2 rounded transition"
+                              className="bg-red-100 hover:bg-red-200 text-red-600 p-2 rounded transition h-fit self-center"
                               title="Delete Request"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -909,14 +970,31 @@ export default function AdminPanel() {
               {/* Issues Column */}
               <div className="bg-gray-100 rounded-xl p-4 h-fit max-h-[600px] overflow-y-auto custom-scrollbar">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold text-gray-700 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                    Issues
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-gray-700 flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                      Issues
+                    </h3>
+                    <div className="flex bg-white rounded-lg p-0.5 shadow-sm border border-gray-200 ml-2">
+                      <button 
+                        onClick={() => setIssueFilter("open")}
+                        className={`px-2 py-0.5 text-[10px] font-bold rounded ${issueFilter === "open" ? "bg-red-100 text-red-700" : "text-gray-500 hover:bg-gray-50"}`}
+                      >
+                        Open
+                      </button>
+                      <button 
+                        onClick={() => setIssueFilter("completed")}
+                        className={`px-2 py-0.5 text-[10px] font-bold rounded ${issueFilter === "completed" ? "bg-green-100 text-green-700" : "text-gray-500 hover:bg-gray-50"}`}
+                      >
+                        Done
+                      </button>
+                    </div>
+                  </div>
                   <span className="bg-white text-gray-600 text-xs font-bold px-2 py-1 rounded-full shadow-sm">
-                    {bookingRequests.filter((r) => r.status === "issue")
-                      .length +
-                      clientIssues.filter((i) => i.status !== "completed").length}
+                    {issueFilter === "open" 
+                      ? (bookingRequests.filter((r) => r.status === "issue").length + clientIssues.filter((i) => i.status !== "completed").length)
+                      : clientIssues.filter((i) => i.status === "completed").length
+                    }
                   </span>
                 </div>
                 <div className="space-y-3">
@@ -946,22 +1024,18 @@ export default function AdminPanel() {
 
                   {/* Client Reported Issues */}
                   {clientIssues
-                    .filter((i) => i.status !== "completed")
+                    .filter((i) => issueFilter === "open" ? i.status !== "completed" : i.status === "completed")
                     .map((issue) => (
                       <div
                         key={issue.id}
-                        className="bg-white rounded-lg shadow-sm p-3 border border-orange-200"
+                        className={`bg-white rounded-lg shadow-sm p-3 border ${issue.status === "completed" ? "border-green-200 opacity-75" : "border-orange-200"}`}
                       >
                         <div className="flex justify-between items-start mb-2">
                           <div>
                             <p className="text-sm font-medium text-gray-800">
                               {issue.contactName || "Client Report"}
                             </p>
-                            {(issue.contactEmail || issue.contactPhone) && (
-                              <p className="text-[10px] text-gray-500">
-                                {issue.contactEmail || issue.contactPhone}
-                              </p>
-                            )}
+                            {/* Contact info hidden as per user request */}
                           </div>
                           <div className="flex flex-col gap-1 items-end">
                             <span className="text-[10px] bg-orange-100 text-orange-800 px-1.5 py-0.5 rounded uppercase font-bold">
@@ -972,6 +1046,11 @@ export default function AdminPanel() {
                                 Paused
                               </span>
                             )}
+                            {issue.status === "completed" && (
+                              <span className="text-[10px] bg-green-100 text-green-800 px-1.5 py-0.5 rounded uppercase font-bold">
+                                Completed
+                              </span>
+                            )}
                           </div>
                         </div>
                         <p
@@ -980,32 +1059,34 @@ export default function AdminPanel() {
                         >
                           {issue.description}
                         </p>
-                        <div className="grid grid-cols-3 gap-1">
-                          <button
-                            onClick={() => respondToClientIssue(issue)}
-                            className="bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold py-1.5 rounded transition flex items-center justify-center gap-1"
-                            title="Respond via email or WhatsApp"
-                          >
-                            <MessageSquare className="w-3 h-3" />
-                            Respond
-                          </button>
-                          <button
-                            onClick={() => resolveClientIssue(issue.id)}
-                            className="bg-green-600 hover:bg-green-700 text-white text-[10px] font-bold py-1.5 rounded transition flex items-center justify-center gap-1"
-                            title="Mark as completed"
-                          >
-                            <CheckCircle className="w-3 h-3" />
-                            Complete
-                          </button>
-                          <button
-                            onClick={() => pauseClientIssue(issue.id)}
-                            className="bg-yellow-600 hover:bg-yellow-700 text-white text-[10px] font-bold py-1.5 rounded transition flex items-center justify-center gap-1"
-                            title="Pause for later"
-                          >
-                            <Pause className="w-3 h-3" />
-                            Pause
-                          </button>
-                        </div>
+                        {issue.status !== "completed" && (
+                          <div className="grid grid-cols-3 gap-1">
+                            <button
+                              onClick={() => respondToClientIssue(issue)}
+                              className="bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold py-1.5 rounded transition flex items-center justify-center gap-1"
+                              title="Respond via In-App, Email or WhatsApp"
+                            >
+                              <MessageSquare className="w-3 h-3" />
+                              Respond
+                            </button>
+                            <button
+                              onClick={() => resolveClientIssue(issue.id)}
+                              className="bg-green-600 hover:bg-green-700 text-white text-[10px] font-bold py-1.5 rounded transition flex items-center justify-center gap-1"
+                              title="Mark as completed"
+                            >
+                              <CheckCircle className="w-3 h-3" />
+                              Complete
+                            </button>
+                            <button
+                              onClick={() => pauseClientIssue(issue.id)}
+                              className="bg-yellow-600 hover:bg-yellow-700 text-white text-[10px] font-bold py-1.5 rounded transition flex items-center justify-center gap-1"
+                              title="Pause for later"
+                            >
+                              <Pause className="w-3 h-3" />
+                              Pause
+                            </button>
+                          </div>
+                        )}
                       </div>
                     ))}
 
@@ -1106,6 +1187,29 @@ export default function AdminPanel() {
                 </div>
               </div>
             </div>
+          </div>
+        )}
+        {/* Users Tab */}
+        {activeTab === "users" && (
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-gray-800">System Users</h2>
+              <button 
+                onClick={() => router.push("/admin/users")}
+                className="text-green-600 hover:underline text-sm font-medium"
+              >
+                Open Full Users Page →
+              </button>
+            </div>
+            <p className="text-gray-600 mb-4">
+              Use the dedicated users management page to suspend accounts or change roles.
+            </p>
+            <button
+              onClick={() => router.push("/admin/users")}
+              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-bold transition"
+            >
+              Manage Users
+            </button>
           </div>
         )}
       </div>

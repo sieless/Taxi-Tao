@@ -123,11 +123,8 @@ export default function SignUpPage() {
       );
 
       setTimeout(() => {
-        if (userType === "driver") {
-          router.push("/verify-email");
-        } else {
-          router.push("/");
-        }
+        // All users must verify email before accessing the app
+        router.push("/verify-email");
       }, 2000);
     } catch (err: any) {
       console.error("Signup error details:", err);

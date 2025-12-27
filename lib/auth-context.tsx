@@ -80,6 +80,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             targetUser.email?.split("@")[0] ||
             "Anonymous",
         };
+        if (data?.suspended) {
+          // If suspended, sign out and don't set the profile
+          await signOut(auth);
+          setUserProfile(null);
+          setDriverProfile(null);
+          localStorage.removeItem("userProfile");
+          localStorage.removeItem("driverProfile");
+          setError("Your account has been suspended. Please contact support.");
+          router.replace("/login");
+          return;
+        }
+
         setUserProfile(profileData);
         localStorage.setItem("userProfile", JSON.stringify(profileData));
 
@@ -134,8 +146,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setLoading(true);
       setUser(firebaseUser);
-      if (firebaseUser) await refreshUserProfile(firebaseUser);
-      else {
+      if (firebaseUser) {
+        // Check email verification - redirect to verification page if not verified
+        // (except on verification page itself to avoid redirect loops)
+        if (!firebaseUser.emailVerified && !window.location.pathname.includes('/verify-email') && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/signup') && !window.location.pathname.includes('/driver/register')) {
+          router.push('/verify-email');
+          setLoading(false);
+          return;
+        }
+        await refreshUserProfile(firebaseUser);
+      } else {
         setUserProfile(null);
         setDriverProfile(null);
         localStorage.removeItem("userProfile");
@@ -145,15 +165,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [router]);
 
   const signIn = async (email: string, password: string) => {
     setError(null);
     try {
-      const normalized = email.trim().toLowerCase();
+      const trimmedEmail = email.trim();
       const userCredential = await signInWithEmailAndPassword(
         auth,
-        normalized,
+        trimmedEmail,
         password
       );
 
@@ -165,6 +185,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (userDoc.exists()) {
         const data = userDoc.data();
+        if (data?.suspended) {
+          await signOut(auth);
+          throw new Error("Your account has been suspended. Please contact support.");
+        }
         const role = (data as any).role || "customer";
         await refreshUserProfile(userCredential.user); // update React state
         return role;

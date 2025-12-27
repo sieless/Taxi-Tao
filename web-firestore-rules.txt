@@ -1,0 +1,484 @@
+# TAXI-TAO WEB APPLICATION - FIRESTORE SECURITY RULES
+# Version: December 2024
+# Platform: Web Application Only
+# Purpose: Comprehensive security rules for TaxiTao web platform
+
+================================================================================
+FIRESTORE SECURITY RULES - WEB APPLICATION
+================================================================================
+
+This document contains ONLY the web-specific Firestore security rules for the
+TaxiTao web application. These rules implement a split-data architecture where
+public booking data is accessible to drivers, but private customer data requires
+active subscriptions.
+
+================================================================================
+HELPER FUNCTIONS
+================================================================================
+
+isSignedIn()        - Checks if user is authenticated (request.auth != null)
+isNotSuspended()    - Checks if user is authenticated AND not suspended
+getUserData()       - Gets current user's profile data from /users collection
+isAdmin()           - Checks if user has 'admin' role AND is not suspended
+isDriver()          - Checks if user has 'driver' role AND is not suspended
+isOwner(userId)     - Checks if current user owns the resource (UID match)
+isSubscribedDriver()- Checks if driver has active subscription + visibility
+driverMatches(id)   - Checks if user matches driver (UID or profile driverId)
+negotiationParticipant(driverId, customerId) - Checks negotiation access
+negotiationImmutableFieldsUnchanged() - Validates negotiation field integrity
+
+================================================================================
+USER TYPES AND PERMISSIONS
+================================================================================
+
+CUSTOMERS:
+- Can create/read/update their own booking requests
+- Can read public driver profiles and vehicles
+- Can negotiate fares with drivers
+- Can submit issues and provide feedback
+- Cannot access private customer data of others
+- Cannot modify driver information
+
+DRIVERS:
+- Can read all booking requests to find rides
+- Can accept pending booking requests
+- Can update status of rides they accepted
+- Can read private customer data (if subscribed)
+- Can manage their own driver profile and vehicles
+- Can create/update their pricing information
+- Cannot modify other drivers' information
+- Cannot access rides they didn't accept
+
+ADMINS:
+- Can read/write all collections
+- Can manage user accounts and driver profiles
+- Can access all booking data and negotiations
+- Can modify pricing and app settings
+- Can manage testing configurations
+- Can delete any data for cleanup
+
+================================================================================
+COLLECTION RULES - DETAILED BREAKDOWN
+================================================================================
+
+================================================================================
+1. USERS COLLECTION (/users/{userId})
+================================================================================
+PURPOSE: Stores user profiles with roles, driver associations, and account status
+
+CUSTOMERS:
+- CREATE: ✓ Can create their own profile
+- READ: ✓ Can read their own profile
+- UPDATE: ✓ Can update their own profile
+- DELETE: ✗ Cannot delete profiles
+
+DRIVERS:
+- CREATE: ✓ Can create their own profile
+- READ: ✓ Can read their own profile
+- UPDATE: ✓ Can update their own profile
+- DELETE: ✗ Cannot delete profiles
+
+ADMINS:
+- CREATE: ✓ Can create any user profile
+- READ: ✓ Can read any user profile + LIST all users
+- UPDATE: ✓ Can update any user profile
+- DELETE: ✓ Can delete any user profile
+
+================================================================================
+2. DRIVERS COLLECTION (/drivers/{driverId})
+================================================================================
+PURPOSE: Driver profiles, vehicle info, M-Pesa details, availability status
+
+NESTED COLLECTIONS:
+- /vehicles/{vehicleId} - Driver's vehicle information
+- /payments/{paymentId} - Driver's payment transactions
+
+CUSTOMERS:
+- CREATE: ✗ Cannot create driver profiles
+- READ: ✓ Can read any driver profile (for booking)
+- UPDATE: ✗ Cannot update driver profiles
+- DELETE: ✗ Cannot delete driver profiles
+
+DRIVERS:
+- CREATE: ✓ Can create their own profile
+- READ: ✓ Can read any driver profile
+- UPDATE: ✓ Can update their own profile only
+- DELETE: ✗ Cannot delete profiles
+
+ADMINS:
+- CREATE: ✓ Can create any driver profile
+- READ: ✓ Can read any driver profile
+- UPDATE: ✓ Can update any driver profile
+- DELETE: ✓ Can delete any driver profile
+
+================================================================================
+3. VEHICLES COLLECTION (/vehicles/{vehicleId}) - TOP LEVEL
+================================================================================
+PURPOSE: Vehicle information linked to drivers (public for booking display)
+
+CUSTOMERS:
+- CREATE: ✗ Cannot create vehicles
+- READ: ✓ Can read any vehicle (public info)
+- UPDATE: ✗ Cannot update vehicles
+- DELETE: ✗ Cannot delete vehicles
+
+DRIVERS:
+- CREATE: ✓ Can create vehicles for themselves
+- READ: ✓ Can read any vehicle
+- UPDATE: ✓ Can update their own vehicles only
+- DELETE: ✓ Can delete their own vehicles only
+
+ADMINS:
+- CREATE: ✓ Can create vehicles for any driver
+- READ: ✓ Can read any vehicle
+- UPDATE: ✓ Can update any vehicle
+- DELETE: ✓ Can delete any vehicle
+
+================================================================================
+4. BOOKING REQUESTS (/bookingRequests/{bookingId}) - PUBLIC DATA
+================================================================================
+PURPOSE: Public ride data (pickup/dropoff areas, times, estimated fares)
+CONTAINS: Areas, dates, times, fares, status, passenger count
+DOES NOT CONTAIN: Customer phone, exact addresses, names
+
+CUSTOMERS:
+- CREATE: ✓ Can create booking requests
+- READ: ✓ Can read their own booking requests
+- UPDATE: ✓ Can update their own bookings (cancel, negotiate)
+- DELETE: ✓ Can delete their own cancelled rides
+
+DRIVERS:
+- CREATE: ✓ Can create booking requests (system/driver initiated)
+- READ: ✓ Can read any booking request (to find rides)
+- UPDATE: ✓ Can accept pending rides + update accepted rides
+- DELETE: ✓ Can delete expired rides they accepted
+
+ADMINS:
+- CREATE: ✓ Can create any booking request
+- READ: ✓ Can read any booking request
+- UPDATE: ✓ Can update any booking request
+- DELETE: ✗ Cannot delete active bookings
+
+================================================================================
+5. BOOKING REQUEST PRIVATE (/bookingRequestPrivate/{bookingId})
+================================================================================
+PURPOSE: Private customer data (phone numbers, exact addresses, names)
+ACCESS: Requires active driver subscription
+
+CUSTOMERS:
+- CREATE: ✗ Cannot access private data
+- READ: ✗ Cannot access private data
+- UPDATE: ✗ Cannot access private data
+- DELETE: ✗ Cannot access private data
+
+DRIVERS:
+- CREATE: ✗ Cannot create (system only)
+- READ: ✓ Can read IF they have active subscription
+- UPDATE: ✗ Cannot update (admin only)
+- DELETE: ✗ Cannot delete (admin only)
+
+ADMINS:
+- CREATE: ✓ System can create during booking flow
+- READ: ✓ Can read all private data
+- UPDATE: ✓ Can update private data
+- DELETE: ✓ Can delete private data
+
+================================================================================
+6. RIDE SHARES (/rideShares/{shareId})
+================================================================================
+PURPOSE: Time-gated shared links for payment verification (±3 minute window)
+
+CUSTOMERS:
+- CREATE: ✗ Cannot create share links
+- READ: ✓ Can read any share link (to validate)
+- UPDATE: ✗ Cannot update share links
+- DELETE: ✗ Cannot delete share links
+
+DRIVERS:
+- CREATE: ✓ Can create share links (admin/system)
+- READ: ✓ Can read share links
+- UPDATE: ✓ Can claim/update share links
+- DELETE: ✗ Cannot delete share links
+
+ADMINS:
+- CREATE: ✓ Can create share links
+- READ: ✓ Can read share links
+- UPDATE: ✓ Can update share links
+- DELETE: ✓ Can delete share links
+
+================================================================================
+7. PAYMENT VERIFICATIONS (/paymentVerifications/{verificationId})
+================================================================================
+PURPOSE: M-Pesa payment confirmation tracking and verification
+
+CUSTOMERS:
+- CREATE: ✗ Cannot create verification requests
+- READ: ✗ Cannot read verification data
+- UPDATE: ✗ Cannot update verifications
+- DELETE: ✗ Cannot delete verifications
+
+DRIVERS:
+- CREATE: ✓ Can create verification requests
+- READ: ✓ Can read their own verifications
+- UPDATE: ✗ Cannot update (admin only)
+- DELETE: ✗ Cannot delete (admin only)
+
+ADMINS:
+- CREATE: ✓ Can create verification requests
+- READ: ✓ Can read all verifications
+- UPDATE: ✓ Can verify/reject payments
+- DELETE: ✓ Can delete verification records
+
+================================================================================
+8. USER BOOKINGS (/users/{userId}/bookings/{bookingId})
+================================================================================
+PURPOSE: Private user-specific booking history and data
+
+CUSTOMERS:
+- CREATE: ✓ Can create booking history
+- READ: ✓ Can read their own booking history
+- UPDATE: ✓ Can update their booking history
+- DELETE: ✗ Cannot delete booking history
+
+DRIVERS:
+- CREATE: ✗ Cannot access user booking history
+- READ: ✗ Cannot access user booking history
+- UPDATE: ✗ Cannot access user booking history
+- DELETE: ✗ Cannot access user booking history
+
+ADMINS:
+- CREATE: ✓ Can create booking history records
+- READ: ✓ Can read any user's booking history
+- UPDATE: ✓ Can update any booking history
+- DELETE: ✗ Cannot delete booking history
+
+================================================================================
+9. DRIVER PRICING (/driverPricing/{driverId})
+================================================================================
+PURPOSE: Individual driver pricing configurations and preferences
+
+CUSTOMERS:
+- CREATE: ✗ Cannot create pricing
+- READ: ✓ Can read any driver's pricing (public)
+- UPDATE: ✗ Cannot update pricing
+- DELETE: ✗ Cannot delete pricing
+
+DRIVERS:
+- CREATE: ✓ Can create their own pricing
+- READ: ✓ Can read any driver's pricing
+- UPDATE: ✓ Can update their own pricing only
+- DELETE: ✗ Cannot delete pricing
+
+ADMINS:
+- CREATE: ✓ Can create pricing for any driver
+- READ: ✓ Can read any driver's pricing
+- UPDATE: ✓ Can update any driver's pricing
+- DELETE: ✗ Cannot delete pricing
+
+================================================================================
+10. STANDARD PRICING (/pricing/{priceId})
+================================================================================
+PURPOSE: System-wide pricing configurations and fare calculations
+
+CUSTOMERS:
+- CREATE: ✗ Cannot create pricing rules
+- READ: ✓ Can read pricing information (public)
+- UPDATE: ✗ Cannot update pricing
+- DELETE: ✗ Cannot delete pricing
+
+DRIVERS:
+- CREATE: ✗ Cannot create pricing rules
+- READ: ✓ Can read pricing information
+- UPDATE: ✗ Cannot update pricing
+- DELETE: ✗ Cannot delete pricing
+
+ADMINS:
+- CREATE: ✓ Can create pricing configurations
+- READ: ✓ Can read pricing configurations
+- UPDATE: ✓ Can update pricing configurations
+- DELETE: ✗ Cannot delete pricing
+
+================================================================================
+11. NEGOTIATIONS (/negotiations/{negotiationId})
+================================================================================
+PURPOSE: Fare negotiation threads between customers and drivers
+
+CUSTOMERS:
+- CREATE: ✓ Can start negotiations (including guest users)
+- READ: ✓ Can read negotiations they participate in
+- UPDATE: ✓ Can counter-offer in their negotiations
+- DELETE: ✗ Cannot delete negotiations
+
+DRIVERS:
+- CREATE: ✓ Can participate in negotiations
+- READ: ✓ Can read negotiations they participate in
+- UPDATE: ✓ Can counter-offer in their negotiations
+- DELETE: ✗ Cannot delete negotiations
+
+ADMINS:
+- CREATE: ✓ Can create negotiations
+- READ: ✓ Can read all negotiations
+- UPDATE: ✓ Can update negotiations
+- DELETE: ✓ Can delete negotiations
+
+================================================================================
+12. RIDE REQUESTS (/rideRequests/{requestId}) - LEGACY
+================================================================================
+PURPOSE: Legacy ride request system (fallback compatibility)
+
+CUSTOMERS:
+- CREATE: ✓ Can create ride requests
+- READ: ✗ Cannot read ride requests
+- UPDATE: ✗ Cannot update ride requests
+- DELETE: ✗ Cannot delete ride requests
+
+DRIVERS:
+- CREATE: ✓ Can create ride requests
+- READ: ✓ Can read ride requests
+- UPDATE: ✓ Can update pending ride requests
+- DELETE: ✗ Cannot delete ride requests
+
+ADMINS:
+- CREATE: ✓ Can create ride requests
+- READ: ✓ Can read ride requests
+- UPDATE: ✓ Can update ride requests
+- DELETE: ✓ Can delete ride requests
+
+================================================================================
+13. NOTIFICATIONS (/notifications/{notificationId})
+================================================================================
+PURPOSE: Customer-facing notifications (system alerts, driver updates)
+
+CUSTOMERS:
+- CREATE: ✗ Cannot create notifications
+- READ: ✓ Can read notifications sent to them
+- UPDATE: ✓ Can mark their notifications as read
+- DELETE: ✗ Cannot delete notifications
+
+DRIVERS:
+- CREATE: ✓ Can create notifications for customers
+- READ: ✓ Can read notifications sent to them (via driverId)
+- UPDATE: ✓ Can mark their notifications as read
+- DELETE: ✗ Cannot delete notifications
+
+ADMINS:
+- CREATE: ✓ Can create notifications for anyone
+- READ: ✓ Can read all notifications + system broadcasts
+- UPDATE: ✓ Can update any notification
+- DELETE: ✓ Can delete notifications
+
+================================================================================
+14. DRIVER NOTIFICATIONS (/driverNotifications/{notificationId})
+================================================================================
+PURPOSE: Driver-facing notifications (ride requests, confirmations)
+
+CUSTOMERS:
+- CREATE: ✓ Can create notifications for drivers
+- READ: ✗ Cannot read driver notifications
+- UPDATE: ✗ Cannot update driver notifications
+- DELETE: ✗ Cannot delete driver notifications
+
+DRIVERS:
+- CREATE: ✗ Cannot create driver notifications
+- READ: ✓ Can read notifications sent to them
+- UPDATE: ✓ Can mark their notifications as read
+- DELETE: ✗ Cannot delete notifications
+
+ADMINS:
+- CREATE: ✓ Can create driver notifications
+- READ: ✓ Can read all driver notifications
+- UPDATE: ✓ Can update driver notifications
+- DELETE: ✓ Can delete driver notifications
+
+================================================================================
+15. ISSUES (/issues/{issueId})
+================================================================================
+PURPOSE: Customer and driver issue reports for admin review
+
+CUSTOMERS:
+- CREATE: ✓ Can create their own issue reports
+- READ: ✓ Can read their own issue reports
+- UPDATE: ✗ Cannot update issue status
+- DELETE: ✗ Cannot delete issues
+
+DRIVERS:
+- CREATE: ✓ Can create their own issue reports
+- READ: ✓ Can read their own issue reports
+- UPDATE: ✗ Cannot update issue status
+- DELETE: ✗ Cannot delete issues
+
+ADMINS:
+- CREATE: ✓ Can create issue reports
+- READ: ✓ Can read all issue reports
+- UPDATE: ✓ Can update issue status (investigating, resolved)
+- DELETE: ✗ Cannot delete issues
+
+================================================================================
+16. APP SETTINGS (/appSettings/{settingId})
+================================================================================
+PURPOSE: Global application settings and banner content
+
+CUSTOMERS:
+- CREATE: ✗ Cannot create app settings
+- READ: ✓ Can read app settings (banners, etc.)
+- UPDATE: ✗ Cannot update settings
+- DELETE: ✗ Cannot delete settings
+
+DRIVERS:
+- CREATE: ✗ Cannot create app settings
+- READ: ✓ Can read app settings
+- UPDATE: ✗ Cannot update settings
+- DELETE: ✗ Cannot delete settings
+
+ADMINS:
+- CREATE: ✓ Can create app settings
+- READ: ✓ Can read app settings
+- UPDATE: ✓ Can update app settings
+- DELETE: ✗ Cannot delete settings
+
+================================================================================
+17. TESTING COLLECTIONS (Development Only)
+================================================================================
+
+TESTING QUESTIONS (/testingQuestions/{questionId}):
+- All authenticated users have full read/write access for development
+
+TESTING CONFIG (/testingConfig/{configId}):
+- All authenticated users have full read/write access for development
+
+TESTING FEEDBACK (/testingFeedback/{feedbackId}):
+- All authenticated users have full read/write access for development
+
+CRASH REPORTS (/crashReports/{crashId}):
+- All authenticated users have full read/write access for development
+
+================================================================================
+SPECIAL SECURITY CONDITIONS
+================================================================================
+
+1. SUBSCRIPTION REQUIREMENTS:
+   - Private customer data requires active driver subscription
+   - Subscription must be 'active' status AND 'isVisibleToPublic: true'
+
+2. SUSPENSION CHECKS:
+   - All admin and driver operations check for suspension status
+   - Suspended users cannot perform privileged operations
+
+3. TIME-BASED DELETION:
+   - Drivers can delete expired rides they accepted/targeted
+   - Customers can delete their cancelled rides
+   - Expiration based on 'expiresAt' timestamp
+
+4. IMMUTABLE NEGOTIATION FIELDS:
+   - driverId, customerId, bookingRequestId, customerName, customerPhone
+   - initialPrice, proposedPrice cannot be changed after creation
+
+5. MULTI-PARTY BOOKING ACCESS:
+   - Customer who created booking
+   - Driver who accepted booking
+   - Targeted driver (specific assignment)
+   - Any driver for pending broadcast rides
+
+================================================================================
+END OF WEB FIRESTORE SECURITY RULES DOCUMENTATION
+================================================================================

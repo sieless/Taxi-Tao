@@ -209,11 +209,11 @@ export default function DriverRegisterPage() {
       });
 
       setSuccess(
-        "Registration successful! Please check your email to verify your account. Redirecting to dashboard..."
+        "Registration successful! Please check your email to verify your account. Redirecting to verification page..."
       );
 
       setTimeout(() => {
-        router.push("/driver/dashboard");
+        router.push("/verify-email");
       }, 2500);
     } catch (err: any) {
       console.error("Registration error:", err);

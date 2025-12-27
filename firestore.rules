@@ -29,30 +29,43 @@ service cloud.firestore {
       return request.auth != null;
     }
     
+    // Check if user's email is verified (REQUIRED for account access)
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+    
     // Check if user owns this resource
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
     
+    // Check if user is NOT suspended
+    function isNotSuspended() {
+      return isSignedIn() && (
+        !exists(/databases/$(database)/documents/users/$(request.auth.uid)) ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.suspended != true
+      );
+    }
+    
     // Get current user's profile data
     function getUserData() {
-      return isSignedIn() 
-        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data 
-        : null;
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
     
-    // Check if user is admin
+    // Check if user is admin (requires email verification)
     function isAdmin() {
       return isSignedIn() && 
-             getUserData() != null && 
-             getUserData().role == 'admin';
+             isEmailVerified() &&
+             getUserData().role == 'admin' &&
+             getUserData().suspended != true;
     }
     
-    // Check if user is a driver
+    // Check if user is a driver (requires email verification)
     function isDriver() {
       return isSignedIn() && 
-             getUserData() != null && 
-             getUserData().role == 'driver';
+             isEmailVerified() &&
+             getUserData().role == 'driver' &&
+             getUserData().suspended != true;
     }
     
     // Get driver's subscription data (only for drivers)
@@ -109,23 +122,18 @@ service cloud.firestore {
     // USER PROFILES
     // ============================================================
     match /users/{userId} {
-      // Any authenticated user can read (needed for customer/driver lookups)
-      allow read: if isSignedIn();
+      // Users can read their own profile (email verification required) or admins can read all
+      allow read: if isSignedIn() && (isOwner(userId) && isEmailVerified() || isAdmin());
       
-      // Users can create their own profile, or admins can create any
-      allow create: if isSignedIn() && (
-        isOwner(userId) ||
-        (getUserData() != null && getUserData().role == 'admin')
-      );
+      // Users can create their own profile (email verification not required during signup)
+      // Admins can create any profile
+      allow create: if isSignedIn() && (isOwner(userId) || isAdmin());
       
-      // Users can update their own profile, or admins can update any
-      allow update: if isSignedIn() && (
-        isOwner(userId) ||
-        (getUserData() != null && getUserData().role == 'admin')
-      );
+      // Users can update their own profile (email verification required) or admins can update any
+      allow update: if isSignedIn() && ((isOwner(userId) && isEmailVerified()) || isAdmin());
       
       // Only admins can delete users
-      allow delete: if isSignedIn() && (getUserData() != null && getUserData().role == 'admin');
+      allow delete: if isAdmin();
       
       // Admins can list all users
       allow list: if isAdmin();
@@ -135,17 +143,22 @@ service cloud.firestore {
     // DRIVER PROFILES (Mobile: auth read, self write)
     // ============================================================
     match /drivers/{driverId} {
-      // Anyone authenticated can read driver profiles (for booking flow)
-      allow read: if isSignedIn();
-      // Only the driver themselves can create/update their profile; admins can assist
+      // Anyone authenticated with verified email can read driver profiles (for booking flow)
+      allow read: if isSignedIn() && isEmailVerified();
+      // Drivers can create their own profile (email verification required), or admins can create any
       allow create: if isSignedIn() && (
-        isOwner(driverId) || isAdmin()
+        (request.auth.uid == driverId && isEmailVerified()) ||
+        isAdmin()
       );
+
+      // Drivers can update their own profile (email verification required), or admins can update any
       allow update: if isSignedIn() && (
-        isOwner(driverId) || isAdmin()
+        (request.auth.uid == driverId && isEmailVerified()) ||
+        isAdmin()
       );
-      // Drivers cannot delete their profile via app (admin only)
-      allow delete: if isAdmin();
+
+      // Only admins can delete driver profiles
+      allow delete: if isSignedIn() && isAdmin();
       
       // Nested vehicles subcollection
       match /vehicles/{vehicleId} {
@@ -163,19 +176,12 @@ service cloud.firestore {
     // DRIVER ROUTES (TaxiTao Mobile compatibility)
     // ============================================================
     match /driverRoutes/{routeId} {
-      // Drivers can create their own routes with required fields
-      allow create: if isSignedIn()
-        && request.resource.data.driverId == request.auth.uid
-        && request.resource.data.price is number
-        && request.resource.data.fromLocation is string
-        && request.resource.data.toLocation is string;
+      // Anyone can read routes (customers need to see pricing options)
+      allow read: if request.auth != null;
 
-      // Only route owner can update/delete
-      allow update, delete: if isSignedIn()
-        && resource.data.driverId == request.auth.uid;
-
-      // Reads: mobile allows any authenticated read
-      allow get, list: if isSignedIn();
+      // Only the route owner (driver) can create/modify/delete
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.driverId;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.driverId;
     }
 
     // ============================================================
@@ -198,33 +204,32 @@ service cloud.firestore {
     // Does NOT contain: customerPhone, customerName, exact addresses
     // ============================================================
     match /bookingRequests/{bookingId} {
-      // Any authenticated user can create a booking request
-      allow create: if isSignedIn();
+      // Any authenticated user with verified email can create a booking request
+      allow create: if isSignedIn() && isEmailVerified();
+
+      // Any authenticated user with verified email can read (drivers scan for rides in area)
+      allow read: if isSignedIn() && isEmailVerified();
       
-      // Any authenticated user can read/list (drivers scan for rides in area)
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
-      
-      // Update logic - multi-party access
-      allow update: if isSignedIn() && (
+      // Update logic - multi-party access (email verification required)
+      allow update: if isSignedIn() && isEmailVerified() && (
         // Customer who created the booking (can cancel, negotiate, confirm)
-        request.auth.uid == resource.data.customerId || 
-        
-        // Driver who accepted the booking (can update status)
+        request.auth.uid == resource.data.customerId ||
+
+        // Driver who accepted the booking (can update status and location)
         request.auth.uid == resource.data.acceptedBy ||
-        
-        // Targeted driver (can accept/reject specifically-assigned ride)
+
+        // Targeted driver (can accept a specifically-assigned ride)
         request.auth.uid == resource.data.targetDriverId ||
-        
-        // Any driver can accept a PENDING broadcast ride (no targetDriverId set)
-        resource.data.status == 'pending'
+
+        // Any driver can accept a PENDING broadcast ride
+        (resource.data.status == 'pending')
       );
       
-      // Allow deletion of rides under specific conditions:
+      // Allow deletion of rides under specific conditions (email verification required):
       // 1. Driver can delete expired rides they accepted (for cleanup)
       // 2. Driver can delete expired rides where they were chosen by customer (for cleanup)
       // 3. Customer can delete their own cancelled rides (for cleanup)
-      allow delete: if request.auth != null && (
+      allow delete: if isSignedIn() && isEmailVerified() && (
         // Driver can delete expired rides they accepted
         (request.auth.uid == resource.data.acceptedBy &&
          resource.data.expiresAt != null &&
@@ -244,10 +249,10 @@ service cloud.firestore {
     // Contains: customerName, customerPhone, exactPickup, exactDropoff
     // ============================================================
     match /bookingRequestPrivate/{bookingId} {
-      // CRITICAL: Only subscribed drivers OR admins can read private data
-      allow read: if isSignedIn() && (isSubscribedDriver() || isAdmin());
+      // CRITICAL: Only subscribed drivers (with verified email) OR admins can read private data
+      allow read: if isSignedIn() && isEmailVerified() && (isSubscribedDriver() || isAdmin());
       
-      // System creates during booking flow
+      // System creates during booking flow (no auth required for system operations)
       allow create: if true;
       
       // Only admins can modify
@@ -259,14 +264,14 @@ service cloud.firestore {
     // Used for ±3 minute payment verification
     // ============================================================
     match /rideShares/{shareId} {
-      // Anyone can read (to validate share link exists)
+      // Anyone can read (to validate share link exists) - no auth required for public links
       allow read: if true;
       
-      // Only admins/system can create share links
-      allow create: if isSignedIn() && (isAdmin() || isDriver());
+      // Only admins/system can create share links (email verification required)
+      allow create: if isSignedIn() && isEmailVerified() && (isAdmin() || isDriver());
       
-      // Drivers can claim (update) share links
-      allow update: if isSignedIn() && isDriver();
+      // Drivers can claim (update) share links (email verification required)
+      allow update: if isSignedIn() && isEmailVerified() && isDriver();
       
       allow delete: if isAdmin();
     }
@@ -275,11 +280,11 @@ service cloud.firestore {
     // PAYMENT VERIFICATIONS (M-Pesa confirmation tracking)
     // ============================================================
     match /paymentVerifications/{verificationId} {
-      // Drivers can create verification requests
-      allow create: if isSignedIn() && isDriver();
+      // Drivers can create verification requests (email verification required)
+      allow create: if isSignedIn() && isEmailVerified() && isDriver();
       
-      // Drivers can read their own, admins can read all
-      allow read: if isSignedIn() && (
+      // Drivers can read their own (email verification required), admins can read all
+      allow read: if isSignedIn() && isEmailVerified() && (
         resource.data.driverId == request.auth.uid || isAdmin()
       );
       
@@ -291,15 +296,15 @@ service cloud.firestore {
     // USER BOOKINGS (Private user data)
     // ============================================================
     match /users/{userId}/bookings/{bookingId} {
-      allow read, write: if isSignedIn() && isOwner(userId);
+      allow read, write: if isSignedIn() && isEmailVerified() && isOwner(userId);
     }
 
     // ============================================================
     // DRIVER PRICING
     // ============================================================
     match /driverPricing/{driverId} {
-      allow read: if true;
-      allow write: if isSignedIn() && (
+      allow read: if true; // Public pricing info
+      allow write: if isSignedIn() && isEmailVerified() && (
         getUserData().driverId == driverId || isAdmin()
       );
     }
@@ -316,22 +321,28 @@ service cloud.firestore {
     // NEGOTIATIONS
     // ============================================================
     match /negotiations/{negotiationId} {
-      // Anyone can start a negotiation (guest customers allowed)
-      allow create: if true;
+      // Anyone can start a negotiation (guest customers allowed, but authenticated users need verified email)
+      allow create: if !isSignedIn() || (isSignedIn() && isEmailVerified());
 
-      // Read: participants (customer or driver) or admin.
+      // Read: participants (customer or driver) or admin (email verification required for authenticated users).
       // For guest negotiations (customerId == null), allow read by possession of the link/id.
-      allow get: if negotiationParticipant(resource.data.driverId, resource.data.customerId) ||
-                 resource.data.customerId == null;
+      allow get: if !isSignedIn() || 
+                 (isSignedIn() && isEmailVerified() && (
+                   negotiationParticipant(resource.data.driverId, resource.data.customerId) ||
+                   resource.data.customerId == null
+                 ));
 
-      // List: only participants (customer/driver) or admin to avoid broad enumeration
-      allow list: if negotiationParticipant(resource.data.driverId, resource.data.customerId);
+      // List: only participants (customer/driver) or admin to avoid broad enumeration (email verification required)
+      allow list: if isSignedIn() && isEmailVerified() && 
+                     negotiationParticipant(resource.data.driverId, resource.data.customerId);
 
-      // Updates: participants or admin, and guests when customerId is null,
+      // Updates: participants or admin (email verification required), and guests when customerId is null,
       // while keeping immutable fields locked.
       allow update: if negotiationImmutableFieldsUnchanged() && (
-        negotiationParticipant(resource.data.driverId, resource.data.customerId) ||
-        (resource.data.customerId == null && request.resource.data.customerId == null)
+        (!isSignedIn() || (isSignedIn() && isEmailVerified())) && (
+          negotiationParticipant(resource.data.driverId, resource.data.customerId) ||
+          (resource.data.customerId == null && request.resource.data.customerId == null)
+        )
       );
 
       // Delete restricted to admins
@@ -356,34 +367,28 @@ service cloud.firestore {
     // NOTIFICATIONS
     // ============================================================
     match /notifications/{notificationId} {
-      // Only the recipient can read their notifications (matches auth UID or driverId)
-      allow read: if isSignedIn() && (
-        request.auth.uid == resource.data.recipientId ||
-        (getUserData() != null && getUserData().driverId == resource.data.recipientId)
-      );
-      
-      // Anyone authenticated can create notifications (cross-party alerts)
-      allow create: if isSignedIn();
-      
-      // Only recipient can update (e.g., mark as read)
-      allow update: if isSignedIn() && request.auth.uid == resource.data.recipientId;
+      // Only the recipient can read their notifications (email verification required)
+      allow read: if isSignedIn() && isEmailVerified() && request.auth.uid == resource.data.recipientId;
+
+      // Anyone authenticated with verified email can create notifications (cross-party alerts)
+      allow create: if isSignedIn() && isEmailVerified();
+
+      // Only recipient can update (e.g., mark as read) (email verification required)
+      allow update: if isSignedIn() && isEmailVerified() && request.auth.uid == resource.data.recipientId;
       
       // No deletion
       allow delete: if false;
     }
 
     match /driverNotifications/{notificationId} {
-      // Only the driver can read their notifications (matches auth UID or driverId)
-      allow read: if isSignedIn() && (
-        request.auth.uid == resource.data.driverId ||
-        (getUserData() != null && getUserData().driverId == resource.data.driverId)
-      );
+      // Only the driver can read their notifications (email verification required)
+      allow read: if isSignedIn() && isEmailVerified() && request.auth.uid == resource.data.driverId;
+
+      // Anyone authenticated with verified email can create (customer confirms, system alerts)
+      allow create: if isSignedIn() && isEmailVerified();
       
-      // Anyone authenticated can create (customer confirms, system alerts)
-      allow create: if isSignedIn();
-      
-      // Only driver can update (e.g., mark as read)
-      allow update: if isSignedIn() && request.auth.uid == resource.data.driverId;
+      // Only driver can update (e.g., mark as read) (email verification required)
+      allow update: if isSignedIn() && isEmailVerified() && request.auth.uid == resource.data.driverId;
       
       // No deletion
       allow delete: if false;
@@ -393,15 +398,15 @@ service cloud.firestore {
     // ISSUES COLLECTION (Issue reports from customers and drivers)
     // ============================================================
     match /issues/{issueId} {
-      // Users can read their own issues, admins can read all
-      allow read: if isSignedIn() && (
+      // Users can read their own issues (email verification required), admins can read all
+      allow read: if isSignedIn() && isEmailVerified() && (
         request.auth.uid == resource.data.userId ||
         isAdmin()
       );
 
-      // Any authenticated user can create their own issue report
+      // Any authenticated user with verified email can create their own issue report
       // Must match userId and have valid userType (customer or driver)
-      allow create: if isSignedIn() &&
+      allow create: if isSignedIn() && isEmailVerified() &&
         request.auth.uid == request.resource.data.userId &&
         request.resource.data.userType in ['customer', 'driver'];
 
@@ -418,32 +423,32 @@ service cloud.firestore {
     
     // Testing Questions Collection
     match /testingQuestions/{questionId} {
-      // TEMPORARY: Allow all authenticated users full access (for development)
-      allow read, write: if request.auth != null;
+      // TEMPORARY: Allow all authenticated users with verified email full access (for development)
+      allow read, write: if isSignedIn() && isEmailVerified();
     }
 
     // Testing Config Collection
     match /testingConfig/{configId} {
-      // TEMPORARY: Allow all authenticated users full access (for development)
-      allow read, write: if request.auth != null;
+      // TEMPORARY: Allow all authenticated users with verified email full access (for development)
+      allow read, write: if isSignedIn() && isEmailVerified();
     }
 
     // Testing Feedback Collection
     match /testingFeedback/{feedbackId} {
-      // TEMPORARY: Allow all authenticated users full access (for development)
-      allow read, write: if request.auth != null;
+      // TEMPORARY: Allow all authenticated users with verified email full access (for development)
+      allow read, write: if isSignedIn() && isEmailVerified();
     }
 
     // Crash Reports Collection
     match /crashReports/{crashId} {
-      // TEMPORARY: Allow all authenticated users full access (for development)
-      allow read, write: if request.auth != null;
+      // TEMPORARY: Allow all authenticated users with verified email full access (for development)
+      allow read, write: if isSignedIn() && isEmailVerified();
     }
 
     // APP SETTINGS (global)
     // ============================================================
     match /appSettings/{settingId} {
-      allow read: if isSignedIn();
+      allow read: if isSignedIn() && isEmailVerified();
       allow create, update: if isAdmin();
       allow delete: if false;
     }

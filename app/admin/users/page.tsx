@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { collection, query, orderBy, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { Users, Shield, User } from "lucide-react";
+import { Users, Shield, User, Ban, CheckCircle } from "lucide-react";
+import { doc, updateDoc } from "firebase/firestore";
 
 interface UserProfile {
   id: string;
@@ -12,6 +13,7 @@ interface UserProfile {
   phone: string;
   role: string;
   createdAt: any;
+  suspended?: boolean;
 }
 
 export default function AdminUsersPage() {
@@ -24,20 +26,40 @@ export default function AdminUsersPage() {
   }, []);
 
   const loadUsers = async () => {
-    setLoading(true);
+    console.log("Starting loadUsers...");
     try {
       const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
       const snapshot = await getDocs(q);
+      console.log(`Fetched ${snapshot.size} users`);
       const usersList = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as UserProfile[];
       
       setUsers(usersList);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error loading users:", error);
+      if (error.code === "permission-denied") {
+        console.error("Permission denied: Check if you are logged in as an admin and if firestore.rules allow listing users.");
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const toggleSuspension = async (userId: string, currentStatus: boolean) => {
+    if (!confirm(`Are you sure you want to ${currentStatus ? 'unsuspend' : 'suspend'} this user?`)) return;
+    
+    try {
+      await updateDoc(doc(db, "users", userId), {
+        suspended: !currentStatus,
+        updatedAt: new Date()
+      });
+      // Update local state
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, suspended: !currentStatus } : u));
+    } catch (error) {
+      console.error("Error toggling suspension:", error);
+      alert("Failed to update user status");
     }
   };
 
@@ -129,6 +151,34 @@ export default function AdminUsersPage() {
                       <p>📧 {user.email}</p>
                       <p>📱 {user.phone}</p>
                     </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                    {user.suspended && (
+                      <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-800 flex items-center gap-1">
+                        <Ban size={12} />
+                        SUSPENDED
+                      </span>
+                    )}
+                    <button
+                      onClick={() => toggleSuspension(user.id, !!user.suspended)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${
+                        user.suspended
+                          ? "bg-green-100 text-green-700 hover:bg-green-200"
+                          : "bg-red-100 text-red-700 hover:bg-red-200"
+                      }`}
+                    >
+                      {user.suspended ? (
+                        <>
+                          <CheckCircle size={16} />
+                          Unsuspend
+                        </>
+                      ) : (
+                        <>
+                          <Ban size={16} />
+                          Suspend
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
               </div>
