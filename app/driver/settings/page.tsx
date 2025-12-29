@@ -7,6 +7,7 @@ import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Driver } from "@/lib/types";
 import { ArrowLeft, User, Bell, Clock, CreditCard, Shield, Globe, Save, Loader2, Phone } from "lucide-react";
+import { sanitizeAuthError } from "@/lib/error-utils";
 
 export default function DriverSettings() {
   const { user, userProfile, loading: authLoading, refreshUserProfile } = useAuth();
@@ -101,7 +102,15 @@ export default function DriverSettings() {
   }, [userProfile]);
 
   async function handleSaveProfile() {
-    if (!driver) return;
+    if (!driver || !user) return;
+    
+    // Pre-check: Email verification
+    if (!user.emailVerified) {
+      alert("Please verify your email address to update your profile. Check your inbox for the verification link.");
+      router.push("/verify-email");
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -127,16 +136,36 @@ export default function DriverSettings() {
       setDriver(prev => prev ? { ...prev, ...profileForm } : null);
       await refreshUserProfile();
       alert("Profile updated successfully!");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating profile:", error);
-      alert("Failed to update profile.");
+      
+      // Enhanced error handling
+      if (error?.code?.includes('permission-denied') || error?.message?.includes('permission')) {
+        if (!user?.emailVerified) {
+          alert("Please verify your email address to update your profile.");
+          router.push("/verify-email");
+        } else {
+          alert("Permission denied. Please contact support if you believe this is an error.");
+        }
+      } else {
+        const friendlyError = sanitizeAuthError(error, "Failed to update profile. Please try again.");
+        alert(friendlyError);
+      }
     } finally {
       setSaving(false);
     }
   }
 
   async function handleSaveMpesa() {
-    if (!driver) return;
+    if (!driver || !user) return;
+    
+    // Pre-check: Email verification
+    if (!user.emailVerified) {
+      alert("Please verify your email address to update your M-Pesa details. Check your inbox for the verification link.");
+      router.push("/verify-email");
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -162,9 +191,21 @@ export default function DriverSettings() {
         }
       } : null);
       alert("M-Pesa details updated successfully!");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating M-Pesa details:", error);
-      alert("Failed to update M-Pesa details.");
+      
+      // Enhanced error handling
+      if (error?.code?.includes('permission-denied') || error?.message?.includes('permission')) {
+        if (!user?.emailVerified) {
+          alert("Please verify your email address to update your M-Pesa details.");
+          router.push("/verify-email");
+        } else {
+          alert("Permission denied. Please contact support if you believe this is an error.");
+        }
+      } else {
+        const friendlyError = sanitizeAuthError(error, "Failed to update M-Pesa details. Please try again.");
+        alert(friendlyError);
+      }
     } finally {
       setSaving(false);
     }

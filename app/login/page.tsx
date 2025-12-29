@@ -18,6 +18,8 @@ export default function DriverLoginPage() {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const [resetMode, setResetMode] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const { signIn } = useAuth();
   const router = useRouter();
 
@@ -25,6 +27,26 @@ export default function DriverLoginPage() {
     e.preventDefault();
     setError("");
     setSuccess("");
+    setEmailError("");
+    setPasswordError("");
+    
+    // Validation
+    let hasError = false;
+    if (!email.trim()) {
+      setEmailError("Email is required");
+      hasError = true;
+    } else if (!email.includes("@")) {
+      setEmailError("Please enter a valid email address");
+      hasError = true;
+    }
+    
+    if (!password) {
+      setPasswordError("Password is required");
+      hasError = true;
+    }
+    
+    if (hasError) return;
+    
     setLoading(true);
 
     try {
@@ -168,11 +190,19 @@ export default function DriverLoginPage() {
                   id="email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setEmailError("");
+                  }}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+                    emailError ? 'border-red-300' : 'border-gray-300'
+                  }`}
                   placeholder="your.email@example.com"
                 />
+                {emailError && (
+                  <p className="text-red-500 text-xs mt-1">{emailError}</p>
+                )}
               </div>
 
               <div>
@@ -199,9 +229,14 @@ export default function DriverLoginPage() {
                     id="password"
                     type={showPassword ? "text" : "password"}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setPasswordError("");
+                    }}
                     required
-                    className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
+                    className={`w-full px-4 py-3 pr-12 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 ${
+                      passwordError ? 'border-red-300' : 'border-gray-300'
+                    }`}
                     placeholder="••••••••"
                   />
                   <button
@@ -219,6 +254,9 @@ export default function DriverLoginPage() {
                     )}
                   </button>
                 </div>
+                {passwordError && (
+                  <p className="text-red-500 text-xs mt-1">{passwordError}</p>
+                )}
               </div>
 
               <button

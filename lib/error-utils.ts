@@ -66,6 +66,16 @@ export function sanitizeAuthError(
     case "auth/requires-recent-login":
       return "For security, please sign in again to continue.";
     default:
+      // Check for Firestore permission errors with context
+      if (errorCode?.includes('permission-denied') || errorMessage?.includes('Missing or insufficient permissions')) {
+        if (errorMessage?.includes('email') || errorMessage?.includes('verified')) {
+          return "Please verify your email address to perform this action. Check your inbox for the verification link.";
+        }
+        if (errorMessage?.includes('subscription') || errorMessage?.includes('visible')) {
+          return "You need an active subscription to perform this action.";
+        }
+        return "Permission denied. This may be due to unverified email, inactive subscription, or account restrictions.";
+      }
       // For any other error, return generic message to avoid revealing system details
       return defaultMessage;
   }
