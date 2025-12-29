@@ -367,8 +367,11 @@ service cloud.firestore {
     // NOTIFICATIONS
     // ============================================================
     match /notifications/{notificationId} {
-      // Only the recipient can read their notifications (email verification required)
-      allow read: if isSignedIn() && isEmailVerified() && request.auth.uid == resource.data.recipientId;
+      // Read: Only the recipient can read their notifications OR system_broadcast (email verification required)
+      allow read: if isSignedIn() && isEmailVerified() && (
+        request.auth.uid == resource.data.recipientId ||
+        resource.data.recipientId == "system_broadcast"
+      );
 
       // Anyone authenticated with verified email can create notifications (cross-party alerts)
       allow create: if isSignedIn() && isEmailVerified();

@@ -22,6 +22,7 @@ import {
   deleteNotification,
 } from "@/lib/notifications";
 import { Notification } from "@/lib/types";
+import { useAuth } from "@/lib/auth-context";
 
 interface NotificationBellProps {
   driverId: string;
@@ -48,6 +49,7 @@ export default function NotificationBell({
   driverId,
   onNotificationClick,
 }: NotificationBellProps) {
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [driverNotifications, setDriverNotifications] = useState<
     DriverNotification[]
@@ -59,6 +61,12 @@ export default function NotificationBell({
   // Real-time listener for driverNotifications collection
   useEffect(() => {
     if (!driverId) {
+      setLoading(false);
+      return;
+    }
+
+    // Don't fetch if email is not verified
+    if (!user?.emailVerified) {
       setLoading(false);
       return;
     }
@@ -96,10 +104,13 @@ export default function NotificationBell({
     return () => {
       unsubscribe1();
     };
-  }, [driverId]);
+  }, [driverId, user?.emailVerified]);
 
   async function fetchNotifications() {
     if (!driverId) return;
+    
+    // Don't fetch if email is not verified
+    if (!user?.emailVerified) return;
 
     try {
       const [notifs, count] = await Promise.all([

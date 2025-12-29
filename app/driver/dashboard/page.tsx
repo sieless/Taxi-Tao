@@ -311,6 +311,14 @@ export default function DriverDashboard() {
         setUploading(false);
       }
 
+      // Check email verification before updating
+      if (!user?.emailVerified) {
+        alert("Please verify your email address before updating your profile. Check your inbox for the verification link.");
+        setSaving(false);
+        setUploading(false);
+        return;
+      }
+
       const driverRef = doc(db, "drivers", driver.id);
       await updateDoc(driverRef, {
         name: editForm.name,
@@ -335,9 +343,13 @@ export default function DriverDashboard() {
       setSelectedImage(null);
       setPreviewUrl(null);
       alert("Profile updated successfully!");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating profile:", error);
-      alert("Failed to update profile.");
+      if (error?.code === "permission-denied" || error?.message?.includes("permission")) {
+        alert("Permission denied. Please verify your email address to update your profile.");
+      } else {
+        alert("Failed to update profile. Please try again.");
+      }
     } finally {
       setSaving(false);
       setUploading(false);
