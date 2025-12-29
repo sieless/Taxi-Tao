@@ -220,7 +220,8 @@ export interface Notification {
     | "driver_enroute"
     | "driver_arrived"
     | "trip_started"
-    | "trip_completed";
+    | "trip_completed"
+    | "system_broadcast";
   title: string;
   message: string;
   read: boolean;
@@ -237,6 +238,7 @@ export interface Notification {
     pickupDate?: string; // Add this
     pickupTime?: string; // Add this
     customerName?: string; // Add this
+    issueId?: string; // For linking notifications to issues
     fareEstimate?: number;
     customerPhone?: string;
     action?: string;
