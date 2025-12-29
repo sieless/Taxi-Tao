@@ -7,6 +7,7 @@ import { auth } from "@/lib/firebase";
 import { Lock, Eye, EyeOff, CheckCircle, AlertTriangle, Loader2, Mail } from "lucide-react";
 import Link from "next/link";
 import Logo from "@/components/Logo";
+import { sanitizeAuthError } from "@/lib/error-utils";
 
 function AuthActionHandler() {
   const searchParams = useSearchParams();
@@ -190,13 +191,10 @@ function ResetPasswordForm({ oobCode }: { oobCode: string | null }) {
       }, 3000);
     } catch (err: any) {
       console.error("Error resetting password:", err);
-      if (err.code === "auth/expired-action-code") {
-        setError("This password reset link has expired. Please request a new one.");
-      } else if (err.code === "auth/weak-password") {
-        setError("Password is too weak. Please choose a stronger password.");
-      } else {
-        setError("Failed to reset password. Please try again.");
-      }
+      // Use sanitized error message to prevent revealing security details
+      setError(
+        sanitizeAuthError(err, "Failed to reset password. Please try again or request a new reset link.")
+      );
     } finally {
       setSubmitting(false);
     }

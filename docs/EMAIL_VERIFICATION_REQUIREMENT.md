@@ -1,6 +1,7 @@
 # Email Verification Requirement
 
 ## Overview
+
 All users must verify their email address before they can access the TaxiTao application. This is enforced at both the application level and Firestore security rules level.
 
 ---
@@ -10,12 +11,14 @@ All users must verify their email address before they can access the TaxiTao app
 ### 1. **Account Creation Flow**
 
 #### Signup Process (`app/signup/page.tsx`)
+
 1. User creates Firebase Auth account
 2. System sends verification email via `sendEmailVerification(user)`
 3. User document is created in Firestore (email verification not required for initial creation)
 4. **User is redirected to `/verify-email` page** (not to dashboard)
 
 #### Driver Registration (`app/driver/register/page.tsx`)
+
 1. Driver creates Firebase Auth account
 2. System sends verification email via `sendEmailVerification(user)`
 3. User and driver documents are created in Firestore
@@ -24,12 +27,14 @@ All users must verify their email address before they can access the TaxiTao app
 ### 2. **Email Verification Page** (`app/verify-email/page.tsx`)
 
 **Features**:
+
 - Displays verification status
 - Allows resending verification email
 - "I've Verified My Email" button to check status
 - Auto-redirects to dashboard once verified
 
 **User Actions**:
+
 - Click "Resend Verification Email" if email not received
 - Click "I've Verified My Email" after clicking link in email
 - System checks `user.emailVerified` status
@@ -37,21 +42,25 @@ All users must verify their email address before they can access the TaxiTao app
 ### 3. **Auth Context Enforcement** (`lib/auth-context.tsx`)
 
 **Email Verification Check**:
+
 ```typescript
 // In onAuthStateChanged callback
 if (firebaseUser && !firebaseUser.emailVerified) {
   // Redirect to verification page (unless already on verification/login/signup pages)
-  if (!window.location.pathname.includes('/verify-email') && 
-      !window.location.pathname.includes('/login') && 
-      !window.location.pathname.includes('/signup') && 
-      !window.location.pathname.includes('/driver/register')) {
-    router.push('/verify-email');
+  if (
+    !window.location.pathname.includes("/verify-email") &&
+    !window.location.pathname.includes("/login") &&
+    !window.location.pathname.includes("/signup") &&
+    !window.location.pathname.includes("/driver/register")
+  ) {
+    router.push("/verify-email");
     return; // Stop further processing
   }
 }
 ```
 
 **Behavior**:
+
 - If user is not verified, they are automatically redirected to `/verify-email`
 - Prevents access to protected routes
 - Allows access to verification, login, and signup pages
@@ -59,6 +68,7 @@ if (firebaseUser && !firebaseUser.emailVerified) {
 ### 4. **Firestore Security Rules** (`firestore.rules`)
 
 #### Helper Function
+
 ```typescript
 // Check if user's email is verified (REQUIRED for account access)
 function isEmailVerified() {
@@ -69,6 +79,7 @@ function isEmailVerified() {
 #### Rule Enforcement
 
 **All authenticated operations require email verification**:
+
 - ✅ User profile reads/updates (except initial creation)
 - ✅ Driver profile reads/updates (except initial creation)
 - ✅ Booking request creation/reads/updates
@@ -80,6 +91,7 @@ function isEmailVerified() {
 - ✅ All other protected collections
 
 **Exceptions**:
+
 - ❌ User profile creation (allowed during signup before verification)
 - ❌ Driver profile creation (allowed during registration before verification)
 - ❌ Public data reads (pricing, vehicles - no auth required)
@@ -88,20 +100,22 @@ function isEmailVerified() {
 #### Example Rules
 
 **User Profiles**:
+
 ```typescript
 match /users/{userId} {
   // Read: requires email verification
   allow read: if isSignedIn() && (isOwner(userId) && isEmailVerified() || isAdmin());
-  
+
   // Create: allowed during signup (no verification required yet)
   allow create: if isSignedIn() && (isOwner(userId) || isAdmin());
-  
+
   // Update: requires email verification
   allow update: if isSignedIn() && ((isOwner(userId) && isEmailVerified()) || isAdmin());
 }
 ```
 
 **Booking Requests**:
+
 ```typescript
 match /bookingRequests/{bookingId} {
   // All operations require email verification
@@ -113,6 +127,7 @@ match /bookingRequests/{bookingId} {
 ```
 
 **Private Booking Data** (Subscription + Email Verification):
+
 ```typescript
 match /bookingRequestPrivate/{bookingId} {
   // Requires BOTH subscription AND email verification
@@ -220,6 +235,7 @@ Key Files to Reference:
 ## Summary
 
 **Email Verification Flow**:
+
 1. User creates account → Verification email sent
 2. Redirected to `/verify-email` → Cannot access app
 3. User clicks email link → Email verified in Firebase
@@ -227,13 +243,14 @@ Key Files to Reference:
 5. Full access granted → All Firestore operations allowed
 
 **Enforcement Points**:
+
 - **Application Level**: Auth context redirects unverified users
 - **Firestore Rules**: All authenticated operations require `emailVerified === true`
 - **User Experience**: Clear messaging and easy verification process
 
 **Key Locations**:
+
 - **UI**: `app/verify-email/page.tsx`
 - **Enforcement**: `lib/auth-context.tsx` (lines 144-160)
 - **Signup**: `app/signup/page.tsx`, `app/driver/register/page.tsx`
 - **Rules**: `firestore.rules` (lines 28-30, throughout all match blocks)
-

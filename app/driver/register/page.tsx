@@ -20,6 +20,7 @@ import {
   ChevronRight,
   ChevronLeft,
 } from "lucide-react";
+import { sanitizeAuthError } from "@/lib/error-utils";
 
 type VehicleType = "sedan" | "suv" | "van" | "bike" | "tuk-tuk";
 
@@ -217,13 +218,10 @@ export default function DriverRegisterPage() {
       }, 2500);
     } catch (err: any) {
       console.error("Registration error:", err);
-      if (err.code === "auth/email-already-in-use") {
-        setError("This email is already registered. Please sign in instead.");
-      } else if (err.code === "auth/invalid-email") {
-        setError("Invalid email address.");
-      } else {
-        setError(`Error: ${err.message || "Failed to create account"}`);
-      }
+      // Use sanitized error message to prevent revealing security details
+      setError(
+        sanitizeAuthError(err, "Failed to create account. Please check your information and try again.")
+      );
     } finally {
       setLoading(false);
     }

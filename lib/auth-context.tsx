@@ -11,6 +11,7 @@ import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { User as AppUser, Driver as AppDriver } from "@/lib/types";
 import { useRouter } from "next/navigation";
+import { sanitizeAuthError } from "@/lib/error-utils";
 
 interface AuthContextType {
   user: FirebaseUser | null;
@@ -209,9 +210,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     } catch (err: any) {
       console.error("Sign in failed:", err);
-      setError(err.message || "Sign in failed");
-      // Throw the error so the login page can handle it properly
-      throw err;
+      // Use sanitized error message to prevent revealing security details
+      const sanitizedError = sanitizeAuthError(err, "Sign in failed. Please try again.");
+      setError(sanitizedError);
+      // Throw a new error with sanitized message
+      const error = new Error(sanitizedError);
+      (error as any).code = err.code; // Preserve error code for handling
+      throw error;
     }
   };
 

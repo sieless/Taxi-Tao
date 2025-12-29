@@ -11,6 +11,7 @@ import { auth, db } from "@/lib/firebase";
 import Link from "next/link";
 import Logo from "@/components/Logo";
 import { UserPlus, AlertCircle, CheckCircle, Eye, EyeOff } from "lucide-react";
+import { sanitizeAuthError } from "@/lib/error-utils";
 
 export default function SignUpPage() {
   const [step, setStep] = useState(1);
@@ -128,13 +129,10 @@ export default function SignUpPage() {
       }, 2000);
     } catch (err: any) {
       console.error("Signup error details:", err);
-      if (err.code === "auth/email-already-in-use") {
-        setError("This email is already registered. Please sign in instead.");
-      } else if (err.code === "auth/invalid-email") {
-        setError("Invalid email address.");
-      } else {
-        setError(`Error: ${err.message || "Failed to create account"}`);
-      }
+      // Use sanitized error message to prevent revealing security details
+      setError(
+        sanitizeAuthError(err, "Failed to create account. Please check your information and try again.")
+      );
     } finally {
       setLoading(false);
     }

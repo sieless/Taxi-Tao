@@ -8,6 +8,7 @@ import { auth } from "@/lib/firebase";
 import Link from "next/link";
 import Logo from "@/components/Logo";
 import { LogIn, AlertCircle, Eye, EyeOff, CheckCircle } from "lucide-react";
+import { sanitizeAuthError } from "@/lib/error-utils";
 
 export default function DriverLoginPage() {
   const [email, setEmail] = useState("");
@@ -38,8 +39,9 @@ export default function DriverLoginPage() {
         router.push("/"); // Customers go to homepage
       }
     } catch (err: any) {
+      // Use sanitized error message to prevent revealing security details
       setError(
-        err.message || "Failed to sign in. Please check your credentials."
+        sanitizeAuthError(err, "Failed to sign in. Please check your credentials and try again.")
       );
     } finally {
       setLoading(false);
@@ -60,9 +62,9 @@ export default function DriverLoginPage() {
         setSuccess("");
       }, 3000);
     } catch (err: any) {
+      // Use sanitized error message to prevent revealing security details
       setError(
-        err.message ||
-          "Failed to send reset email. Please check your email address."
+        sanitizeAuthError(err, "Failed to send reset email. Please check your email address and try again.")
       );
     } finally {
       setLoading(false);
