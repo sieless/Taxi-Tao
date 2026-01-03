@@ -128,7 +128,7 @@ export default function AvailableDrivers() {
   }
 
   return (
-    <div className="py-20 bg-gradient-to-br from-gray-50 to-green-50">
+    <div id="taxis" className="pt-4 pb-20 bg-gradient-to-br from-gray-50 to-green-50 scroll-mt-24 md:scroll-mt-28">
       <div className="max-w-7xl mx-auto px-4">
         {/* Section Header */}
         <div className="text-center mb-12">

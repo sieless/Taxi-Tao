@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { DriverMatch, getRecommendations } from "@/lib/matching-service";
-import { Loader2, Star, TrendingDown, Award, Zap } from "lucide-react";
+import { Loader2, Star, TrendingDown, Award, Zap, Car } from "lucide-react";
 
 interface SmartRecommendationsProps {
   fromLocation: string;
@@ -114,53 +114,108 @@ export default function SmartRecommendations({
           return (
             <div 
               key={card.type}
-              className={`relative bg-white rounded-xl border-2 p-4 transition-all hover:shadow-lg cursor-pointer group
+              className={`relative bg-white rounded-xl border-2 overflow-visible transition-all hover:shadow-xl cursor-pointer group
                 ${isBestValue ? 'border-blue-100 hover:border-blue-300' : ''}
                 ${isLowestPrice ? 'border-green-100 hover:border-green-300' : ''}
                 ${isBestRated ? 'border-purple-100 hover:border-purple-300' : ''}
               `}
               onClick={() => onSelectDriver(driver.driverId)}
             >
+              {/* Profile Picture - Top Left */}
+              <div className="absolute -top-4 left-4 z-20">
+                <div className="relative w-16 h-16 rounded-full border-3 border-white shadow-xl overflow-hidden bg-white">
+                  {driver.profilePhotoUrl ? (
+                    <img
+                      src={driver.profilePhotoUrl}
+                      alt={driver.driverName}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
+                      <span className="text-xl font-bold text-white">
+                        {driver.driverName.charAt(0)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                {/* Online status indicator */}
+                <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white shadow-lg"></div>
+              </div>
+
               {/* Badge */}
-              <div className={`absolute -top-3 left-4 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-sm ${badgeColor}`}>
+              <div className={`absolute -top-3 right-4 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-sm ${badgeColor}`}>
                 <card.icon className="w-3.5 h-3.5" />
                 {card.title}
               </div>
 
-              <div className="mt-2 flex items-start justify-between">
-                <div>
-                  <h4 className="font-bold text-gray-900">{driver.driverName}</h4>
-                  <div className="flex items-center gap-1 text-sm text-gray-600 mt-0.5">
-                    <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
-                    <span className="font-medium">{driver.rating.toFixed(1)}</span>
-                    <span className="text-gray-400">({driver.totalRides})</span>
+              {/* Car Photo Header */}
+              <div className="relative h-32 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden rounded-t-xl mt-4">
+                {driver.vehicle?.carPhotoUrl ? (
+                  <img
+                    src={driver.vehicle.carPhotoUrl}
+                    alt={`${driver.vehicle.make} ${driver.vehicle.model}`}
+                    className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-500 p-2"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-green-400 to-green-600">
+                    <Car className="w-12 h-12 text-white/50" />
                   </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-lg font-bold text-green-700">
-                    KES {driver.price.toLocaleString()}
-                  </div>
-                  {driver.matchType === 'nearby' && (
-                    <span className="text-[10px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">
-                      Nearby
-                    </span>
-                  )}
-                </div>
+                )}
               </div>
 
-              <div className="mt-3 pt-3 border-t border-gray-50">
-                <p className="text-xs text-gray-500 italic mb-3">
-                  "{card.description}"
-                </p>
-                <button 
-                  className={`w-full py-2 rounded-lg text-sm font-bold transition-colors
-                    ${isBestValue ? 'bg-blue-50 text-blue-700 group-hover:bg-blue-600 group-hover:text-white' : ''}
-                    ${isLowestPrice ? 'bg-green-50 text-green-700 group-hover:bg-green-600 group-hover:text-white' : ''}
-                    ${isBestRated ? 'bg-purple-50 text-purple-700 group-hover:bg-purple-600 group-hover:text-white' : ''}
-                  `}
-                >
-                  Select Driver
-                </button>
+              {/* Driver Details */}
+              <div className="p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h4 className="font-bold text-gray-900 text-base">{driver.driverName}</h4>
+                    <div className="flex items-center gap-1 text-xs text-gray-600 mt-0.5">
+                      <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                      <span className="font-medium">{driver.rating.toFixed(1)}</span>
+                      <span className="text-gray-400">({driver.totalRides})</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-base font-bold text-green-700">
+                      KES {driver.price.toLocaleString()}
+                    </div>
+                    {driver.matchType === 'nearby' && (
+                      <span className="text-[9px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">
+                        Nearby
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Vehicle Info */}
+                {driver.vehicle && (
+                  <div className="flex items-center gap-2 text-xs text-gray-700 mb-3 bg-gray-50 px-2 py-1.5 rounded">
+                    <Car className="w-3.5 h-3.5 text-green-600" />
+                    <span className="font-semibold">
+                      {driver.vehicle.make} {driver.vehicle.model}
+                    </span>
+                    {driver.vehicle.color && (
+                      <span className="text-gray-500">• {driver.vehicle.color}</span>
+                    )}
+                    <span className="ml-auto text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full capitalize font-medium">
+                      {driver.vehicle.type}
+                    </span>
+                  </div>
+                )}
+
+                <div className="pt-3 border-t border-gray-50">
+                  <p className="text-xs text-gray-500 italic mb-3">
+                    "{card.description}"
+                  </p>
+                  <button 
+                    className={`w-full py-2.5 rounded-lg text-sm font-bold transition-colors
+                      ${isBestValue ? 'bg-blue-50 text-blue-700 group-hover:bg-blue-600 group-hover:text-white' : ''}
+                      ${isLowestPrice ? 'bg-green-50 text-green-700 group-hover:bg-green-600 group-hover:text-white' : ''}
+                      ${isBestRated ? 'bg-purple-50 text-purple-700 group-hover:bg-purple-600 group-hover:text-white' : ''}
+                    `}
+                  >
+                    Select Driver
+                  </button>
+                </div>
               </div>
             </div>
           );

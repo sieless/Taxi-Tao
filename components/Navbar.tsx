@@ -44,6 +44,7 @@ export default function Navbar() {
     { href: "/#home", label: "Home", icon: Home },
     { href: "/#services", label: "Services", icon: Briefcase },
     { href: "/#taxis", label: "Drivers", icon: Users },
+    { href: "/#about", label: "About", icon: User },
     { href: "/#contact", label: "Contact", icon: Mail },
   ];
 
@@ -59,10 +60,11 @@ export default function Navbar() {
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className={`flex justify-between items-center transition-all duration-300 ${isScrolled ? "py-2" : "py-3"}`}>
+        <div className={`flex justify-between items-center transition-all duration-300 ${isScrolled ? "py-3" : "py-4"}`}>
           {/* Logo */}
           <div className="flex items-center gap-3 group">
             <Logo variant="icon-only" size="md" clickable={true} />
+            <span className="hidden sm:block text-xl font-bold text-gray-900">TaxiTao</span>
           </div>
 
           {/* Desktop Navigation */}
@@ -71,23 +73,16 @@ export default function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-sm font-medium text-gray-600 hover:text-green-600 transition-colors relative group"
+                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors relative group"
               >
                 {link.label}
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-green-600 group-hover:w-full transition-all duration-300"></span>
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gray-900 group-hover:w-full transition-all duration-300"></span>
               </Link>
             ))}
           </div>
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-4 flex-shrink-0">
-            <Link
-              href="/#booking"
-              className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg font-medium transition-all shadow-md hover:shadow-lg whitespace-nowrap"
-            >
-              Book Now
-            </Link>
-
             {user ? (
               <div className="flex items-center gap-3">
                 {userProfile?.role === "customer" && (
@@ -114,18 +109,18 @@ export default function Navbar() {
                 <ProfileIcon />
               </div>
             ) : (
-              <div className="flex items-center gap-4">
-                <Link
-                  href="/signup"
-                  className="text-sm font-semibold text-gray-700 hover:text-green-600 transition-colors whitespace-nowrap"
-                >
-                  Sign Up
-                </Link>
+              <div className="flex items-center gap-3">
                 <Link
                   href="/login"
-                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg whitespace-nowrap"
+                  className="text-sm font-semibold text-gray-700 hover:text-gray-900 transition-colors whitespace-nowrap px-4 py-2 border border-gray-300 rounded-lg hover:border-gray-400"
                 >
                   Login
+                </Link>
+                <Link
+                  href="/#booking"
+                  className="bg-gray-900 hover:bg-gray-800 text-white px-6 py-2.5 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg whitespace-nowrap"
+                >
+                  Book Now
                 </Link>
               </div>
             )}
@@ -164,7 +159,7 @@ export default function Navbar() {
 
           {/* Profile Section (when logged in) */}
           {user && userProfile && (
-            <div className="p-4 bg-gradient-to-br from-green-500 to-green-700 text-white">
+            <div className="p-4 bg-gradient-to-br from-gray-800 to-gray-900 text-white">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-lg">
                   {user.email?.substring(0, 2).toUpperCase() || "U"}
@@ -191,8 +186,8 @@ export default function Navbar() {
                 const Icon = link.icon;
                 return (
                   <Link key={link.href} href={link.href} onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors group">
-                    <Icon className="w-5 h-5 text-gray-500 group-hover:text-green-600 transition-colors" />
-                    <span className="font-medium text-gray-700 group-hover:text-green-600 transition-colors">{link.label}</span>
+                    <Icon className="w-5 h-5 text-gray-500 group-hover:text-gray-900 transition-colors" />
+                    <span className="font-medium text-gray-700 group-hover:text-gray-900 transition-colors">{link.label}</span>
                   </Link>
                 );
               })}
@@ -202,28 +197,27 @@ export default function Navbar() {
               <div className="px-4 py-2 border-t border-gray-100">
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">My Account</p>
                 <Link href="/customer/profile" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors group">
-                  <User className="w-5 h-5 text-gray-500 group-hover:text-green-600 transition-colors" />
-                  <span className="font-medium text-gray-700 group-hover:text-green-600 transition-colors">My Profile</span>
+                  <User className="w-5 h-5 text-gray-500 group-hover:text-gray-900 transition-colors" />
+                  <span className="font-medium text-gray-700 group-hover:text-gray-900 transition-colors">My Profile</span>
                 </Link>
                 <Link href="/customer/bookings" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors group">
-                  <Briefcase className="w-5 h-5 text-gray-500 group-hover:text-green-600 transition-colors" />
-                  <span className="font-medium text-gray-700 group-hover:text-green-600 transition-colors">My Bookings</span>
+                  <Briefcase className="w-5 h-5 text-gray-500 group-hover:text-gray-900 transition-colors" />
+                  <span className="font-medium text-gray-700 group-hover:text-gray-900 transition-colors">My Bookings</span>
                 </Link>
                 <Link href="/customer/history" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors group">
-                  <History className="w-5 h-5 text-gray-500 group-hover:text-green-600 transition-colors" />
-                  <span className="font-medium text-gray-700 group-hover:text-green-600 transition-colors">Driver History</span>
+                  <History className="w-5 h-5 text-gray-500 group-hover:text-gray-900 transition-colors" />
+                  <span className="font-medium text-gray-700 group-hover:text-gray-900 transition-colors">Driver History</span>
                 </Link>
               </div>
             )}
 
             {!user && (
               <div className="mt-4 px-4 pt-4 border-t border-gray-200 space-y-2">
-                <Link href="/signup" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors group">
-                  <User className="w-5 h-5 text-gray-500 group-hover:text-green-600 transition-colors" />
-                  <span className="font-medium text-gray-700 group-hover:text-green-600 transition-colors">Sign Up</span>
-                </Link>
-                <Link href="/login" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-center bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-medium transition-colors shadow-md">
+                <Link href="/login" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-center text-sm font-semibold text-gray-700 hover:text-gray-900 transition-colors px-4 py-3 border border-gray-300 rounded-lg">
                   Login
+                </Link>
+                <Link href="/#booking" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-center bg-gray-900 hover:bg-gray-800 text-white px-4 py-3 rounded-lg font-semibold transition-colors shadow-md">
+                  Book Now
                 </Link>
               </div>
             )}
@@ -231,10 +225,7 @@ export default function Navbar() {
 
           {/* Mobile Menu Footer */}
           <div className="p-4 border-t border-gray-200 space-y-3">
-            <Link href="/#book" onClick={() => setIsMenuOpen(false)} className="block text-center bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-medium transition-colors shadow-md">
-              Book Now
-            </Link>
-            <a href="tel:+254708674665" className="flex items-center justify-center gap-2 text-gray-600 hover:text-green-600 transition-colors">
+            <a href="tel:+254708674665" className="flex items-center justify-center gap-2 text-gray-600 hover:text-gray-900 transition-colors">
               <Phone className="w-4 h-4" />
               <span className="font-medium">+254 708 674 665</span>
             </a>
