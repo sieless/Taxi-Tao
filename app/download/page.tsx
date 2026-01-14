@@ -1,23 +1,54 @@
 "use client";
 
 import { useState } from "react";
-import { Download, Smartphone, CheckCircle, AlertTriangle, Shield, Zap } from "lucide-react";
+import {
+  Download,
+  Smartphone,
+  CheckCircle,
+  AlertTriangle,
+  Shield,
+  Zap,
+} from "lucide-react";
 import Link from "next/link";
 
 export default function DownloadPage() {
   const [isDownloading, setIsDownloading] = useState(false);
-  
+
   // Static configuration - update these values when you have a new APK
-  const apkUrl = "https://expo.dev/artifacts/eas/s7y3KG1583xbKYZDen2XSG.apk";
+  const apkUrl =
+    "https://expo.dev/artifacts/eas/272c1795-a8f0-4c09-8ca1-e6d6f83cb70a.apk";
   const appVersion = "1.0.0 (Preview)";
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     setIsDownloading(true);
-    
-    // Initiate download
-    window.location.href = apkUrl;
-    
-    setTimeout(() => setIsDownloading(false), 2000);
+
+    try {
+      // Fetch the APK file
+      const response = await fetch(apkUrl);
+      const blob = await response.blob();
+
+      // Create a blob URL for download
+      const blobUrl = URL.createObjectURL(blob);
+
+      // Create a temporary anchor element for download
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = "taxitao-mobile.apk";
+
+      // Append to body, click, and remove
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Clean up the blob URL
+      URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Download failed:", error);
+      // Fallback to opening in new tab
+      window.open(apkUrl, "_blank");
+    }
+
+    setTimeout(() => setIsDownloading(false), 3000);
   };
 
   return (
@@ -33,8 +64,8 @@ export default function DownloadPage() {
                 ⚠️ Testing Phase - Preview Version
               </h3>
               <p className="text-yellow-700 mb-2">
-                This is a <strong>beta testing version</strong> of the Taxi-Tao mobile app. 
-                It is NOT yet available on the Google Play Store.
+                This is a <strong>beta testing version</strong> of the Taxi-Tao
+                mobile app. It is NOT yet available on the Google Play Store.
               </p>
               <ul className="text-sm text-yellow-700 space-y-1 ml-4">
                 <li>• Features may be incomplete or change without notice</li>
@@ -57,8 +88,9 @@ export default function DownloadPage() {
               Download Taxi-Tao Mobile App
             </h1>
             <p className="text-xl text-gray-600 mb-8">
-              Experience seamless taxi booking on the go. Join our testing community 
-              and help shape the future of transportation in Machakos, Kitui, and Makueni.
+              Experience seamless taxi booking on the go. Join our testing
+              community and help shape the future of transportation in Machakos,
+              Kitui, and Makueni.
             </p>
 
             {/* Download Button */}
@@ -68,7 +100,9 @@ export default function DownloadPage() {
               className="group bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold py-5 px-10 rounded-full text-lg shadow-xl transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3"
             >
               <Download className="w-6 h-6" />
-              {isDownloading ? "Preparing Download..." : "Download APK (Android)"}
+              {isDownloading
+                ? "Preparing Download..."
+                : "Download APK (Android)"}
             </button>
 
             <div className="mt-4 flex items-center gap-4 text-sm text-gray-600">
@@ -97,16 +131,21 @@ export default function DownloadPage() {
 
           {/* Right Column - Features */}
           <div className="bg-white rounded-2xl shadow-xl p-8">
-            <h3 className="text-2xl font-bold text-gray-800 mb-6">What You'll Get</h3>
+            <h3 className="text-2xl font-bold text-gray-800 mb-6">
+              What You&apos;ll Get
+            </h3>
             <div className="space-y-6">
               <div className="flex items-start gap-4">
                 <div className="bg-green-100 p-3 rounded-full">
                   <Zap className="w-6 h-6 text-green-600" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-gray-800 mb-1">Real-Time Tracking</h4>
+                  <h4 className="font-bold text-gray-800 mb-1">
+                    Real-Time Tracking
+                  </h4>
                   <p className="text-gray-600 text-sm">
-                    Track your driver's location in real-time and get accurate ETAs.
+                    Track your driver&apos;s location in real-time and get
+                    accurate ETAs.
                   </p>
                 </div>
               </div>
@@ -128,7 +167,9 @@ export default function DownloadPage() {
                   <Shield className="w-6 h-6 text-purple-600" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-gray-800 mb-1">Secure & Safe</h4>
+                  <h4 className="font-bold text-gray-800 mb-1">
+                    Secure & Safe
+                  </h4>
                   <p className="text-gray-600 text-sm">
                     All drivers are verified and rated by the community.
                   </p>
@@ -139,8 +180,13 @@ export default function DownloadPage() {
         </div>
 
         {/* Installation Guide */}
-        <div id="installation" className="mt-16 bg-white rounded-2xl shadow-lg p-8">
-          <h2 className="text-3xl font-bold text-gray-800 mb-6">📥 Installation Guide</h2>
+        <div
+          id="installation"
+          className="mt-16 bg-white rounded-2xl shadow-lg p-8"
+        >
+          <h2 className="text-3xl font-bold text-gray-800 mb-6">
+            📥 Installation Guide
+          </h2>
           <div className="grid md:grid-cols-3 gap-6">
             <div className="bg-gray-50 rounded-xl p-6">
               <div className="bg-green-100 w-12 h-12 rounded-full flex items-center justify-center text-green-700 font-bold text-xl mb-4">
@@ -148,7 +194,8 @@ export default function DownloadPage() {
               </div>
               <h3 className="font-bold text-gray-800 mb-2">Download APK</h3>
               <p className="text-gray-600 text-sm">
-                Click the download button above. The APK file will be saved to your device.
+                Click the download button above. The APK file will be saved to
+                your device.
               </p>
             </div>
 
@@ -156,9 +203,12 @@ export default function DownloadPage() {
               <div className="bg-green-100 w-12 h-12 rounded-full flex items-center justify-center text-green-700 font-bold text-xl mb-4">
                 2
               </div>
-              <h3 className="font-bold text-gray-800 mb-2">Enable Installation</h3>
+              <h3 className="font-bold text-gray-800 mb-2">
+                Enable Installation
+              </h3>
               <p className="text-gray-600 text-sm">
-                Go to Settings → Security → Enable "Install from Unknown Sources" for your browser.
+                Go to Settings → Security → Enable &ldquo;Install from Unknown
+                Sources&rdquo; for your browser.
               </p>
             </div>
 
@@ -168,14 +218,18 @@ export default function DownloadPage() {
               </div>
               <h3 className="font-bold text-gray-800 mb-2">Install & Launch</h3>
               <p className="text-gray-600 text-sm">
-                Open the downloaded file, tap "Install", and launch the app when complete.
+                Open the downloaded file, tap &ldquo;Install&rdquo;, and launch
+                the app when complete.
               </p>
             </div>
           </div>
         </div>
 
         {/* Testing Guide */}
-        <div id="testing-guide" className="mt-12 bg-gradient-to-r from-green-600 to-blue-600 rounded-2xl shadow-lg p-8 text-white">
+        <div
+          id="testing-guide"
+          className="mt-12 bg-gradient-to-r from-green-600 to-blue-600 rounded-2xl shadow-lg p-8 text-white"
+        >
           <h2 className="text-3xl font-bold mb-6">✅ What to Test</h2>
           <div className="grid md:grid-cols-2 gap-8">
             <div>
@@ -210,20 +264,22 @@ export default function DownloadPage() {
           <div className="mt-8 bg-white/10 backdrop-blur-sm rounded-xl p-6">
             <h4 className="font-bold text-lg mb-2">📝 Found a Bug?</h4>
             <p className="text-green-50 mb-4">
-              Your feedback is invaluable! Report issues directly in the app by tapping the 
-              "Report Issue" banner on your dashboard.
+              Your feedback is invaluable! Report issues directly in the app by
+              tapping the &ldquo;Report Issue&rdquo; banner on your dashboard.
             </p>
             <div className="text-sm text-green-100 space-y-2">
               <p className="flex items-center gap-2">
                 <span>Email:</span>
-                <a href="mailto:support@taxitao.co.ke" className="underline">support@taxitao.co.ke</a>
+                <a href="mailto:support@taxitao.co.ke" className="underline">
+                  support@taxitao.co.ke
+                </a>
               </p>
               <p className="flex items-center gap-2">
                 <span>WhatsApp:</span>
-                <a 
-                  href="https://wa.me/254708674665" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
+                <a
+                  href="https://wa.me/254708674665"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="underline hover:text-white transition-colors"
                 >
                   +254 708 674 665
@@ -235,7 +291,9 @@ export default function DownloadPage() {
 
         {/* System Requirements */}
         <div className="mt-12 bg-gray-50 rounded-xl p-6">
-          <h3 className="font-bold text-gray-800 mb-4">📱 System Requirements</h3>
+          <h3 className="font-bold text-gray-800 mb-4">
+            📱 System Requirements
+          </h3>
           <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-600">
             <div>
               <strong>Operating System:</strong> Android 9.0 or higher

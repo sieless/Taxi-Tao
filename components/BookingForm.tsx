@@ -166,17 +166,17 @@ export default function BookingForm() {
 
   return (
     <div className="relative min-h-[400px]">
-      {success && (
+        {success && (
         <div className="absolute inset-0 bg-white/95 z-20 flex flex-col items-center justify-center rounded-lg text-center p-6 backdrop-blur-sm">
-          <CheckCircle className="w-16 h-16 text-green-600 mb-4" />
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">Request Sent!</h3>
-          <p className="text-gray-600">
-            {preferredDriverId 
-              ? "Your selected driver has been notified and will contact you shortly."
-              : "We are notifying drivers in your area. You will be contacted shortly."}
-          </p>
-          <button 
-            type="button" 
+            <CheckCircle className="w-16 h-16 text-green-600 mb-4" />
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">Request Sent!</h3>
+            <p className="text-gray-600">
+              {preferredDriverId 
+                ? "Your selected driver has been notified and will contact you shortly."
+                : "We are notifying drivers in your area. You will be contacted shortly."}
+            </p>
+            <button 
+              type="button" 
             onClick={() => {
               setSuccess(false);
               setActiveField('pickup');
@@ -187,12 +187,12 @@ export default function BookingForm() {
                 time: "",
               });
             }}
-            className="mt-6 text-green-600 font-medium hover:underline"
-          >
-            Make another booking
-          </button>
-        </div>
-      )}
+              className="mt-6 text-green-600 font-medium hover:underline"
+            >
+              Make another booking
+            </button>
+          </div>
+        )}
 
       <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-6 md:gap-8 items-start">
         {/* Left Side - Title */}
@@ -233,24 +233,24 @@ export default function BookingForm() {
             >
               <label className="block text-gray-700 mb-3 font-medium" htmlFor="pickup">
                 Pick up
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <MapPin className="text-green-600 w-5 h-5" />
-                </div>
-                <input
-                  type="text"
-                  id="pickup"
-                  name="pickup"
+            </div>
+            <input
+              type="text"
+              id="pickup"
+              name="pickup"
                   placeholder="Enter pickup address"
-                  required
-                  value={formData.pickup}
-                  onChange={handleChange}
+              required
+              value={formData.pickup}
+              onChange={handleChange}
                   autoFocus={activeField === 'pickup'}
                   className="w-full pl-11 px-4 py-3 text-base rounded-lg border border-green-300 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 transition-all"
-                />
-              </div>
-            </div>
+            />
+          </div>
+        </div>
 
             {/* Destination Field */}
             <div
@@ -266,24 +266,24 @@ export default function BookingForm() {
             >
               <label className="block text-gray-700 mb-3 font-medium" htmlFor="destination">
                 Drop off
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Flag className="text-green-600 w-5 h-5" />
-                </div>
-                <input
-                  type="text"
-                  id="destination"
-                  name="destination"
-                  placeholder="Enter destination"
-                  required
-                  value={formData.destination}
-                  onChange={handleChange}
+            </div>
+            <input
+              type="text"
+              id="destination"
+              name="destination"
+              placeholder="Enter destination"
+              required
+              value={formData.destination}
+              onChange={handleChange}
                   autoFocus={activeField === 'destination'}
                   className="w-full pl-11 px-4 py-3 text-base rounded-lg border border-green-300 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 transition-all"
-                />
-              </div>
-            </div>
+            />
+          </div>
+        </div>
 
             {/* Date Field */}
             <div
@@ -299,24 +299,24 @@ export default function BookingForm() {
             >
               <label className="block text-gray-700 mb-3 font-medium" htmlFor="date">
                 Date
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Calendar className="text-green-600 w-5 h-5" />
-                </div>
-                <input
-                  type="date"
-                  id="date"
-                  name="date"
-                  required
-                  min={new Date().toISOString().split("T")[0]}
-                  value={formData.date}
-                  onChange={handleChange}
+            </div>
+            <input
+              type="date"
+              id="date"
+              name="date"
+              required
+              min={new Date().toISOString().split("T")[0]}
+              value={formData.date}
+              onChange={handleChange}
                   autoFocus={activeField === 'date'}
                   className="w-full pl-11 px-4 py-3 text-base rounded-lg border border-green-300 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 transition-all"
-                />
-              </div>
-            </div>
+            />
+          </div>
+        </div>
 
             {/* Time Field */}
             <div
@@ -332,73 +332,73 @@ export default function BookingForm() {
             >
               <label className="block text-gray-700 mb-3 font-medium" htmlFor="time">
                 Time
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Clock className="text-green-600 w-5 h-5" />
-                </div>
-                <input
-                  type="time"
-                  id="time"
-                  name="time"
-                  required
-                  value={formData.time}
-                  onChange={handleChange}
+            </div>
+            <input
+              type="time"
+              id="time"
+              name="time"
+              required
+              value={formData.time}
+              onChange={handleChange}
                   autoFocus={activeField === 'time'}
                   className="w-full pl-11 px-4 py-3 text-base rounded-lg border border-green-300 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 transition-all"
-                />
+            />
               </div>
-            </div>
           </div>
+        </div>
 
           {/* Submit Section - Only show if active */}
           {activeField === 'submit' && (
             <div className="transition-all duration-500 space-y-4">
-              {/* Smart Recommendations Toggle */}
-              {!showRecommendations && !preferredDriverId && formData.pickup && formData.destination && (
-                <button
-                  type="button"
-                  onClick={() => setShowRecommendations(true)}
-                  className="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-3 px-6 rounded-lg transition flex items-center justify-center gap-2 border border-blue-200 mb-4"
-                >
-                  <Sparkles className="w-5 h-5" />
-                  Find Recommended Drivers
-                </button>
-              )}
+        {/* Smart Recommendations Toggle */}
+          {!showRecommendations && !preferredDriverId && formData.pickup && formData.destination && (
+            <button
+              type="button"
+              onClick={() => setShowRecommendations(true)}
+              className="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-3 px-6 rounded-lg transition flex items-center justify-center gap-2 border border-blue-200 mb-4"
+            >
+              <Sparkles className="w-5 h-5" />
+              Find Recommended Drivers
+            </button>
+          )}
 
-              {preferredDriverId && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                    <span className="text-green-800 font-medium">Driver Selected</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setPreferredDriverId(undefined)}
-                    className="text-sm text-red-600 hover:text-red-700 font-medium"
-                  >
-                    Change
-                  </button>
-                </div>
-              )}
-
+          {preferredDriverId && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-green-800 font-medium">Driver Selected</span>
+              </div>
               <button
-                type="submit"
+                type="button"
+                onClick={() => setPreferredDriverId(undefined)}
+                className="text-sm text-red-600 hover:text-red-700 font-medium"
+              >
+                Change
+              </button>
+            </div>
+          )}
+
+          <button
+            type="submit"
                 disabled={loading || !userName || !userPhone || !formData.pickup || !formData.destination || !formData.date || !formData.time}
                 className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Sending Request...
-                  </>
-                ) : (
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Sending Request...
+              </>
+            ) : (
                   <>
                     {preferredDriverId ? "Book Selected Driver" : "Request Ride Now"}
                     <ArrowRight className="w-5 h-5" />
                   </>
-                )}
-              </button>
+            )}
+          </button>
             </div>
           )}
         </div>
