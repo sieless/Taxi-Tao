@@ -19,35 +19,10 @@ export default function DownloadPage() {
     "https://expo.dev/artifacts/eas/79a6ed37-ef23-4ba0-a370-c7428c1533b4.apk";
   const appVersion = "1.0.0 (Preview)";
 
-  const handleDownload = async () => {
+  const handleDownload = () => {
     setIsDownloading(true);
-
-    try {
-      // Fetch the APK file
-      const response = await fetch(apkUrl);
-      const blob = await response.blob();
-
-      // Create a blob URL for download
-      const blobUrl = URL.createObjectURL(blob);
-
-      // Create a temporary anchor element for download
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = "taxitao-mobile.apk";
-
-      // Append to body, click, and remove
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      // Clean up the blob URL
-      URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-      console.error("Download failed:", error);
-      // Fallback to opening in new tab
-      window.open(apkUrl, "_blank");
-    }
-
+    // Direct redirect to avoid CORS issues with fetch
+    window.location.href = apkUrl;
     setTimeout(() => setIsDownloading(false), 3000);
   };
 
