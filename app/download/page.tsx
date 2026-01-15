@@ -16,7 +16,7 @@ export default function DownloadPage() {
 
   // Static configuration - update these values when you have a new APK
   const apkUrl =
-    "https://expo.dev/artifacts/eas/272c1795-a8f0-4c09-8ca1-e6d6f83cb70a.apk";
+    "https://expo.dev/artifacts/eas/79a6ed37-ef23-4ba0-a370-c7428c1533b4.apk";
   const appVersion = "1.0.0 (Preview)";
 
   const handleDownload = async () => {
