@@ -3,8 +3,11 @@
 import { useEffect, useState } from "react";
 import { collection, query, orderBy, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { Users, Shield, User, Ban, CheckCircle } from "lucide-react";
+import { Users, Shield, User, Ban, CheckCircle, LogOut, ArrowLeft } from "lucide-react";
 import { doc, updateDoc } from "firebase/firestore";
+import { useAuth } from "@/lib/auth-context";
+import { useRouter } from "next/navigation";
+import Logo from "@/components/Logo";
 
 interface UserProfile {
   id: string;
@@ -17,6 +20,8 @@ interface UserProfile {
 }
 
 export default function AdminUsersPage() {
+  const { logout } = useAuth();
+  const router = useRouter();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "customer" | "driver" | "admin">("all");
@@ -83,13 +88,41 @@ export default function AdminUsersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Users Management</h1>
-          <p className="text-gray-600">Manage all system users</p>
+    <div className="min-h-screen bg-gray-50">
+      {/* Navigation Header */}
+      <div className="bg-white shadow px-6 py-4 mb-8">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => router.push("/admin/panel")}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              title="Back to Admin Panel"
+            >
+              <ArrowLeft className="w-6 h-6 text-gray-600" />
+            </button>
+            <div className="flex items-center gap-3">
+              <Logo variant="icon-only" size="sm" clickable={true} />
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">Users Management</h1>
+                <p className="text-xs text-gray-500 hidden sm:block">Manage all system users</p>
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={async () => {
+              await logout();
+              router.push("/");
+            }}
+            className="flex items-center gap-2 text-gray-600 hover:text-red-600 px-3 py-2 rounded-lg hover:bg-red-50 transition-colors"
+            title="Logout"
+          >
+            <LogOut className="w-5 h-5" />
+            <span className="hidden sm:inline font-medium">Logout</span>
+          </button>
         </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 pb-8">
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">

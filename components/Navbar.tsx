@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, Phone, X, Home, Briefcase, Users, Mail, User, History, Bell } from "lucide-react";
+import { Menu, Phone, X, Home, Briefcase, Users, Mail, User, History, Bell, LogOut } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import ProfileIcon from "./ProfileIcon";
 import Logo from "./Logo";
@@ -15,7 +15,7 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, logout } = useAuth();
   const pathname = usePathname();
 
   // Handle scroll for navbar shadow and compact mode
@@ -225,7 +225,19 @@ export default function Navbar() {
 
           {/* Mobile Menu Footer */}
           <div className="p-4 border-t border-gray-200 space-y-3">
-            <a href="tel:+254708674665" className="flex items-center justify-center gap-2 text-gray-600 hover:text-gray-900 transition-colors">
+            {user && (
+              <button
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  logout();
+                }}
+                className="w-full flex items-center justify-center gap-2 p-3 text-red-600 font-semibold hover:bg-red-50 rounded-xl transition-colors border border-red-100"
+              >
+                <LogOut className="w-5 h-5" />
+                <span>Sign Out</span>
+              </button>
+            )}
+            <a href="tel:+254708674665" className="flex items-center justify-center gap-2 text-gray-600 hover:text-gray-900 transition-colors pt-2">
               <Phone className="w-4 h-4" />
               <span className="font-medium">+254 708 674 665</span>
             </a>

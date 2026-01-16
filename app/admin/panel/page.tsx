@@ -486,20 +486,23 @@ export default function AdminPanel() {
               Manage drivers and subscriptions
             </p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
             <button
               onClick={() => router.push("/admin/expired")}
-              className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition"
+              className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-3 md:px-4 py-2 rounded-lg transition shadow-sm"
+              title={`View ${expiredCount} expired subscriptions`}
             >
               <AlertTriangle className="w-5 h-5" />
-              Expired ({expiredCount})
+              <span className="hidden sm:inline">Expired ({expiredCount})</span>
+              <span className="sm:hidden">({expiredCount})</span>
             </button>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-800"
+              className="flex items-center gap-2 text-gray-600 hover:text-red-600 px-2 py-2 rounded-lg hover:bg-red-50 transition-colors"
+              title="Logout"
             >
               <LogOut className="w-5 h-5" />
-              Logout
+              <span className="hidden sm:inline">Logout</span>
             </button>
           </div>
         </div>
