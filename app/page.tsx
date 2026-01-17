@@ -280,8 +280,19 @@ export default function Home() {
           {/* Phone Mockup with Floating Cards */}
           <div className="relative max-w-5xl mx-auto min-h-[600px]">
             {/* Central Phone Mockup */}
-            <div className="relative z-20 flex justify-center">
+            <div className="relative z-20 flex flex-col items-center">
               <PhoneMockup />
+              
+              {/* Download Button - Visible on all screens below mockup */}
+              <div className="mt-10 lg:mt-12">
+                <Link
+                  href="/download"
+                  className="bg-[#FFD84D] hover:bg-[#FFC107] text-gray-900 font-bold py-4 px-10 rounded-full text-lg transition-all shadow-xl hover:shadow-2xl transform hover:scale-105 flex items-center justify-center gap-3 group"
+                >
+                  <Download className="w-6 h-6 group-hover:animate-bounce" />
+                  <span>Download Mobile App</span>
+                </Link>
+              </div>
             </div>
 
             {/* Floating Card 1 - Top Left - Download App */}

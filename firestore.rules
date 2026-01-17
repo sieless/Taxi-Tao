@@ -143,8 +143,8 @@ service cloud.firestore {
     // DRIVER PROFILES (Mobile: auth read, self write)
     // ============================================================
     match /drivers/{driverId} {
-      // Anyone authenticated with verified email can read driver profiles (for booking flow)
-      allow read: if isSignedIn() && isEmailVerified();
+      // Anyone can read driver profiles (required for home page and booking flow)
+      allow read: if true;
       // Drivers can create their own profile (email verification required), or admins can create any
       allow create: if isSignedIn() && (
         (request.auth.uid == driverId && isEmailVerified()) ||
