@@ -45,21 +45,41 @@ export default function AvailableDrivers() {
     const q = query(
       collection(db, "drivers"),
       where("status", "==", "available"),
-      where("subscriptionStatus", "==", "active")
+      where("subscriptionStatus", "==", "active"),
+      where("active", "==", true),
+      where("isVisibleToPublic", "==", true)
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
       const availableDrivers: Driver[] = [];
-      snapshot.forEach((doc) => {
-        availableDrivers.push({ id: doc.id, ...doc.data() } as Driver);
+      
+      // Use Promise.all to fetch vehicles for drivers that don't have them in the main doc
+      const driverPromises = snapshot.docs.map(async (docSnap) => {
+        const data = docSnap.data() as Driver;
+        const driver = { id: docSnap.id, ...data };
+        
+        // If vehicles array is missing or empty, try fetching from subcollection
+        if (!driver.vehicles || driver.vehicles.length === 0) {
+          try {
+            const vQ = query(collection(db, "drivers", driver.id, "vehicles"));
+            const vSnapshot = await getDocs(vQ);
+            driver.vehicles = vSnapshot.docs.map(vDoc => ({ id: vDoc.id, ...vDoc.data() } as Vehicle));
+          } catch (vErr) {
+            console.warn(`Failed to fetch vehicles for driver ${driver.id}:`, vErr);
+          }
+        }
+        
+        return driver;
       });
 
+      const resolvedDrivers = await Promise.all(driverPromises);
+
       // Sort by rating (highest first)
-      availableDrivers.sort(
+      resolvedDrivers.sort(
         (a, b) => (b.averageRating || 0) - (a.averageRating || 0)
       );
 
-      setDrivers(availableDrivers.slice(0, 6)); // Show max 6 drivers
+      setDrivers(resolvedDrivers);
       setLoading(false);
     }, (error) => {
       console.error("AvailableDrivers listener error:", error);

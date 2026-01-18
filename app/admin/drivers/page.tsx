@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, query, orderBy, getDocs, where } from "firebase/firestore";
+import { collection, query, orderBy, getDocs, where, doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Users, ShieldCheck, XCircle, CheckCircle } from "lucide-react";
 
@@ -115,10 +115,42 @@ export default function AdminDriversPage() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <button className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition">
+                    <button 
+                      onClick={async () => {
+                        if (!confirm(`Are you sure you want to activate ${driver.name}?`)) return;
+                        try {
+                          await updateDoc(doc(db, "drivers", driver.id), {
+                            status: "available",
+                            active: true
+                          });
+                          loadDrivers();
+                        } catch (error) {
+                          console.error("Error activating driver:", error);
+                          alert("Failed to activate driver");
+                        }
+                      }}
+                      className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition"
+                      title="Activate Driver"
+                    >
                       <CheckCircle size={20} />
                     </button>
-                    <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition">
+                    <button 
+                      onClick={async () => {
+                        if (!confirm(`Are you sure you want to deactivate ${driver.name}?`)) return;
+                        try {
+                          await updateDoc(doc(db, "drivers", driver.id), {
+                            status: "inactive",
+                            active: false
+                          });
+                          loadDrivers();
+                        } catch (error) {
+                          console.error("Error deactivating driver:", error);
+                          alert("Failed to deactivate driver");
+                        }
+                      }}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                      title="Deactivate Driver"
+                    >
                       <XCircle size={20} />
                     </button>
                   </div>

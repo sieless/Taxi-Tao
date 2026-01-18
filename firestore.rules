@@ -112,6 +112,51 @@ service cloud.firestore {
     }
 
     // ============================================================
+    // PUBLIC COLLECTIONS (Must be at top for guest access)
+    // ============================================================
+    
+    match /drivers/{driverId} {
+      allow read, list: if true;
+      
+      // Drivers can create their own profile (email verification required), or admins can create any
+      allow create: if isSignedIn() && (
+        (request.auth.uid == driverId && isEmailVerified()) ||
+        isAdmin()
+      );
+
+      // Drivers can update their own profile (email verification required), or admins can update any
+      allow update: if isSignedIn() && (
+        (request.auth.uid == driverId && isEmailVerified()) ||
+        isAdmin()
+      );
+
+      // Only admins can delete driver profiles
+      allow delete: if isSignedIn() && isAdmin();
+      
+      // Nested vehicles subcollection
+      match /vehicles/{vehicleId} {
+        allow read: if true;
+        allow write: if isSignedIn() && (isOwner(driverId) || isAdmin());
+      }
+      
+      // Nested payments subcollection
+      match /payments/{paymentId} {
+        allow read: if isSignedIn() && (isOwner(driverId) || isAdmin());
+        allow write: if isSignedIn() && isOwner(driverId);
+      }
+    }
+
+    match /vehicles/{vehicleId} {
+      allow read: if true;
+      allow create: if isSignedIn() && (
+        request.resource.data.driverId == request.auth.uid || isAdmin()
+      );
+      allow update, delete: if isSignedIn() && (
+        resource.data.driverId == request.auth.uid || isAdmin()
+      );
+    }
+
+    // ============================================================
     // DEFAULT: Block all access unless explicitly allowed
     // ============================================================
     match /{document=**} {
@@ -139,38 +184,6 @@ service cloud.firestore {
       allow list: if isAdmin();
     }
 
-    // ============================================================
-    // DRIVER PROFILES (Mobile: auth read, self write)
-    // ============================================================
-    match /drivers/{driverId} {
-      // Anyone can read driver profiles (required for home page and booking flow)
-      allow read: if true;
-      // Drivers can create their own profile (email verification required), or admins can create any
-      allow create: if isSignedIn() && (
-        (request.auth.uid == driverId && isEmailVerified()) ||
-        isAdmin()
-      );
-
-      // Drivers can update their own profile (email verification required), or admins can update any
-      allow update: if isSignedIn() && (
-        (request.auth.uid == driverId && isEmailVerified()) ||
-        isAdmin()
-      );
-
-      // Only admins can delete driver profiles
-      allow delete: if isSignedIn() && isAdmin();
-      
-      // Nested vehicles subcollection
-      match /vehicles/{vehicleId} {
-        allow read, write: if isSignedIn() && (isOwner(driverId) || isAdmin());
-      }
-      
-      // Nested payments subcollection
-      match /payments/{paymentId} {
-        allow read: if isSignedIn() && (isOwner(driverId) || isAdmin());
-        allow write: if isSignedIn() && isOwner(driverId);
-      }
-    }
 
     // ============================================================
     // DRIVER ROUTES (TaxiTao Mobile compatibility)
@@ -184,18 +197,6 @@ service cloud.firestore {
       allow update, delete: if request.auth != null && request.auth.uid == resource.data.driverId;
     }
 
-    // ============================================================
-    // VEHICLES (Top-level, public read for booking display)
-    // ============================================================
-    match /vehicles/{vehicleId} {
-      allow read: if true;
-      allow create: if isSignedIn() && (
-        request.resource.data.driverId == request.auth.uid || isAdmin()
-      );
-      allow update, delete: if isSignedIn() && (
-        resource.data.driverId == request.auth.uid || isAdmin()
-      );
-    }
 
     // ============================================================
     // BOOKING REQUESTS - PUBLIC DATA ONLY

@@ -238,7 +238,7 @@ export default function Home() {
       {/* Hero Section - New Design */}
       <section
         id="home"
-        className="relative bg-white py-20 md:py-32 min-h-[90vh] flex items-center overflow-hidden px-4 md:px-6 scroll-mt-24 md:scroll-mt-28"
+        className="relative bg-white py-20 md:py-32 min-h-[90vh] flex items-center px-4 md:px-6 scroll-mt-24 md:scroll-mt-28"
       >
         {/* Background Gradient Shapes */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">

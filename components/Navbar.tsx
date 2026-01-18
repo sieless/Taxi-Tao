@@ -30,7 +30,8 @@ export default function Navbar() {
 
   // Close mobile menu when toggled: toggle body scroll via class for safety
   useEffect(() => {
-    if (isMenuOpen) {
+    const isMobile = window.innerWidth < 768;
+    if (isMenuOpen && isMobile) {
       document.body.classList.add("overflow-hidden");
     } else {
       document.body.classList.remove("overflow-hidden");

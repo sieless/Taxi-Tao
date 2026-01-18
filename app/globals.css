@@ -19,7 +19,12 @@
   }
 }
 
-html,
+html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -30,9 +35,6 @@ body {
   /* Prevent horizontal overflow on mobile */
   overflow-x: hidden;
   width: 100%;
-
-  /* Prevent elastic bounce/overscroll on mobile */
-  overscroll-behavior: none;
 }
 
 /* Prevent background images from stretching */
