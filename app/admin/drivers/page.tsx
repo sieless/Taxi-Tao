@@ -31,8 +31,8 @@ export default function AdminDriversPage() {
 
       const snapshot = await getDocs(q);
       const driversList = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
+        ...doc.data(),
+        id: doc.id
       })) as Driver[];
       
       setDrivers(driversList);

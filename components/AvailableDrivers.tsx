@@ -11,9 +11,10 @@ import {
   arrayUnion,
   arrayRemove,
   setDoc,
+  getDocs,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { Driver } from "@/lib/types";
+import { Driver, Vehicle } from "@/lib/types";
 import {
   Star,
   Car,
@@ -56,14 +57,14 @@ export default function AvailableDrivers() {
       // Use Promise.all to fetch vehicles for drivers that don't have them in the main doc
       const driverPromises = snapshot.docs.map(async (docSnap) => {
         const data = docSnap.data() as Driver;
-        const driver = { id: docSnap.id, ...data };
+        const driver = { ...data, id: docSnap.id };
         
         // If vehicles array is missing or empty, try fetching from subcollection
         if (!driver.vehicles || driver.vehicles.length === 0) {
           try {
             const vQ = query(collection(db, "drivers", driver.id, "vehicles"));
             const vSnapshot = await getDocs(vQ);
-            driver.vehicles = vSnapshot.docs.map(vDoc => ({ id: vDoc.id, ...vDoc.data() } as Vehicle));
+            driver.vehicles = vSnapshot.docs.map(vDoc => ({ ...vDoc.data(), id: vDoc.id } as Vehicle));
           } catch (vErr) {
             console.warn(`Failed to fetch vehicles for driver ${driver.id}:`, vErr);
           }

@@ -60,7 +60,7 @@ export default function AllDriversPage() {
       const snapshot = await getDocs(q);
       const allDrivers: Driver[] = [];
       snapshot.forEach((doc) => {
-        allDrivers.push({ id: doc.id, ...doc.data() } as Driver);
+        allDrivers.push({ ...doc.data(), id: doc.id } as Driver);
       });
       setDrivers(allDrivers);
       setFilteredDrivers(allDrivers);

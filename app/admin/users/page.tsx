@@ -37,8 +37,8 @@ export default function AdminUsersPage() {
       const snapshot = await getDocs(q);
       console.log(`Fetched ${snapshot.size} users`);
       const usersList = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
+        ...doc.data(),
+        id: doc.id
       })) as UserProfile[];
       
       setUsers(usersList);
