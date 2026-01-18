@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { Driver } from "@/lib/types";
+import { Driver, Vehicle } from "@/lib/types";
 import { Star, Car, MapPin, Briefcase, Loader2, Search, Navigation } from "lucide-react";
 import Link from "next/link";
 import { getDriverPricing, createRouteKey } from "@/lib/pricing-service";
@@ -58,12 +58,29 @@ export default function AllDriversPage() {
         where("isVisibleToPublic", "==", true)
       );
       const snapshot = await getDocs(q);
-      const allDrivers: Driver[] = [];
-      snapshot.forEach((doc) => {
-        allDrivers.push({ ...doc.data(), id: doc.id } as Driver);
+      
+      // Use Promise.all to fetch vehicles for drivers that don't have them in the main doc
+      const driverPromises = snapshot.docs.map(async (docSnap) => {
+        const data = docSnap.data() as Driver;
+        const driver = { ...data, id: docSnap.id };
+        
+        // If vehicles array is missing or empty, try fetching from subcollection
+        if (!driver.vehicles || driver.vehicles.length === 0) {
+          try {
+            const vQ = query(collection(db, "drivers", driver.id, "vehicles"));
+            const vSnapshot = await getDocs(vQ);
+            driver.vehicles = vSnapshot.docs.map(vDoc => ({ ...vDoc.data(), id: vDoc.id } as Vehicle));
+          } catch (vErr) {
+            console.warn(`Failed to fetch vehicles for driver ${driver.id}:`, vErr);
+          }
+        }
+        
+        return driver;
       });
-      setDrivers(allDrivers);
-      setFilteredDrivers(allDrivers);
+
+      const resolvedDrivers = await Promise.all(driverPromises);
+      setDrivers(resolvedDrivers);
+      setFilteredDrivers(resolvedDrivers);
       setLoading(false);
     } catch (error) {
       console.error("Error fetching drivers:", error);
@@ -413,12 +430,12 @@ export default function AllDriversPage() {
                     )}
                   </div>
 
-                  {/* Book Now Button */}
+                  {/* View Profile Button */}
                   <Link
-                    href="/#book-taxi"
+                    href={`/d/${driver.id}`}
                     className="block w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-bold py-2.5 rounded-lg text-center transition-all shadow-md hover:shadow-lg text-sm"
                   >
-                    Book Now
+                    View Profile & Book
                   </Link>
                 </div>
               </div>

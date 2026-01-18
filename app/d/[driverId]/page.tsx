@@ -54,8 +54,18 @@ export default async function DriverPage({
           <div className="lg:col-span-1">
             <div className="bg-white rounded-xl shadow-md overflow-hidden p-6">
               <div className="flex flex-col items-center text-center">
-                <div className="w-32 h-32 bg-gray-200 rounded-full mb-4 flex items-center justify-center text-gray-500 text-4xl font-bold">
-                  {driver.name.charAt(0)}
+                <div className="relative w-32 h-32 rounded-full border-4 border-white shadow-xl overflow-hidden bg-gray-100 mb-4">
+                  {driver.profilePhotoUrl ? (
+                    <img
+                      src={driver.profilePhotoUrl}
+                      alt={driver.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-4xl font-bold">
+                      {driver.name.charAt(0)}
+                    </div>
+                  )}
                 </div>
                 <h1 className="text-2xl font-bold text-gray-800 mb-2">
                   {driver.name}
@@ -65,30 +75,30 @@ export default async function DriverPage({
                     <Star
                       key={i}
                       className={`w-5 h-5 ${
-                        i < Math.round(driver.rating || 0)
+                        i < Math.round(driver.averageRating || 0)
                           ? "fill-current"
                           : "text-gray-300"
                       }`}
                     />
                   ))}
                   <span className="ml-2 text-gray-600 font-medium">
-                    ({driver.rating})
+                    ({driver.averageRating ? driver.averageRating.toFixed(1) : "New"})
                   </span>
                 </div>
                 <span
                   className={`px-3 py-1 rounded-full text-sm font-semibold mb-6 ${
-                    driver.active
+                    driver.status === "available"
                       ? "bg-green-100 text-green-800"
-                      : "bg-red-100 text-red-800"
+                      : "bg-gray-100 text-gray-800"
                   }`}
                 >
-                  {driver.active ? "Available Now" : "Currently Busy"}
+                  {driver.status === "available" ? "Available Now" : "Currently Offline"}
                 </span>
 
                 <div className="w-full space-y-3">
                   <a
                     href={`tel:${driver.phone}`}
-                    className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition flex items-center justify-center gap-2"
+                    className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition flex items-center justify-center gap-2 shadow-md"
                   >
                     <Phone className="w-5 h-5" /> Call Driver
                   </a>
@@ -98,7 +108,7 @@ export default async function DriverPage({
               <div className="mt-8 border-t pt-6">
                 <h3 className="font-semibold text-gray-800 mb-3">About</h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
-                  {driver.bio}
+                  {driver.bio || "No bio provided."}
                 </p>
               </div>
 
@@ -107,24 +117,39 @@ export default async function DriverPage({
                   Vehicle Details
                 </h3>
                 {mainVehicle ? (
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="flex items-center mb-2">
-                      <Car className="w-4 h-4 text-gray-500 mr-2" />
-                      <span className="font-medium text-gray-700">
-                        {mainVehicle.make} {mainVehicle.model}
-                      </span>
+                  <div className="space-y-4">
+                    <div className="aspect-video rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
+                      {mainVehicle.images?.[0] ? (
+                        <img
+                          src={mainVehicle.images[0]}
+                          alt={`${mainVehicle.make} ${mainVehicle.model}`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-400">
+                          <Car className="w-12 h-12" />
+                        </div>
+                      )}
                     </div>
-                    <div className="flex items-center mb-2">
-                      <Shield className="w-4 h-4 text-gray-500 mr-2" />
-                      <span className="text-sm text-gray-600">
-                        {mainVehicle.plate}
-                      </span>
-                    </div>
-                    <div className="flex items-center">
-                      <MapPin className="w-4 h-4 text-gray-500 mr-2" />
-                      <span className="text-sm text-gray-600">
-                        Based in Machakos
-                      </span>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="flex items-center mb-2">
+                        <Car className="w-4 h-4 text-green-600 mr-2" />
+                        <span className="font-medium text-gray-700">
+                          {mainVehicle.make} {mainVehicle.model}
+                        </span>
+                      </div>
+                      <div className="flex items-center mb-2">
+                        <Shield className="w-4 h-4 text-gray-500 mr-2" />
+                        <span className="text-sm text-gray-600">
+                          {mainVehicle.plate}
+                        </span>
+                      </div>
+                      <div className="flex items-center">
+                        <MapPin className="w-4 h-4 text-gray-500 mr-2" />
+                        <span className="text-sm text-gray-600">
+                          {driver.businessLocation || "Location not set"}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 ) : (

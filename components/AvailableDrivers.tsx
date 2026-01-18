@@ -304,10 +304,10 @@ export default function AvailableDrivers() {
                     Call Driver
                   </a>
                   <Link
-                    href={`/booking?driverId=${driver.id}`}
+                    href={`/d/${driver.id}`}
                     className="block w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-bold py-2.5 rounded-lg text-center transition-all shadow-md hover:shadow-lg text-sm"
                   >
-                    Book Now
+                    View Profile & Book
                   </Link>
                 </div>
               </div>
