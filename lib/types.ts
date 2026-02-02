@@ -77,6 +77,7 @@ export interface BookingRequest {
   customerName: string;
   customerPhone: string;
   pickupLocation: string;
+  pickupRegion: string; // Region/City for driver matching
   destination: string;
   pickupDate: string;
   pickupTime: string;

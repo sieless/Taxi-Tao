@@ -135,7 +135,7 @@ service cloud.firestore {
       
       // Nested vehicles subcollection
       match /vehicles/{vehicleId} {
-        allow read: if true;
+        allow read, list: if true;
         allow write: if isSignedIn() && (isOwner(driverId) || isAdmin());
       }
       

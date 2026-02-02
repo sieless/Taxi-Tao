@@ -131,7 +131,7 @@ export async function getNewRequestsCount(location: string): Promise<number> {
     const q = query(
       collection(db, "bookingRequests"),
       where("status", "==", "pending"),
-      where("pickupLocation", "==", location)
+      where("pickupRegion", "==", location)
     );
 
     const snapshot = await getDocs(q);

@@ -28,14 +28,29 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Close mobile menu when window is resized to desktop width
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768 && isMenuOpen) {
+        setIsMenuOpen(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [isMenuOpen]);
+
   // Close mobile menu when toggled: toggle body scroll via class for safety
   useEffect(() => {
+    // Only lock scroll on small screens
     const isMobile = window.innerWidth < 768;
     if (isMenuOpen && isMobile) {
       document.body.classList.add("overflow-hidden");
     } else {
       document.body.classList.remove("overflow-hidden");
     }
+    
+    // Cleanup function ensures scroll is ALWAYS restored when component unmounts
+    // or when the menu is closed.
     return () => {
       document.body.classList.remove("overflow-hidden");
     };

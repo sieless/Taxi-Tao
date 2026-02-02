@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { doc, updateDoc, getDoc } from "firebase/firestore";
+import { doc, updateDoc, getDoc, collection, query, where, onSnapshot } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import { Driver } from "@/lib/types";
 import {
@@ -50,6 +50,7 @@ import DriverPricingManager from "@/components/DriverPricingManager";
 import ServicePackagesConfig from "@/components/ServicePackagesConfig";
 import CustomerDetailsModal from "@/components/CustomerDetailsModal";
 import { DollarSign, TrendingUp, Briefcase, Settings, Banana } from "lucide-react";
+import { KENYA_COUNTIES } from "@/lib/kenya-locations";
 
 export default function DriverDashboard() {
   const { user, userProfile, logout, loading: authLoading } = useAuth();
@@ -186,10 +187,31 @@ export default function DriverDashboard() {
     }
   }, [userProfile]);
 
+  // Real-time listener for available rides
   useEffect(() => {
-    if (driver?.currentLocation) {
-      fetchRides();
-    }
+    if (!driver?.currentLocation) return;
+
+    setRidesLoading(true);
+    const q = query(
+      collection(db, "bookingRequests"),
+      where("status", "in", ["pending", "negotiating"]), // Catch both new and active negotiations
+      where("pickupRegion", "==", driver.currentLocation)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const rides = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setAvailableRides(rides);
+      setNewRequestsCount(snapshot.size);
+      setRidesLoading(false);
+    }, (error) => {
+      console.error("Error listening for rides:", error);
+      setRidesLoading(false);
+    });
+
+    return () => unsubscribe();
   }, [driver?.currentLocation]);
 
   // Fetch statistics
@@ -204,14 +226,11 @@ export default function DriverDashboard() {
     setStatsLoading(true);
 
     try {
-      const [today, monthly, history, newReqs, activeTrips] = await Promise.all(
+      const [today, monthly, history, activeTrips] = await Promise.all(
         [
           getTodayEarnings(driver.id),
           getMonthlyEarnings(driver.id),
           getEarningsHistory(driver.id, 6),
-          driver.currentLocation
-            ? getNewRequestsCount(driver.currentLocation)
-            : Promise.resolve(0),
           getActiveTripsCount(driver.id),
         ]
       );
@@ -219,7 +238,6 @@ export default function DriverDashboard() {
       setTodayEarnings(today);
       setMonthlyEarnings(monthly);
       setEarningsData(history);
-      setNewRequestsCount(newReqs);
       setActiveTripsCount(activeTrips);
     } catch (error) {
       console.error("Error fetching statistics:", error);
@@ -229,16 +247,9 @@ export default function DriverDashboard() {
   }
 
   async function fetchRides() {
-    if (!driver?.currentLocation) return;
-    setRidesLoading(true);
-    try {
-      const rides = await getAvailableBookings(driver.currentLocation);
-      setAvailableRides(rides);
-    } catch (error) {
-      console.error("Error fetching rides:", error);
-    } finally {
-      setRidesLoading(false);
-    }
+    // No longer needed as we use onSnapshot, but keeping the name for potential compatibility
+    // if other parts of the UI still want to "trigger" a refresh (which will happen anyway)
+    console.log("Rides are now updated in real-time via onSnapshot");
   }
 
   async function updateLocation(newLocation: string) {
@@ -950,16 +961,9 @@ export default function DriverDashboard() {
               disabled={locationUpdating}
             >
               <option value="">Select your location...</option>
-              <option value="Nairobi">Nairobi</option>
-              <option value="Mombasa">Mombasa</option>
-              <option value="Kisumu">Kisumu</option>
-              <option value="Nakuru">Nakuru</option>
-              <option value="Eldoret">Eldoret</option>
-              <option value="Thika">Thika</option>
-              <option value="Malindi">Malindi</option>
-              <option value="Kitui">Kitui</option>
-              <option value="Machakos">Machakos</option>
-              <option value="Makueni">Makueni</option>
+              {KENYA_COUNTIES.map(county => (
+                <option key={county} value={county}>{county}</option>
+              ))}
             </select>
             {locationUpdating && (
               <Loader2 className="w-5 h-5 animate-spin text-gray-400" />

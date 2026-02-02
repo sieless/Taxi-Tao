@@ -6,6 +6,8 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  GoogleAuthProvider,
+  signInWithPopup,
 } from "firebase/auth";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
@@ -20,6 +22,7 @@ interface AuthContextType {
   loading: boolean;
   error: string | null;
   signIn: (email: string, password: string) => Promise<string | null>;
+  signInWithGoogle: () => Promise<string | null>;
   logout: () => Promise<void>;
   refreshUserProfile: (currentUser?: FirebaseUser | null) => Promise<void>;
 }
@@ -31,6 +34,7 @@ export const AuthContext = createContext<AuthContextType>({
   loading: true,
   error: null,
   signIn: async () => null,
+  signInWithGoogle: async () => null,
   logout: async () => {},
   refreshUserProfile: async () => {},
 });
@@ -210,13 +214,58 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     } catch (err: any) {
       console.error("Sign in failed:", err);
-      // Use sanitized error message to prevent revealing security details
       const sanitizedError = sanitizeAuthError(err, "Sign in failed. Please try again.");
       setError(sanitizedError);
-      // Throw a new error with sanitized message
-      const error = new Error(sanitizedError);
-      (error as any).code = err.code; // Preserve error code for handling
-      throw error;
+      throw new Error(sanitizedError);
+    }
+  };
+  
+  const signInWithGoogle = async () => {
+    setError(null);
+    setLoading(true);
+    const provider = new GoogleAuthProvider();
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const firebaseUser = result.user;
+      
+      // Check if user already has a profile
+      const userDocRef = doc(db, "users", firebaseUser.uid);
+      const userDoc = await getDoc(userDocRef);
+      
+      if (userDoc.exists()) {
+        const data = userDoc.data();
+        if (data?.suspended) {
+          await signOut(auth);
+          throw new Error("Your account has been suspended. Please contact support.");
+        }
+        await refreshUserProfile(firebaseUser);
+        return (data as any).role || "customer";
+      } else {
+        // Auto-create customer profile for new Google users
+        const newProfile: any = {
+          email: firebaseUser.email || "",
+          name: firebaseUser.displayName || "User",
+          role: "customer",
+          createdAt: serverTimestamp(),
+          photoURL: firebaseUser.photoURL || "",
+        };
+        await setDoc(userDocRef, newProfile);
+        await refreshUserProfile(firebaseUser);
+        return "customer";
+      }
+    } catch (err: any) {
+      console.error("Google sign in failed:", err);
+      let message = "Google sign in failed. Please try again.";
+      if (err.code === "auth/popup-blocked") {
+        message = "Login popup was blocked by your browser. Please allow popups for this site and try again.";
+      } else if (err.code === "auth/cancelled-popup-request") {
+        message = "Sign-in was cancelled.";
+      }
+      const sanitizedError = sanitizeAuthError(err, message);
+      setError(sanitizedError);
+      throw new Error(sanitizedError);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -248,6 +297,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         loading,
         error,
         signIn,
+        signInWithGoogle,
         logout,
         refreshUserProfile,
       }}

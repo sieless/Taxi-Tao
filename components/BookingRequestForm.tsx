@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Calendar, MapPin, User, Phone, Loader2 } from 'lucide-react';
 import { createBookingRequest } from '../lib/booking-service';
 import { createNegotiation } from '../lib/negotiation-service';
+import { KENYA_COUNTIES } from '../lib/kenya-locations';
+import { Search } from 'lucide-react';
 
 interface BookingRequestFormProps {
   driverId: string;
@@ -28,6 +30,7 @@ export default function BookingRequestForm({
     customerPhone: '',
     pickupDate: '',
     pickupTime: '',
+    region: '',
     proposedPrice: estimatedPrice.toString(),
     notes: '',
   });
@@ -50,12 +53,14 @@ export default function BookingRequestForm({
         customerName: formData.customerName,
         customerPhone: formData.customerPhone,
         pickupLocation: fromLocation,
+        pickupRegion: formData.region,
         destination: toLocation,
         pickupDate: formData.pickupDate,
         pickupTime: formData.pickupTime,
         vehicleType: 'standard',
         estimatedPrice: estimatedPrice,
         notes: formData.notes,
+        preferredDriverId: driverId,
       };
 
       const bookingId = await createBookingRequest(bookingData);
@@ -133,6 +138,25 @@ export default function BookingRequestForm({
             placeholder="+254 XXX XXX XXX"
             required
           />
+        </div>
+
+        {/* Region */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            <Search className="w-4 h-4 inline mr-1" />
+            Your Region / City *
+          </label>
+          <select
+            value={formData.region}
+            onChange={(e) => setFormData({ ...formData, region: e.target.value })}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
+            required
+          >
+            <option value="">Select your region...</option>
+            {KENYA_COUNTIES.map(county => (
+              <option key={county} value={county}>{county}</option>
+            ))}
+          </select>
         </div>
 
         {/* Pickup Date & Time */}

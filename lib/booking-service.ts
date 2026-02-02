@@ -26,6 +26,7 @@ export async function createBookingRequest(data: {
   customerName: string;
   customerPhone: string;
   pickupLocation: string;
+  pickupRegion: string;
   destination: string;
   pickupDate: string;
   pickupTime: string;
@@ -40,6 +41,7 @@ export async function createBookingRequest(data: {
       customerName: data.customerName,
       customerPhone: data.customerPhone,
       pickupLocation: data.pickupLocation,
+      pickupRegion: data.pickupRegion,
       destination: data.destination,
       pickupDate: data.pickupDate,
       pickupTime: data.pickupTime,
@@ -106,7 +108,7 @@ export async function createBookingRequest(data: {
         driversRef,
         where("status", "==", "available"),
         where("subscriptionStatus", "==", "active"),
-        where("currentLocation", "==", data.pickupLocation) // NOTE: consider replacing with geolocation
+        where("currentLocation", "==", data.pickupRegion) // Match by region/city
       );
 
       const querySnapshot = await getDocs(q);
@@ -214,13 +216,13 @@ export async function acceptBooking(
  * Fetch all available bookings near a driver.
  */
 export async function getAvailableBookings(
-  driverLocation: string
+  driverRegion: string
 ): Promise<BookingRequest[]> {
   try {
     const q = query(
       collection(db, COLLECTION_NAME),
       where("status", "==", "pending"),
-      where("pickupLocation", "==", driverLocation)
+      where("pickupRegion", "==", driverRegion)
     );
 
     const querySnapshot = await getDocs(q);

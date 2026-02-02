@@ -6,6 +6,8 @@ import { createBookingRequest } from "@/lib/booking-service";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import SmartRecommendations from "./SmartRecommendations";
+import { KENYA_COUNTIES } from "@/lib/kenya-locations";
+import { Search } from "lucide-react";
 
 export default function BookingForm() {
   const { user, userProfile } = useAuth();
@@ -22,6 +24,7 @@ export default function BookingForm() {
   const userPhone = userProfile?.phone || user?.phoneNumber || "";
 
   const [formData, setFormData] = useState({
+    region: "",
     pickup: urlFrom,
     destination: urlTo,
     date: "",
@@ -33,7 +36,7 @@ export default function BookingForm() {
   const [showRecommendations, setShowRecommendations] = useState(false);
   
   // Progressive form state - track current active field (removed name and phone)
-  const [activeField, setActiveField] = useState<'pickup' | 'destination' | 'date' | 'time' | 'submit'>('pickup');
+  const [activeField, setActiveField] = useState<'region' | 'pickup' | 'destination' | 'date' | 'time' | 'submit'>('region');
 
   // Update form when URL params change
   useEffect(() => {
@@ -43,9 +46,13 @@ export default function BookingForm() {
         pickup: urlFrom,
         destination: urlTo
       }));
-      // If locations are pre-filled, start with date
+      // If locations are pre-filled, start with region if not set, else date
       if (urlFrom && urlTo) {
-        setActiveField('date');
+        if (!formData.region) {
+          setActiveField('region');
+        } else {
+          setActiveField('date');
+        }
       }
     }
   }, [urlFrom, urlTo]);
@@ -59,6 +66,10 @@ export default function BookingForm() {
 
   // Auto-advance to next field when current is filled
   useEffect(() => {
+    if (activeField === 'region' && formData.region) {
+      const timer = setTimeout(() => setActiveField('pickup'), 400);
+      return () => clearTimeout(timer);
+    }
     if (activeField === 'pickup' && formData.pickup.trim()) {
       const timer = setTimeout(() => setActiveField('destination'), 400);
       return () => clearTimeout(timer);
@@ -82,9 +93,9 @@ export default function BookingForm() {
   };
 
   // Get the next field in sequence
-  const getNextField = (current: string): 'name' | 'phone' | 'pickup' | 'destination' | 'date' | 'time' | 'submit' => {
-    const order: Array<'name' | 'phone' | 'pickup' | 'destination' | 'date' | 'time' | 'submit'> = 
-      ['name', 'phone', 'pickup', 'destination', 'date', 'time', 'submit'];
+  const getNextField = (current: string): 'name' | 'phone' | 'region' | 'pickup' | 'destination' | 'date' | 'time' | 'submit' => {
+    const order: Array<'name' | 'phone' | 'region' | 'pickup' | 'destination' | 'date' | 'time' | 'submit'> = 
+      ['name', 'phone', 'region', 'pickup', 'destination', 'date', 'time', 'submit'];
     const currentIndex = order.indexOf(current as any);
     return order[currentIndex + 1] || 'submit';
   };
@@ -92,6 +103,8 @@ export default function BookingForm() {
   // Check if a field is completed
   const isFieldCompleted = (field: string): boolean => {
     switch (field) {
+      case 'region':
+        return !!formData.region;
       case 'pickup':
         return !!formData.pickup.trim();
       case 'destination':
@@ -106,8 +119,8 @@ export default function BookingForm() {
   };
 
   // Calculate progress (name and phone are auto-filled from user)
-  const totalFields = 4;
-  const completedFields = ['pickup', 'destination', 'date', 'time'].filter(isFieldCompleted).length;
+  const totalFields = 5;
+  const completedFields = ['region', 'pickup', 'destination', 'date', 'time'].filter(isFieldCompleted).length;
   const progress = (completedFields / totalFields) * 100;
 
   const handleDriverSelect = (driverId: string) => {
@@ -119,14 +132,14 @@ export default function BookingForm() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    const { pickup, destination, date, time } = formData;
+    const { region, pickup, destination, date, time } = formData;
 
     if (!userName || !userPhone) {
       alert("Please log in to book a ride. Your name and phone are required.");
       return;
     }
 
-    if (!pickup || !destination || !date || !time) {
+    if (!region || !pickup || !destination || !date || !time) {
       alert("Please fill in all fields");
       return;
     }
@@ -138,6 +151,7 @@ export default function BookingForm() {
         customerName: userName,
         customerPhone: userPhone,
         pickupLocation: pickup,
+        pickupRegion: region,
         destination: destination,
         pickupDate: date,
         pickupTime: time,
@@ -146,6 +160,7 @@ export default function BookingForm() {
       });
       setSuccess(true);
       setFormData({
+        region: "",
         pickup: "",
         destination: "",
         date: "",
@@ -153,7 +168,7 @@ export default function BookingForm() {
       });
       setPreferredDriverId(undefined);
       setShowRecommendations(false);
-      setActiveField('pickup');
+      setActiveField('region');
       // Reset success message after 5 seconds
       setTimeout(() => setSuccess(false), 5000);
     } catch (error) {
@@ -179,8 +194,9 @@ export default function BookingForm() {
               type="button" 
             onClick={() => {
               setSuccess(false);
-              setActiveField('pickup');
+              setActiveField('region');
               setFormData({
+                region: "",
                 pickup: "",
                 destination: "",
                 date: "",
@@ -221,6 +237,39 @@ export default function BookingForm() {
 
           {/* Rolling Fields Container - Fixed height with proper spacing */}
           <div className="relative min-h-[100px]">
+            {/* Region Field */}
+            <div
+              className={`absolute inset-x-0 top-0 transition-all duration-500 ${
+                activeField === 'region'
+                  ? 'opacity-100 translate-y-0 z-10'
+                  : activeField === 'pickup' || activeField === 'destination' || activeField === 'date' || activeField === 'time' || activeField === 'submit'
+                  ? 'opacity-0 -translate-y-full z-0'
+                  : 'opacity-0 translate-y-full z-0'
+              }`}
+            >
+              <label className="block text-gray-700 mb-3 font-medium" htmlFor="region">
+                Your Region / City
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="text-green-600 w-5 h-5" />
+                </div>
+                <select
+                  id="region"
+                  name="region"
+                  required
+                  value={formData.region}
+                  onChange={(e) => setFormData({ ...formData, region: e.target.value })}
+                  className="w-full pl-11 px-4 py-3 text-base rounded-lg border border-green-300 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 transition-all bg-white"
+                >
+                  <option value="">Select your region...</option>
+                  {KENYA_COUNTIES.map(county => (
+                    <option key={county} value={county}>{county}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
             {/* Pickup Field */}
             <div
               className={`absolute inset-x-0 top-0 transition-all duration-500 ${
@@ -228,6 +277,8 @@ export default function BookingForm() {
                   ? 'opacity-100 translate-y-0 z-10'
                   : activeField === 'destination' || activeField === 'date' || activeField === 'time' || activeField === 'submit'
                   ? 'opacity-0 -translate-y-full z-0'
+                  : activeField === 'region'
+                  ? 'opacity-0 translate-y-full z-0'
                   : 'opacity-0 translate-y-full z-0'
               }`}
             >
