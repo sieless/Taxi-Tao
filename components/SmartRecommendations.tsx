@@ -133,7 +133,7 @@ export default function SmartRecommendations({
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
                       <span className="text-xl font-bold text-white">
-                        {driver.driverName.charAt(0)}
+                        {(driver.driverName || 'Driver').charAt(0)}
                       </span>
                     </div>
                   )}

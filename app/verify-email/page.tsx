@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { sendEmailVerification, reload } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
+import { sendAuthVerificationEmail } from "@/lib/auth-email-utils";
 import { Mail, RefreshCw, CheckCircle, ArrowRight } from "lucide-react";
 import Logo from "@/components/Logo";
 
@@ -31,15 +31,11 @@ export default function VerifyEmailPage() {
     setError("");
 
     try {
-      await sendEmailVerification(user);
-      setMessage("Verification email sent! Please check your inbox.");
+      await sendAuthVerificationEmail(user.email!, user.displayName || undefined);
+      setMessage("Verification email sent via Resend! Please check your inbox.");
     } catch (err: any) {
       console.error("Error sending verification email:", err);
-      if (err.code === "auth/too-many-requests") {
-        setError("Too many requests. Please wait a few minutes before trying again.");
-      } else {
-        setError("Failed to send verification email. Please try again later.");
-      }
+      setError("Failed to send verification email. Please try again later.");
     } finally {
       setResending(false);
     }

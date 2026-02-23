@@ -103,7 +103,7 @@ export default function LiveDriverCarousel({ vehicleType }: LiveDriverCarouselPr
         <div>
           <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
             <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-            {drivers.length} {vehicleType ? `${vehicleType.charAt(0).toUpperCase() + vehicleType.slice(1)} ` : ""}Drivers Online Now
+            {drivers.length} {(vehicleType || '').charAt(0).toUpperCase() + (vehicleType || '').slice(1)} Drivers Online Now
           </h3>
           <p className="text-sm text-gray-600">Auto-rotating every 5 seconds</p>
         </div>
@@ -162,7 +162,7 @@ export default function LiveDriverCarousel({ vehicleType }: LiveDriverCarouselPr
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
                       <span className="text-2xl font-bold text-white">
-                        {driver.name.charAt(0)}
+                        {(driver.name || 'Driver').charAt(0)}
                       </span>
                     </div>
                   )}

@@ -773,7 +773,7 @@ export default function DriverDashboard() {
                   />
                 ) : (
                   <span className="text-2xl font-bold text-gray-400">
-                    {driver.name.charAt(0)}
+                    {(driver.name || 'D').charAt(0)}
                   </span>
                 )}
               </div>

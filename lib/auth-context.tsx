@@ -25,6 +25,7 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<string | null>;
   logout: () => Promise<void>;
   refreshUserProfile: (currentUser?: FirebaseUser | null) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -37,6 +38,7 @@ export const AuthContext = createContext<AuthContextType>({
   signInWithGoogle: async () => null,
   logout: async () => {},
   refreshUserProfile: async () => {},
+  resetPassword: async () => {},
 });
 
 export function useAuth() {
@@ -288,6 +290,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const resetPassword = async (email: string) => {
+    setError(null);
+    try {
+      const { sendAuthPasswordResetEmail } = await import("@/lib/auth-email-utils");
+      await sendAuthPasswordResetEmail(email.trim().toLowerCase());
+    } catch (err: any) {
+      console.error("Reset password failed:", err);
+      // Still return success or don't throw to prevent user enumeration if desired, 
+      // but here we just log it. The implementation plan says trigger it.
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -300,6 +314,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         signInWithGoogle,
         logout,
         refreshUserProfile,
+        resetPassword,
       }}
     >
       {children}

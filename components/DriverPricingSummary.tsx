@@ -38,8 +38,8 @@ export default function DriverPricingSummary() {
             // Fallback parsing for old format
             const parts = routeKey.split('-');
             if (parts.length >= 2) {
-              const from = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
-              const to = parts.slice(1).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join('-');
+              const from = (parts[0] || '').charAt(0).toUpperCase() + (parts[0] || '').slice(1);
+              const to = parts.slice(1).map(p => (p || '').charAt(0).toUpperCase() + (p || '').slice(1)).join('-');
               routeName = `${from} → ${to}`;
             }
           }

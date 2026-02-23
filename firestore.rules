@@ -117,10 +117,10 @@ service cloud.firestore {
     
     match /drivers/{driverId} {
       allow read, list: if true;
-      
-      // Drivers can create their own profile (email verification required), or admins can create any
+
+      // Drivers can create their own profile (during signup, before email verification), or admins can create any
       allow create: if isSignedIn() && (
-        (request.auth.uid == driverId && isEmailVerified()) ||
+        request.auth.uid == driverId ||
         isAdmin()
       );
 

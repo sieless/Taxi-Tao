@@ -20,7 +20,7 @@ export default function DriverLoginPage() {
   const [resetMode, setResetMode] = useState(false);
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
-  const { signIn, signInWithGoogle } = useAuth();
+  const { signIn, signInWithGoogle, resetPassword } = useAuth();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -96,17 +96,15 @@ export default function DriverLoginPage() {
     setLoading(true);
 
     try {
-      await sendPasswordResetEmail(auth, email);
-      setSuccess("Password reset email sent! Check your inbox.");
+      await resetPassword(email);
+      setSuccess("If that email is registered, we've sent a custom reset link via Resend! Check your inbox.");
       setTimeout(() => {
         setResetMode(false);
         setSuccess("");
       }, 3000);
     } catch (err: any) {
-      // Use sanitized error message to prevent revealing security details
-      setError(
-        sanitizeAuthError(err, "Failed to send reset email. Please check your email address and try again.")
-      );
+      console.error("Reset initiation failed:", err);
+      setError("Failed to initiate password reset. Please try again.");
     } finally {
       setLoading(false);
     }
