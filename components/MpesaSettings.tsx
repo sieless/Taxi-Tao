@@ -6,7 +6,8 @@ import { db } from "@/lib/firebase";
 import { Driver } from "@/lib/types";
 import { CreditCard, Save, Loader2 } from "lucide-react";
 
-interface MpesaSettingsProps {
+
+import { logError } from "@/lib/logger";interface MpesaSettingsProps {
   driver: Driver;
   onUpdate: (updatedDriver: Driver) => void;
 }
@@ -44,7 +45,7 @@ export default function MpesaSettings({ driver, onUpdate }: MpesaSettingsProps) 
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (error) {
-      console.error("Error saving M-Pesa details:", error);
+      logError("MpesaSettings", error);
       alert("Failed to save M-Pesa details. Please try again.");
     } finally {
       setSaving(false);
@@ -54,8 +55,8 @@ export default function MpesaSettings({ driver, onUpdate }: MpesaSettingsProps) 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-          <CreditCard className="w-5 h-5 text-green-600" />
+        <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+          <CreditCard className="w-5 h-5 text-primary-600" />
         </div>
         <div>
           <h3 className="text-lg font-bold text-gray-900">M-Pesa Payment Details</h3>
@@ -74,7 +75,7 @@ export default function MpesaSettings({ driver, onUpdate }: MpesaSettingsProps) 
             onClick={() => setPaymentType('till')}
             className={`p-4 rounded-lg border-2 transition-all ${
               paymentType === 'till'
-                ? 'border-green-500 bg-green-50'
+                ? 'border-primary-500 bg-primary-50'
                 : 'border-gray-200 hover:border-gray-300'
             }`}
           >
@@ -86,7 +87,7 @@ export default function MpesaSettings({ driver, onUpdate }: MpesaSettingsProps) 
             onClick={() => setPaymentType('paybill')}
             className={`p-4 rounded-lg border-2 transition-all ${
               paymentType === 'paybill'
-                ? 'border-green-500 bg-green-50'
+                ? 'border-primary-500 bg-primary-50'
                 : 'border-gray-200 hover:border-gray-300'
             }`}
           >
@@ -98,7 +99,7 @@ export default function MpesaSettings({ driver, onUpdate }: MpesaSettingsProps) 
             onClick={() => setPaymentType('send_money')}
             className={`p-4 rounded-lg border-2 transition-all ${
               paymentType === 'send_money'
-                ? 'border-green-500 bg-green-50'
+                ? 'border-primary-500 bg-primary-50'
                 : 'border-gray-200 hover:border-gray-300'
             }`}
           >
@@ -120,7 +121,7 @@ export default function MpesaSettings({ driver, onUpdate }: MpesaSettingsProps) 
               value={tillNumber}
               onChange={(e) => setTillNumber(e.target.value)}
               placeholder="Enter your Till Number"
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
             <p className="text-xs text-gray-500 mt-1">
               Customer flow: Amount → Pay
@@ -141,7 +142,7 @@ export default function MpesaSettings({ driver, onUpdate }: MpesaSettingsProps) 
               value={paybillNumber}
               onChange={(e) => setPaybillNumber(e.target.value)}
               placeholder="Enter Paybill Number"
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
           <div>
@@ -153,7 +154,7 @@ export default function MpesaSettings({ driver, onUpdate }: MpesaSettingsProps) 
               value={accountNumber}
               onChange={(e) => setAccountNumber(e.target.value)}
               placeholder="Enter Account Number"
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
             <p className="text-xs text-gray-500 mt-1">
               Customer flow: Paybill → Account → Amount → Pay
@@ -174,7 +175,7 @@ export default function MpesaSettings({ driver, onUpdate }: MpesaSettingsProps) 
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               placeholder="e.g., 0712345678"
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
             <p className="text-xs text-gray-500 mt-1">
               Customer flow: Send Money → Phone Number → Amount
@@ -188,7 +189,7 @@ export default function MpesaSettings({ driver, onUpdate }: MpesaSettingsProps) 
         <button
           onClick={handleSave}
           disabled={saving || (paymentType === 'till' ? !tillNumber : paymentType === 'paybill' ? (!paybillNumber || !accountNumber) : !phoneNumber)}
-          className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="flex-1 bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {saving ? (
             <>
@@ -206,7 +207,7 @@ export default function MpesaSettings({ driver, onUpdate }: MpesaSettingsProps) 
 
       {/* Success Message */}
       {success && (
-        <div className="mt-4 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg text-sm">
+        <div className="mt-4 bg-primary-50 border border-primary-200 text-primary-800 px-4 py-3 rounded-lg text-sm">
           ✓ Payment details saved successfully!
         </div>
       )}

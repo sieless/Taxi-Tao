@@ -17,6 +17,9 @@ import { submitRating } from "@/lib/rating-service";
 
 import { BookingRequest } from "@/lib/types";
 
+
+import { logError } from "@/lib/logger";
+
 export default function CustomerUpcomingBookings() {
   const { user } = useAuth();
   const [bookings, setBookings] = useState<BookingRequest[]>([]);
@@ -51,19 +54,19 @@ export default function CustomerUpcomingBookings() {
         const list: BookingRequest[] = [];
         snapshot.forEach((doc) => list.push({ id: doc.id, ...doc.data() } as BookingRequest));
         
-        // Check for newly completed bookings
-        list.forEach((booking) => {
-          if (booking.rideStatus === 'completed' && !completedBooking) {
-            setCompletedBooking(booking);
-            setShowCompletionModal(true);
-          }
-        });
+         // Check for newly completed bookings
+         list.forEach((booking) => {
+           if (booking.status === 'completed' && !completedBooking) {
+             setCompletedBooking(booking);
+             setShowCompletionModal(true);
+           }
+         });
         
         setBookings(list);
         setLoading(false);
       },
       (err) => {
-        console.error("Error fetching bookings:", err);
+        logError("CustomerUpcomingBookings", err);
         setLoading(false);
       }
     );
@@ -91,9 +94,8 @@ export default function CustomerUpcomingBookings() {
     
     try {
       await submitRating(completedBooking.id, rating, review);
-      console.log('Rating submitted successfully');
     } catch (error) {
-      console.error('Failed to submit rating:', error);
+      logError("CustomerUpcomingBookings", error);
       throw error;
     }
   };
@@ -122,7 +124,7 @@ export default function CustomerUpcomingBookings() {
         <div className="relative">
           <button
             onClick={() => setNotificationsOpen(!notificationsOpen)}
-            className="relative bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition"
+            className="relative bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition"
           >
             <Bell className="w-4 h-4" />
             Notifications
@@ -150,7 +152,7 @@ export default function CustomerUpcomingBookings() {
       {bookings.map((b) => (
         <div key={b.id} className="border-2 border-gray-200 p-4 rounded-lg bg-white shadow-sm hover:shadow-md transition">
           <div className="flex items-center gap-2 mb-2">
-            <Calendar className="w-5 h-5 text-green-600" />
+            <Calendar className="w-5 h-5 text-primary-600" />
             <span className="font-bold text-gray-800">{formatDate(b.pickupDate)}</span>
           </div>
 
@@ -176,7 +178,7 @@ export default function CustomerUpcomingBookings() {
               {b.driverPhone && (
                 <button
                   onClick={() => handleCallDriver(b.driverPhone!)}
-                  className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-xs flex items-center gap-1"
+                  className="bg-primary-600 hover:bg-primary-700 text-white px-3 py-1 rounded-lg text-xs flex items-center gap-1"
                 >
                   <Phone className="w-4 h-4" /> Call
                 </button>
@@ -184,78 +186,78 @@ export default function CustomerUpcomingBookings() {
             </div>
           )}
 
-          <div className="mt-3 pt-3 border-t border-gray-200 flex justify-between items-center">
-            <span className="text-sm font-bold text-gray-700">
-              Status:{" "}
-              <span className={`
-                ${b.rideStatus === 'completed' ? 'text-blue-600' : ''}
-                ${b.rideStatus === 'cancelled' ? 'text-red-600' : ''}
-                ${!b.rideStatus || b.rideStatus === 'confirmed' ? 'text-green-600' : ''}
-              `}>
-                {b.rideStatus ? b.rideStatus.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()) : "Pending"}
-              </span>
-            </span>
+           <div className="mt-3 pt-3 border-t border-gray-200 flex justify-between items-center">
+             <span className="text-sm font-bold text-gray-700">
+               Status:{" "}
+               <span className={`
+                 ${b.status === 'completed' ? 'text-blue-600' : ''}
+                 ${b.status === 'cancelled' ? 'text-red-600' : ''}
+                 ${!b.status || b.status === 'confirmed' ? 'text-primary-600' : ''}
+               `}>
+                 {b.status ? b.status.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()) : "Searching"}
+               </span>
+             </span>
 
             {/* Action Buttons */}
-            <div className="flex gap-2">
-              {/* Share Button - Always visible for active rides */}
-              {(!b.rideStatus || ['confirmed', 'en_route', 'arrived', 'in_progress'].includes(b.rideStatus)) && (
-                <ShareTripButton 
-                  bookingId={b.id} 
-                  driverName={b.driverName} 
-                  vehicleDetails={b.driverName ? 'Vehicle' : undefined} // Can pass actual vehicle if available
-                />
-              )}
+             <div className="flex gap-2">
+               {/* Share Button - Always visible for active rides */}
+               {(!b.status || ['confirmed', 'en_route', 'arrived', 'in_progress'].includes(b.status)) && (
+                 <ShareTripButton 
+                   bookingId={b.id} 
+                   driverName={b.driverName} 
+                   vehicleDetails={b.driverName ? 'Vehicle' : undefined} // Can pass actual vehicle if available
+                 />
+               )}
 
-              {/* Modify Button - Only for pending */}
-              {(!b.rideStatus || b.rideStatus === 'pending') && (
-                <button
-                  onClick={() => {
-                    setBookingToModify(b);
-                    setShowModifyModal(true);
-                  }}
-                  className="text-blue-600 hover:text-blue-700 text-sm font-medium hover:underline"
-                >
-                  Modify
-                </button>
-              )}
+               {/* Modify Button - Only for pending */}
+               {(!b.status || b.status === 'pending') && (
+                 <button
+                   onClick={() => {
+                     setBookingToModify(b);
+                     setShowModifyModal(true);
+                   }}
+                   className="text-blue-600 hover:text-blue-700 text-sm font-medium hover:underline"
+                 >
+                   Modify
+                 </button>
+               )}
 
-              {/* Cancel Button - Only for active bookings */}
-              {(!b.rideStatus || ['confirmed', 'assigned', 'pending'].includes(b.rideStatus)) && (
-                <button
-                  onClick={() => {
-                    setBookingToCancel(b);
-                    setShowCancelModal(true);
-                  }}
-                  className="text-red-600 hover:text-red-700 text-sm font-medium hover:underline"
-                >
-                  Cancel Ride
-                </button>
-              )}
+               {/* Cancel Button - Only for active bookings */}
+               {(!b.status || ['confirmed', 'assigned', 'pending'].includes(b.status)) && (
+                 <button
+                   onClick={() => {
+                     setBookingToCancel(b);
+                     setShowCancelModal(true);
+                   }}
+                   className="text-red-600 hover:text-red-700 text-sm font-medium hover:underline"
+                 >
+                   Cancel Ride
+                 </button>
+               )}
 
-              {/* Report Issue - For active/completed rides */}
-              {b.rideStatus && ['in_progress', 'completed'].includes(b.rideStatus) && (
-                <button
-                  onClick={() => {
-                    setBookingToReport(b);
-                    setShowReportModal(true);
-                  }}
-                  className="text-gray-500 hover:text-gray-700 text-sm font-medium hover:underline"
-                >
-                  Report Issue
-                </button>
-              )}
+               {/* Report Issue - For active/completed rides */}
+               {b.status && ['in_progress', 'completed'].includes(b.status) && (
+                 <button
+                   onClick={() => {
+                     setBookingToReport(b);
+                     setShowReportModal(true);
+                   }}
+                   className="text-gray-500 hover:text-gray-700 text-sm font-medium hover:underline"
+                 >
+                   Report Issue
+                 </button>
+               )}
             </div>
           </div>
 
-          {/* Emergency SOS Button - Only show for active rides (in_progress) */}
-          {b.rideStatus === 'in_progress' && (
-            <EmergencyButton 
-              bookingId={b.id} 
-              driverName={b.driverName} 
-              vehicleDetails={b.driverName ? 'Vehicle' : undefined}
-            />
-          )}
+           {/* Emergency SOS Button - Only show for active rides (in_progress) */}
+           {b.status === 'in_progress' && (
+             <EmergencyButton 
+               bookingId={b.id} 
+               driverName={b.driverName} 
+               vehicleDetails={b.driverName ? 'Vehicle' : undefined}
+             />
+           )}
         </div>
       ))}
 
@@ -285,7 +287,6 @@ export default function CustomerUpcomingBookings() {
           bookingId={bookingToCancel.id}
           onSuccess={() => {
             // Refresh logic is handled by onSnapshot automatically
-            console.log('Booking cancelled');
           }}
         />
       )}

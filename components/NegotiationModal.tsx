@@ -5,6 +5,8 @@ import { X, Send, Loader2, CheckCircle, XCircle, MessageCircle } from 'lucide-re
 import { createNegotiation, getNegotiation, counterOffer, acceptOffer, declineOffer } from '@/lib/negotiation-service';
 import { Negotiation } from '@/lib/types';
 
+
+import { logError } from "@/lib/logger";
 interface NegotiationModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -71,7 +73,7 @@ export default function NegotiationModal({
       setNegotiation(newNegotiation);
       setProposedPrice('');
     } catch (error) {
-      console.error('Error starting negotiation:', error);
+      logError("NegotiationModal", error);
       alert('Failed to start negotiation. Please try again.');
     } finally {
       setLoading(false);
@@ -94,7 +96,7 @@ export default function NegotiationModal({
       setNegotiation(updated);
       setProposedPrice('');
     } catch (error) {
-      console.error('Error sending counter offer:', error);
+      logError("NegotiationModal", error);
       alert('Failed to send counter offer. Please try again.');
     } finally {
       setLoading(false);
@@ -111,7 +113,7 @@ export default function NegotiationModal({
       setNegotiation(updated);
       alert('Offer accepted! The driver will contact you shortly.');
     } catch (error) {
-      console.error('Error accepting offer:', error);
+      logError("NegotiationModal", error);
       alert('Failed to accept offer. Please try again.');
     } finally {
       setLoading(false);
@@ -127,7 +129,7 @@ export default function NegotiationModal({
       const updated = await getNegotiation(negotiation.id);
       setNegotiation(updated);
     } catch (error) {
-      console.error('Error declining offer:', error);
+      logError("NegotiationModal", error);
       alert('Failed to decline offer. Please try again.');
     } finally {
       setLoading(false);
@@ -140,10 +142,10 @@ export default function NegotiationModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-green-600 to-green-700 text-white p-6 flex justify-between items-center">
+        <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-6 flex justify-between items-center">
           <div>
             <h2 className="text-2xl font-bold">Negotiate Price</h2>
-            <p className="text-green-100 text-sm mt-1">with {driverName}</p>
+            <p className="text-primary-100 text-sm mt-1">with {driverName}</p>
           </div>
           <button
             onClick={onClose}
@@ -159,7 +161,7 @@ export default function NegotiationModal({
           <div className="bg-gray-50 rounded-lg p-4 mb-6">
             <p className="text-sm text-gray-600 mb-2">Route</p>
             <p className="font-semibold text-lg">{route.from} → {route.to}</p>
-            <p className="text-sm text-gray-600 mt-2">Driver's Price: <span className="font-bold text-green-600">KES {initialPrice.toLocaleString()}</span></p>
+            <p className="text-sm text-gray-600 mt-2">Driver's Price: <span className="font-bold text-primary-600">KES {initialPrice.toLocaleString()}</span></p>
           </div>
 
           {!negotiation ? (
@@ -171,7 +173,7 @@ export default function NegotiationModal({
                   type="text"
                   value={customerNameInput}
                   onChange={(e) => setCustomerNameInput(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                   placeholder="John Doe"
                 />
               </div>
@@ -181,7 +183,7 @@ export default function NegotiationModal({
                   type="tel"
                   value={customerPhoneInput}
                   onChange={(e) => setCustomerPhoneInput(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                   placeholder="0712 345 678"
                 />
               </div>
@@ -191,14 +193,14 @@ export default function NegotiationModal({
                   type="number"
                   value={proposedPrice}
                   onChange={(e) => setProposedPrice(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                   placeholder={`e.g., ${Math.floor(initialPrice * 0.8)}`}
                 />
               </div>
               <button
                 onClick={handleStartNegotiation}
                 disabled={loading}
-                className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-6 rounded-lg transition disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
@@ -219,7 +221,7 @@ export default function NegotiationModal({
               {/* Status Badge */}
               <div className="flex items-center justify-center gap-2 mb-4">
                 {negotiation.status === 'accepted' && (
-                  <div className="bg-green-100 text-green-800 px-4 py-2 rounded-full flex items-center gap-2">
+                  <div className="bg-primary-100 text-primary-800 px-4 py-2 rounded-full flex items-center gap-2">
                     <CheckCircle className="w-5 h-5" />
                     <span className="font-semibold">Accepted!</span>
                   </div>
@@ -251,7 +253,7 @@ export default function NegotiationModal({
                     key={idx}
                     className={`p-3 rounded-lg ${
                       msg.sender === 'customer'
-                        ? 'bg-green-100 ml-8'
+                        ? 'bg-primary-100 ml-8'
                         : msg.sender === 'driver'
                         ? 'bg-blue-100 mr-8'
                         : 'bg-gray-200 mx-8'
@@ -282,7 +284,7 @@ export default function NegotiationModal({
                       type="number"
                       value={proposedPrice}
                       onChange={(e) => setProposedPrice(e.target.value)}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                       placeholder="Counter offer (KES)"
                     />
                     <button
@@ -297,7 +299,7 @@ export default function NegotiationModal({
                     <button
                       onClick={handleAccept}
                       disabled={loading}
-                      className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition disabled:opacity-50"
+                      className="flex-1 bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-6 rounded-lg transition disabled:opacity-50"
                     >
                       Accept Current Offer
                     </button>
@@ -313,12 +315,12 @@ export default function NegotiationModal({
               )}
 
               {negotiation.status === 'accepted' && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <p className="text-green-800 font-semibold mb-2">Negotiation Successful!</p>
-                  <p className="text-sm text-green-700">
+                <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+                  <p className="text-primary-800 font-semibold mb-2">Negotiation Successful!</p>
+                  <p className="text-sm text-primary-700">
                     Agreed Price: <span className="font-bold">KES {negotiation.currentOffer.toLocaleString()}</span>
                   </p>
-                  <p className="text-sm text-green-700 mt-2">
+                  <p className="text-sm text-primary-700 mt-2">
                     The driver will contact you at {customerPhoneInput} to confirm the booking.
                   </p>
                 </div>

@@ -3,7 +3,8 @@ import { db } from "./firebase";
 import { Notification } from "./types";
 import { sendDriverEmail, shouldSendEmail, EmailType } from "./email-service";
 
-/**
+
+import { logError } from "@/lib/logger";/**
  * Create a new notification for a driver
  * Also sends an email for important notification types
  */
@@ -47,13 +48,13 @@ export async function createNotification(
         });
       } catch (emailError) {
         // Log but don't fail the notification creation
-        console.error("Error sending email notification:", emailError);
+        logError("notifications", emailError);
       }
     }
 
     return docRef.id;
   } catch (error) {
-    console.error("Error creating notification:", error);
+    logError("notifications", error);
     throw error;
   }
 }
@@ -75,7 +76,7 @@ export async function getDriverNotifications(driverId: string): Promise<Notifica
       ...doc.data(),
     })) as Notification[];
   } catch (error) {
-    console.error("Error fetching notifications:", error);
+    logError("notifications", error);
     return [];
   }
 }
@@ -94,7 +95,7 @@ export async function getUnreadCount(driverId: string): Promise<number> {
     const querySnapshot = await getDocs(q);
     return querySnapshot.size;
   } catch (error) {
-    console.error("Error getting unread count:", error);
+    logError("notifications", error);
     return 0;
   }
 }
@@ -108,7 +109,7 @@ export async function markAsRead(notificationId: string): Promise<void> {
       read: true,
     });
   } catch (error) {
-    console.error("Error marking notification as read:", error);
+    logError("notifications", error);
     throw error;
   }
 }
@@ -127,7 +128,7 @@ export async function markAllAsRead(driverId: string): Promise<void> {
 
     await Promise.all(updatePromises);
   } catch (error) {
-    console.error("Error marking all as read:", error);
+    logError("notifications", error);
     throw error;
   }
 }
@@ -139,7 +140,7 @@ export async function deleteNotification(notificationId: string): Promise<void> 
   try {
     await deleteDoc(doc(db, "notifications", notificationId));
   } catch (error) {
-    console.error("Error deleting notification:", error);
+    logError("notifications", error);
     throw error;
   }
 }

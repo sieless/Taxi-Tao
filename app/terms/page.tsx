@@ -44,7 +44,7 @@ export default function TermsOfUsePage() {
   return (
     <div className="min-h-screen bg-white flex">
       {/* Fixed Sidebar - Desktop */}
-      <aside className="hidden lg:block w-80 bg-gradient-to-br from-green-800 to-green-900 text-white fixed h-screen overflow-y-auto">
+      <aside className="hidden lg:block w-80 bg-gradient-to-br from-primary-800 to-primary-900 text-white fixed h-screen overflow-y-auto">
         <div className="p-8">
           {/* Logo */}
           <div className="mb-8">
@@ -58,14 +58,14 @@ export default function TermsOfUsePage() {
               <Scale className="w-6 h-6" />
               <h1 className="text-xl font-bold">Terms of Use</h1>
             </div>
-            <p className="text-sm text-green-100">
+            <p className="text-sm text-primary-100">
               Last Updated: December 9, 2024
             </p>
           </div>
 
           {/* Table of Contents */}
           <nav className="mb-8">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-green-200 mb-4">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-primary-200 mb-4">
               Contents
             </h2>
             <ul className="space-y-1">
@@ -73,7 +73,7 @@ export default function TermsOfUsePage() {
                 <li key={index}>
                   <a
                     href={`#section-${index + 1}`}
-                    className="block py-2 px-3 text-sm text-green-100 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                    className="block py-2 px-3 text-sm text-primary-100 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {section}
@@ -96,7 +96,7 @@ export default function TermsOfUsePage() {
 
       {/* Mobile Menu Button */}
       <button
-        className="lg:hidden fixed top-4 left-4 z-50 bg-green-800 text-white p-3 rounded-lg shadow-lg"
+        className="lg:hidden fixed top-4 left-4 z-50 bg-primary-800 text-white p-3 rounded-lg shadow-lg"
         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
       >
         {mobileMenuOpen ? (
@@ -116,7 +116,7 @@ export default function TermsOfUsePage() {
 
       {/* Mobile Menu */}
       <aside
-        className={`lg:hidden fixed top-0 left-0 h-screen w-80 bg-gradient-to-br from-green-800 to-green-900 text-white z-50 transform transition-transform duration-300 overflow-y-auto ${
+        className={`lg:hidden fixed top-0 left-0 h-screen w-80 bg-gradient-to-br from-primary-800 to-primary-900 text-white z-50 transform transition-transform duration-300 overflow-y-auto ${
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -130,13 +130,13 @@ export default function TermsOfUsePage() {
 
           <div className="mb-8">
             <h1 className="text-xl font-bold mb-2">Terms of Use</h1>
-            <p className="text-sm text-green-100">
+            <p className="text-sm text-primary-100">
               Last Updated: December 9, 2024
             </p>
           </div>
 
           <nav className="mb-8">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-green-200 mb-4">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-primary-200 mb-4">
               Contents
             </h2>
             <ul className="space-y-1">
@@ -144,7 +144,7 @@ export default function TermsOfUsePage() {
                 <li key={index}>
                   <a
                     href={`#section-${index + 1}`}
-                    className="block py-2 px-3 text-sm text-green-100 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                    className="block py-2 px-3 text-sm text-primary-100 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {section}
@@ -170,7 +170,7 @@ export default function TermsOfUsePage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-12 py-12">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm text-gray-500 mb-8">
-            <Link href="/" className="hover:text-green-600">
+            <Link href="/" className="hover:text-primary-600">
               Home
             </Link>
             <ChevronRight className="w-4 h-4" />
@@ -194,7 +194,7 @@ export default function TermsOfUsePage() {
             {/* Section 1 */}
             <section id="section-1" className="mb-12 scroll-mt-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-                <span className="flex-shrink-0 w-10 h-10 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-lg font-bold">
+                <span className="flex-shrink-0 w-10 h-10 bg-primary-100 text-primary-700 rounded-lg flex items-center justify-center text-lg font-bold">
                   1
                 </span>
                 Definitions and Interpretation
@@ -244,7 +244,7 @@ export default function TermsOfUsePage() {
             {/* Section 2 */}
             <section id="section-2" className="mb-12 scroll-mt-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-                <span className="flex-shrink-0 w-10 h-10 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-lg font-bold">
+                <span className="flex-shrink-0 w-10 h-10 bg-primary-100 text-primary-700 rounded-lg flex items-center justify-center text-lg font-bold">
                   2
                 </span>
                 Acceptance of Terms
@@ -271,7 +271,7 @@ export default function TermsOfUsePage() {
             {/* Section 3 */}
             <section id="section-3" className="mb-12 scroll-mt-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-                <span className="flex-shrink-0 w-10 h-10 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-lg font-bold">
+                <span className="flex-shrink-0 w-10 h-10 bg-primary-100 text-primary-700 rounded-lg flex items-center justify-center text-lg font-bold">
                   3
                 </span>
                 Description of Services
@@ -313,7 +313,7 @@ export default function TermsOfUsePage() {
             {/* Section 9 - Service Fees and Charges */}
             <section id="section-9" className="mb-12 scroll-mt-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-                <span className="flex-shrink-0 w-10 h-10 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-lg font-bold">
+                <span className="flex-shrink-0 w-10 h-10 bg-primary-100 text-primary-700 rounded-lg flex items-center justify-center text-lg font-bold">
                   9
                 </span>
                 Service Fees and Charges
@@ -326,7 +326,7 @@ export default function TermsOfUsePage() {
                   <p className="mb-3">
                     Drivers are required to pay a monthly subscription fee to
                     maintain their profile visibility on the Platform. The
-                    current subscription fee is 500 KSH per month, due on the
+                    current subscription fee is subject to change, due on the
                     5th of each month.
                   </p>
                   <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 my-4">
@@ -370,7 +370,7 @@ export default function TermsOfUsePage() {
             {/* Section 13 - Liability (Critical with Warning) */}
             <section id="section-13" className="mb-12 scroll-mt-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-                <span className="flex-shrink-0 w-10 h-10 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-lg font-bold">
+                <span className="flex-shrink-0 w-10 h-10 bg-primary-100 text-primary-700 rounded-lg flex items-center justify-center text-lg font-bold">
                   13
                 </span>
                 Liability and Disclaimers
@@ -443,7 +443,7 @@ export default function TermsOfUsePage() {
             {/* Final Sections */}
             <section id="section-21" className="mb-12 scroll-mt-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-                <span className="flex-shrink-0 w-10 h-10 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-lg font-bold">
+                <span className="flex-shrink-0 w-10 h-10 bg-primary-100 text-primary-700 rounded-lg flex items-center justify-center text-lg font-bold">
                   21
                 </span>
                 Contact Information
@@ -462,7 +462,7 @@ export default function TermsOfUsePage() {
                       Email:{" "}
                       <a
                         href="mailto:support@taxitao.co.ke"
-                        className="text-green-600 hover:text-green-700 font-medium"
+                        className="text-primary-600 hover:text-primary-700 font-medium"
                       >
                         support@taxitao.co.ke
                       </a>
@@ -471,7 +471,7 @@ export default function TermsOfUsePage() {
                       Phone:{" "}
                       <a
                         href="tel:+254708674665"
-                        className="text-green-600 hover:text-green-700 font-medium"
+                        className="text-primary-600 hover:text-primary-700 font-medium"
                       >
                         +254 708 674 665
                       </a>
@@ -483,7 +483,7 @@ export default function TermsOfUsePage() {
                       Website:{" "}
                       <a
                         href="https://www.taxitao.co.ke"
-                        className="text-green-600 hover:text-green-700 font-medium"
+                        className="text-primary-600 hover:text-primary-700 font-medium"
                       >
                         www.taxitao.co.ke
                       </a>
@@ -494,14 +494,14 @@ export default function TermsOfUsePage() {
             </section>
 
             {/* Acknowledgment */}
-            <div className="bg-green-50 border-l-4 border-green-600 p-6 my-12">
+            <div className="bg-primary-50 border-l-4 border-primary-600 p-6 my-12">
               <div className="flex">
-                <Shield className="w-6 h-6 text-green-600 mr-3 flex-shrink-0 mt-0.5" />
+                <Shield className="w-6 h-6 text-primary-600 mr-3 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-bold text-green-900 mb-2">
+                  <p className="font-bold text-primary-900 mb-2">
                     Acknowledgment
                   </p>
-                  <p className="text-green-800 text-sm">
+                  <p className="text-primary-800 text-sm">
                     BY USING THE TAXITAO PLATFORM, YOU ACKNOWLEDGE THAT YOU HAVE
                     READ, UNDERSTOOD, AND AGREE TO BE BOUND BY THESE TERMS OF
                     USE. IF YOU DO NOT AGREE TO THESE TERMS, YOU MUST NOT USE

@@ -78,7 +78,7 @@ export default function DriverNotificationsPage() {
               onClick={() => setFilter("all")}
               className={`px-4 py-2 rounded-lg font-medium transition ${
                 filter === "all"
-                  ? "bg-green-600 text-white"
+                  ? "bg-primary-600 text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
@@ -88,7 +88,7 @@ export default function DriverNotificationsPage() {
               onClick={() => setFilter("unread")}
               className={`px-4 py-2 rounded-lg font-medium transition ${
                 filter === "unread"
-                  ? "bg-green-600 text-white"
+                  ? "bg-primary-600 text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
@@ -100,7 +100,7 @@ export default function DriverNotificationsPage() {
         {/* Notifications List */}
         {loading ? (
           <div className="bg-white rounded-xl shadow-sm p-8 text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Loading notifications...</p>
           </div>
         ) : filteredNotifications.length === 0 ? (
@@ -114,7 +114,7 @@ export default function DriverNotificationsPage() {
               <div
                 key={notif.id}
                 className={`bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition ${
-                  !notif.read ? "border-l-4 border-green-600" : ""
+                  !notif.read ? "border-l-4 border-primary-600" : ""
                 }`}
               >
                 <div className="flex items-start justify-between">
@@ -126,7 +126,7 @@ export default function DriverNotificationsPage() {
                     </p>
                   </div>
                   {!notif.read && (
-                    <div className="w-3 h-3 bg-green-600 rounded-full"></div>
+                    <div className="w-3 h-3 bg-primary-600 rounded-full"></div>
                   )}
                 </div>
               </div>

@@ -35,7 +35,7 @@ export default function HelpPage() {
       <div className="max-w-5xl mx-auto space-y-10">
         {/* HEADER */}
         <header className="space-y-3 text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm font-semibold">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-100 text-primary-700 text-sm font-semibold">
             <HelpCircle className="w-4 h-4" />
             Help Center
           </div>
@@ -167,12 +167,12 @@ export default function HelpPage() {
               </h3>
 
               <div className="flex items-center gap-2 text-gray-700">
-                <Phone className="w-4 h-4 text-green-600" />
+                <Phone className="w-4 h-4 text-primary-600" />
                 <span>+254 708674665</span>
               </div>
 
               <div className="flex items-center gap-2 text-gray-700">
-                <Mail className="w-4 h-4 text-green-600" />
+                <Mail className="w-4 h-4 text-primary-600" />
                 <a
                   href="mailto:titwzmaihya@gmail.com"
                   className="hover:underline"
@@ -203,7 +203,7 @@ export default function HelpPage() {
                       ? "/driver/notifications"
                       : "/customer/notifications"
                   }
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 transition"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white font-medium hover:bg-primary-700 transition"
                 >
                   <MessageSquare className="w-4 h-4" />
                   View Notifications
@@ -229,7 +229,7 @@ export default function HelpPage() {
         </section>
 
         {/* FINAL SUPPORT CTA */}
-        <div className="bg-gradient-to-r from-green-600 to-green-700 text-white rounded-2xl p-8 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-2xl p-8 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-sm font-semibold">
               <LifeBuoy className="w-4 h-4" />
@@ -238,7 +238,7 @@ export default function HelpPage() {
 
             <h3 className="text-2xl font-bold">Raise a Support Request</h3>
 
-            <p className="text-green-50 text-sm max-w-xl">
+            <p className="text-primary-50 text-sm max-w-xl">
               Describe the issue and attach screenshots or booking IDs. Our team
               will get back quickly.
             </p>
@@ -251,14 +251,14 @@ export default function HelpPage() {
                   ? "/driver/notifications"
                   : "/customer/notifications"
               }
-              className="inline-flex items-center justify-center px-5 py-3 rounded-lg bg-white text-green-700 font-semibold shadow-sm hover:shadow"
+              className="inline-flex items-center justify-center px-5 py-3 rounded-lg bg-white text-primary-700 font-semibold shadow-sm hover:shadow"
             >
               Go to Support Inbox
             </Link>
           ) : (
             <Link
               href="/login"
-              className="inline-flex items-center justify-center px-5 py-3 rounded-lg bg-white text-green-700 font-semibold shadow-sm hover:shadow"
+              className="inline-flex items-center justify-center px-5 py-3 rounded-lg bg-white text-primary-700 font-semibold shadow-sm hover:shadow"
             >
               Sign In for Support
             </Link>

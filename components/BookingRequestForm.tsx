@@ -8,6 +8,8 @@ import { createNegotiation } from '../lib/negotiation-service';
 import { KENYA_COUNTIES } from '../lib/kenya-locations';
 import { Search } from 'lucide-react';
 
+
+import { logError } from "@/lib/logger";
 interface BookingRequestFormProps {
   driverId: string;
   driverName: string;
@@ -33,28 +35,37 @@ export default function BookingRequestForm({
     region: '',
     proposedPrice: estimatedPrice.toString(),
     notes: '',
+    // Coordinates (will be filled via geocoding in a real app)
+    pickupLat: 0,
+    pickupLng: 0,
+    destinationLat: 0,
+    destinationLng: 0,
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.customerName || !formData.customerPhone || !formData.pickupDate || !formData.pickupTime) {
       alert('Please fill in all required fields');
       return;
     }
-
+    
     setLoading(true);
     try {
       const proposedPrice = Number(formData.proposedPrice);
       const priceNegotiated = proposedPrice !== estimatedPrice;
-
+    
       // Create booking request
       const bookingData = {
         customerName: formData.customerName,
         customerPhone: formData.customerPhone,
         pickupLocation: fromLocation,
+        pickupLat: formData.pickupLat,
+        pickupLng: formData.pickupLng,
         pickupRegion: formData.region,
         destination: toLocation,
+        destinationLat: formData.destinationLat,
+        destinationLng: formData.destinationLng,
         pickupDate: formData.pickupDate,
         pickupTime: formData.pickupTime,
         vehicleType: 'standard',
@@ -62,9 +73,9 @@ export default function BookingRequestForm({
         notes: formData.notes,
         preferredDriverId: driverId,
       };
-
+    
       const bookingId = await createBookingRequest(bookingData);
-
+    
       // If customer proposed different price, create negotiation
       if (priceNegotiated) {
         const negotiationId = await createNegotiation(
@@ -76,7 +87,7 @@ export default function BookingRequestForm({
           estimatedPrice,
           proposedPrice
         );
-
+    
         // Redirect to negotiation status page
         router.push(`/booking/negotiation/${negotiationId}`);
       } else {
@@ -84,7 +95,7 @@ export default function BookingRequestForm({
         router.push(`/booking/confirmation/${bookingId}`);
       }
     } catch (error) {
-      console.error('Error creating booking:', error);
+      logError("BookingRequestForm", error);
       alert('Failed to create booking. Please try again.');
       setLoading(false);
     }
@@ -118,7 +129,7 @@ export default function BookingRequestForm({
             type="text"
             value={formData.customerName}
             onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             placeholder="Enter your full name"
             required
           />
@@ -134,7 +145,7 @@ export default function BookingRequestForm({
             type="tel"
             value={formData.customerPhone}
             onChange={(e) => setFormData({ ...formData, customerPhone: e.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             placeholder="+254 XXX XXX XXX"
             required
           />
@@ -149,7 +160,7 @@ export default function BookingRequestForm({
           <select
             value={formData.region}
             onChange={(e) => setFormData({ ...formData, region: e.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white"
             required
           >
             <option value="">Select your region...</option>
@@ -171,7 +182,7 @@ export default function BookingRequestForm({
               value={formData.pickupDate}
               onChange={(e) => setFormData({ ...formData, pickupDate: e.target.value })}
               min={new Date().toISOString().split('T')[0]}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               required
             />
           </div>
@@ -183,7 +194,7 @@ export default function BookingRequestForm({
               type="time"
               value={formData.pickupTime}
               onChange={(e) => setFormData({ ...formData, pickupTime: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               required
             />
           </div>
@@ -198,7 +209,7 @@ export default function BookingRequestForm({
             type="number"
             value={formData.proposedPrice}
             onChange={(e) => setFormData({ ...formData, proposedPrice: e.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             placeholder={estimatedPrice.toString()}
           />
           <p className="text-xs text-gray-500 mt-1">
@@ -217,7 +228,7 @@ export default function BookingRequestForm({
             value={formData.notes}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
             rows={3}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             placeholder="Any special requests or instructions..."
           />
         </div>
@@ -226,7 +237,7 @@ export default function BookingRequestForm({
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-4 px-6 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {loading ? (
             <>

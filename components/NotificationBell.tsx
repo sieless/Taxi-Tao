@@ -24,7 +24,8 @@ import {
 import { Notification } from "@/lib/types";
 import { useAuth } from "@/lib/auth-context";
 
-interface NotificationBellProps {
+
+import { logError } from "@/lib/logger";interface NotificationBellProps {
   driverId: string;
   onNotificationClick?: (
     notification: Notification | DriverNotification
@@ -93,7 +94,7 @@ export default function NotificationBell({
         );
       },
       (error) => {
-        console.error("Error fetching driver notifications:", error);
+        logError("NotificationBell", error);
         setLoading(false);
       }
     );
@@ -120,7 +121,7 @@ export default function NotificationBell({
       setNotifications(notifs);
       updateUnreadCount();
     } catch (error) {
-      console.error("Error fetching notifications:", error);
+      logError("NotificationBell", error);
     } finally {
       setLoading(false);
     }
@@ -150,7 +151,7 @@ export default function NotificationBell({
         fetchNotifications();
       }
     } catch (error) {
-      console.error("Error marking as read:", error);
+      logError("NotificationBell", error);
     }
   }
 
@@ -169,7 +170,7 @@ export default function NotificationBell({
       await markAllAsRead(driverId);
       fetchNotifications();
     } catch (error) {
-      console.error("Error marking all as read:", error);
+      logError("NotificationBell", error);
     }
   }
 
@@ -216,7 +217,7 @@ export default function NotificationBell({
   function getNotificationColor(type: Notification["type"]) {
     switch (type) {
       case "payment_verified":
-        return "bg-green-50 border-green-200";
+        return "bg-primary-50 border-primary-200";
       case "payment_rejected":
         return "bg-red-50 border-red-200";
       case "subscription_expiring":
@@ -246,7 +247,7 @@ export default function NotificationBell({
         if (unreadCount > 0) fetchNotifications();
       }
     } catch (error) {
-      console.error("Error deleting notification:", error);
+      logError("NotificationBell", error);
     }
   }
 
@@ -287,7 +288,7 @@ export default function NotificationBell({
               {unreadCount > 0 && (
                 <button
                   onClick={handleMarkAllAsRead}
-                  className="text-sm text-green-600 hover:text-green-700 font-medium"
+                  className="text-sm text-primary-600 hover:text-primary-700 font-medium"
                 >
                   Mark all read
                 </button>
@@ -377,7 +378,7 @@ export default function NotificationBell({
                                     // Always call handleNotificationClick which will use onNotificationClick if provided
                                     handleNotificationClick(notification, true);
                                   }}
-                                  className="flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-md text-xs font-bold hover:bg-green-200 transition"
+                                  className="flex items-center gap-1 px-3 py-1.5 bg-primary-100 text-primary-700 rounded-md text-xs font-bold hover:bg-primary-200 transition"
                                 >
                                   <MapPin className="w-3 h-3" />
                                   View Customer Details
@@ -446,7 +447,7 @@ export default function NotificationBell({
                                     notification.metadata!.customerPhone!
                                   )
                                 }
-                                className="flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-md text-xs font-bold hover:bg-green-200 transition"
+                                className="flex items-center gap-1 px-3 py-1.5 bg-primary-100 text-primary-700 rounded-md text-xs font-bold hover:bg-primary-200 transition"
                               >
                                 <Phone className="w-3 h-3" />
                                 Call Customer

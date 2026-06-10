@@ -23,7 +23,7 @@ export default function DriverDashboardWrapper() {
         <div className="relative">
           <button
             onClick={() => setNotificationsOpen(!notificationsOpen)}
-            className="relative p-2 bg-green-600 hover:bg-green-700 rounded-full transition"
+            className="relative p-2 bg-primary-600 hover:bg-primary-700 rounded-full transition"
             aria-label="Driver Notifications"
           >
             <Bell className="w-5 h-5 text-white" />

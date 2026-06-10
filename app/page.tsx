@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -23,6 +23,7 @@ import {
   Copy,
   Share2,
   Users,
+  ChevronRight,
 } from "lucide-react";
 import BookingForm from "@/components/BookingForm";
 import DriverCard from "@/components/DriverCard";
@@ -62,6 +63,10 @@ const MOCK_DRIVERS: { driver: Driver; vehicle: Vehicle }[] = [
           type: "sedan",
           active: true,
           baseFare: 450,
+          status: "active",
+          dailyRate: 3500,
+          securityDeposit: 5000,
+          availability: [],
         },
       ],
       createdAt: Timestamp.now(), // Use Firebase's Timestamp
@@ -89,6 +94,10 @@ const MOCK_DRIVERS: { driver: Driver; vehicle: Vehicle }[] = [
       type: "sedan",
       active: true,
       baseFare: 450,
+      status: "active",
+      dailyRate: 3500,
+      securityDeposit: 5000,
+      availability: [],
     },
   },
   {
@@ -115,6 +124,10 @@ const MOCK_DRIVERS: { driver: Driver; vehicle: Vehicle }[] = [
           type: "sedan",
           active: true,
           baseFare: 1200,
+          status: "active",
+          dailyRate: 3500,
+          securityDeposit: 5000,
+          availability: [],
         },
       ],
       createdAt: Timestamp.now(), // Use Firebase's Timestamp
@@ -142,6 +155,10 @@ const MOCK_DRIVERS: { driver: Driver; vehicle: Vehicle }[] = [
       type: "sedan",
       active: true,
       baseFare: 1200,
+      status: "active",
+      dailyRate: 3500,
+      securityDeposit: 5000,
+      availability: [],
     },
   },
   {
@@ -168,6 +185,10 @@ const MOCK_DRIVERS: { driver: Driver; vehicle: Vehicle }[] = [
           type: "van",
           active: true,
           baseFare: 2500,
+          status: "active",
+          dailyRate: 3500,
+          securityDeposit: 5000,
+          availability: [],
         },
       ],
       createdAt: Timestamp.now(), // Use Firebase's Timestamp
@@ -197,6 +218,10 @@ const MOCK_DRIVERS: { driver: Driver; vehicle: Vehicle }[] = [
       type: "van",
       active: true,
       baseFare: 2500,
+      status: "active",
+      dailyRate: 3500,
+      securityDeposit: 5000,
+      availability: [],
     },
   },
 ];
@@ -208,6 +233,17 @@ export default function Home() {
 
   // Hide available drivers section from logged-in drivers
   const showAvailableDrivers = !userProfile || userProfile.role !== "driver";
+
+  // Role-based redirection for logged-in partners
+  useEffect(() => {
+    if (userProfile?.role === "driver") {
+      router.push("/driver/dashboard");
+    } else if (userProfile?.role === "car_hire") {
+      router.push("/vendor/dashboard");
+    } else if (userProfile?.role === "admin") {
+      router.push("/admin/panel");
+    }
+  }, [userProfile, router]);
 
   const handleBookClick = (type: string) => {
     if (!user) {
@@ -242,9 +278,9 @@ export default function Home() {
       >
         {/* Background Gradient Shapes */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-20 right-10 w-96 h-96 bg-purple-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
-          <div className="absolute top-40 left-10 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
-          <div className="absolute -bottom-8 left-20 w-96 h-96 bg-purple-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
+          <div className="absolute top-20 right-10 w-96 h-96 bg-primary-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
+          <div className="absolute top-40 left-10 w-96 h-96 bg-primary-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+          <div className="absolute -bottom-8 left-20 w-96 h-96 bg-primary-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto w-full">
@@ -252,7 +288,7 @@ export default function Home() {
           <div className="text-center mb-12 md:mb-16">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-gray-900 leading-tight">
               Your Neighborhood Taxi{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-primary-400">
                 Just Around The Corner
               </span>
             </h1>
@@ -327,8 +363,8 @@ export default function Home() {
               className="hidden lg:block absolute bottom-16 left-0 md:-left-12 lg:-left-20 bg-white rounded-2xl p-5 shadow-2xl transform hover:scale-110 transition-all z-30 w-44 border border-gray-100 cursor-pointer"
               style={{ transform: "rotate(-5deg)" }}
             >
-              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mb-3">
-                <Users className="w-5 h-5 text-purple-600" />
+              <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center mb-3">
+                <Users className="w-5 h-5 text-primary-600" />
               </div>
               <div className="text-xl font-bold text-gray-900 mb-1">
                 Available
@@ -342,8 +378,8 @@ export default function Home() {
               className="hidden lg:block absolute bottom-12 right-0 md:-right-12 lg:-right-20 bg-white rounded-2xl p-5 shadow-2xl transform hover:scale-110 transition-all z-30 w-44 border border-gray-100 cursor-pointer"
               style={{ transform: "rotate(7deg)" }}
             >
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mb-3">
-                <Share2 className="w-5 h-5 text-green-600" />
+              <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center mb-3">
+                <Share2 className="w-5 h-5 text-primary-600" />
               </div>
               <div className="text-xl font-bold text-gray-900 mb-1">Invite</div>
               <div className="text-xs font-semibold text-gray-700">Friends</div>
@@ -423,6 +459,7 @@ export default function Home() {
                   src="/images/service-standard.png"
                   alt="Standard Taxi"
                   fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   className="object-cover"
                 />
               </div>
@@ -431,7 +468,7 @@ export default function Home() {
                   <h3 className="text-xl font-bold text-gray-900">
                     Standard Taxi
                   </h3>
-                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold">
+                  <span className="bg-primary-100 text-primary-800 px-2 py-1 rounded-full text-xs font-semibold">
                     Available
                   </span>
                 </div>
@@ -458,6 +495,7 @@ export default function Home() {
                   src="/images/service-executive.png"
                   alt="Executive Ride"
                   fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   className="object-cover"
                 />
               </div>
@@ -466,7 +504,7 @@ export default function Home() {
                   <h3 className="text-xl font-bold text-gray-900">
                     Executive Ride
                   </h3>
-                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold">
+                  <span className="bg-primary-100 text-primary-800 px-2 py-1 rounded-full text-xs font-semibold">
                     Available
                   </span>
                 </div>
@@ -493,6 +531,7 @@ export default function Home() {
                   src="/images/service-group.png"
                   alt="Group Transport"
                   fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   className="object-cover"
                 />
               </div>
@@ -501,7 +540,7 @@ export default function Home() {
                   <h3 className="text-xl font-bold text-gray-900">
                     Group Transport
                   </h3>
-                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold">
+                  <span className="bg-primary-100 text-primary-800 px-2 py-1 rounded-full text-xs font-semibold">
                     Available
                   </span>
                 </div>
@@ -518,6 +557,48 @@ export default function Home() {
                     className="text-gray-900 hover:text-gray-700 font-semibold flex items-center"
                   >
                     Book <span className="ml-1 text-xs">→</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Car Hire & Self-Drive Service */}
+            <div className="bg-white rounded-2xl shadow-md overflow-hidden transition duration-300 border border-gray-100 hover:border-gray-300 hover:shadow-xl flex flex-col">
+              <div className="h-48 bg-gray-900 relative">
+                <Image
+                  src="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?q=80&w=2070&auto=format&fit=crop"
+                  alt="Car Hire"
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  className="object-cover opacity-80"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
+                  <span className="bg-amber-400 text-black px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+                    NEW SERVICE
+                  </span>
+                </div>
+              </div>
+              <div className="p-6 flex flex-col flex-grow">
+                <div className="flex justify-between items-start mb-3">
+                  <h3 className="text-xl font-bold text-gray-900">
+                    Car Hire & Rentals
+                  </h3>
+                  <span className="bg-primary-100 text-primary-800 px-2 py-1 rounded-full text-xs font-semibold">
+                    Fleet Ready
+                  </span>
+                </div>
+                <p className="text-gray-600 mb-4 flex-grow">
+                  Self-drive or chauffeur-driven long-term rentals. Choose from our vendor fleet of SUVs, Sedans, and Pickups.
+                </p>
+                <div className="flex justify-between items-center mt-auto">
+                  <span className="font-bold text-gray-900">
+                    Daily Rates from KES 3,500
+                  </span>
+                  <button
+                    onClick={() => router.push("/hire")}
+                    className="text-primary-600 hover:text-primary-700 font-bold flex items-center gap-1"
+                  >
+                    View Fleet <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
               </div>
@@ -680,6 +761,7 @@ export default function Home() {
                   src="/images/about-us.png"
                   alt="About TaxiTao"
                   fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
                   priority
                   unoptimized
                   className="object-cover object-center"

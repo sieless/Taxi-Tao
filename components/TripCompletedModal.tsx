@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from 'react';
-import { X, Star, DollarSign, CheckCircle } from 'lucide-react';
+import { X, Star, Wallet, CheckCircle } from 'lucide-react';
 import RatingComponent from './RatingComponent';
 
+
+import { logError } from "@/lib/logger";
 interface TripCompletedModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -45,7 +47,7 @@ export default function TripCompletedModal({
         setReview('');
       }, 2000);
     } catch (error) {
-      console.error('Failed to submit rating:', error);
+      logError("TripCompletedModal", error);
       alert('Failed to submit rating. Please try again.');
     } finally {
       setSubmitting(false);
@@ -71,8 +73,8 @@ export default function TripCompletedModal({
         <div className="p-6 space-y-6">
           {/* Success Icon */}
           <div className="flex justify-center">
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
-              <CheckCircle className="w-12 h-12 text-green-600" />
+            <div className="w-20 h-20 bg-primary-100 rounded-full flex items-center justify-center">
+              <CheckCircle className="w-12 h-12 text-primary-600" />
             </div>
           </div>
 
@@ -80,7 +82,7 @@ export default function TripCompletedModal({
           <div className="bg-gray-50 rounded-lg p-4 text-center">
             <p className="text-sm text-gray-600 mb-1">Total Fare</p>
             <div className="flex items-center justify-center gap-2">
-              <DollarSign className="w-6 h-6 text-gray-700" />
+              <Wallet className="w-6 h-6 text-gray-700" />
               <span className="text-3xl font-bold text-gray-900">
                 KSH {fare.toFixed(2)}
               </span>
@@ -114,7 +116,7 @@ export default function TripCompletedModal({
                   value={review}
                   onChange={(e) => setReview(e.target.value)}
                   placeholder="Tell us about your experience..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
                   maxLength={500}
                 />
                 <p className="text-xs text-gray-500 text-right">
@@ -126,7 +128,7 @@ export default function TripCompletedModal({
               <button
                 onClick={handleSubmit}
                 disabled={submitting || rating === 0}
-                className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-4 px-6 rounded-lg transition flex items-center justify-center gap-2"
+                className="w-full bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-4 px-6 rounded-lg transition flex items-center justify-center gap-2"
               >
                 {submitting ? (
                   <>
@@ -143,7 +145,7 @@ export default function TripCompletedModal({
             </>
           ) : (
             <div className="text-center py-8">
-              <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
+              <CheckCircle className="w-16 h-16 text-primary-600 mx-auto mb-4" />
               <h3 className="text-xl font-bold text-gray-900 mb-2">
                 Thank You!
               </h3>

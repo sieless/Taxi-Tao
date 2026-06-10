@@ -8,7 +8,8 @@ import { BookingRequest } from "@/lib/types";
 import { Calendar, MapPin, Clock, Star, Loader2, User, Car } from "lucide-react";
 import { Timestamp } from "firebase/firestore";
 
-export default function DriverHistoryPage() {
+
+import { logError } from "@/lib/logger";export default function DriverHistoryPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [bookings, setBookings] = useState<BookingRequest[]>([]);
@@ -51,7 +52,7 @@ export default function DriverHistoryPage() {
       const history = allBookings.filter(b => b.status === 'completed');
       setBookings(history);
     } catch (error) {
-      console.error("Error loading history:", error);
+      logError("page", error);
     } finally {
       setLoading(false);
     }
@@ -70,7 +71,7 @@ export default function DriverHistoryPage() {
   if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="w-12 h-12 animate-spin text-green-600" />
+        <Loader2 className="w-12 h-12 animate-spin text-primary-600" />
       </div>
     );
   }
@@ -85,7 +86,7 @@ export default function DriverHistoryPage() {
           </div>
           <button
             onClick={() => router.push("/customer/bookings")}
-            className="text-green-600 hover:text-green-700 font-medium"
+            className="text-primary-600 hover:text-primary-700 font-medium"
           >
             View All Bookings
           </button>
@@ -100,7 +101,7 @@ export default function DriverHistoryPage() {
         ) : (
           <div className="grid gap-6">
             {bookings.map((booking) => (
-              <div key={booking.id} className="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
+              <div key={booking.id} className="bg-white rounded-xl shadow-md p-6 border-l-4 border-primary-500">
                 <div className="flex flex-col md:flex-row justify-between gap-6">
                   {/* Trip Details */}
                   <div className="flex-1">
@@ -114,7 +115,7 @@ export default function DriverHistoryPage() {
 
                     <div className="space-y-3">
                       <div className="flex items-start gap-3">
-                        <div className="w-2 h-2 rounded-full bg-green-500 mt-2"></div>
+                        <div className="w-2 h-2 rounded-full bg-primary-500 mt-2"></div>
                         <div>
                           <p className="text-xs text-gray-500 uppercase font-bold">From</p>
                           <p className="font-medium text-gray-800">{booking.pickupLocation}</p>
@@ -156,7 +157,7 @@ export default function DriverHistoryPage() {
                     {booking.fare && (
                       <div className="mt-4 pt-4 border-t border-gray-200">
                         <p className="text-xs text-gray-500">Total Fare</p>
-                        <p className="text-lg font-bold text-green-600">KES {booking.fare.toLocaleString()}</p>
+                        <p className="text-lg font-bold text-primary-600">KES {booking.fare.toLocaleString()}</p>
                       </div>
                     )}
                   </div>

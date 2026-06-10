@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getDriverPricing, subscribeToDriverPricing } from '../lib/pricing-service';
-import { MapPin, DollarSign, ArrowRight, Loader2, Navigation } from 'lucide-react';
+import { MapPin, Wallet, ArrowRight, Loader2, Navigation } from 'lucide-react';
 
 interface RouteEntry {
   routeKey: string;
@@ -96,7 +96,7 @@ export default function DriverRoutePricing({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2 className="w-6 h-6 animate-spin text-green-600" />
+        <Loader2 className="w-6 h-6 animate-spin text-primary-600" />
       </div>
     );
   }
@@ -114,7 +114,7 @@ export default function DriverRoutePricing({
     <div className="space-y-4">
       {showTitle && (
         <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-          <DollarSign className="w-5 h-5 text-green-600" />
+          <Wallet className="w-5 h-5 text-primary-600" />
           Route Pricing
         </h3>
       )}
@@ -127,14 +127,14 @@ export default function DriverRoutePricing({
             placeholder="From..."
             value={searchFrom}
             onChange={(e) => setSearchFrom(e.target.value)}
-            className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           />
           <input
             type="text"
             placeholder="To..."
             value={searchTo}
             onChange={(e) => setSearchTo(e.target.value)}
-            className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           />
         </div>
       )}
@@ -150,13 +150,13 @@ export default function DriverRoutePricing({
               className={`flex items-center justify-between ${
                 compactView 
                   ? 'p-3 bg-gray-50 rounded-lg' 
-                  : 'p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-green-300 transition-colors'
+                  : 'p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-primary-300 transition-colors'
               }`}
             >
               <div className="flex items-center gap-3 flex-1">
                 {!compactView && (
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <MapPin className="w-4 h-4 text-green-600" />
+                  <div className="p-2 bg-primary-100 rounded-lg">
+                    <MapPin className="w-4 h-4 text-primary-600" />
                   </div>
                 )}
                 <div className="flex-1">
@@ -177,10 +177,10 @@ export default function DriverRoutePricing({
                   )}
                 </div>
               </div>
-              <div className={`flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white rounded-lg font-bold ${
+              <div className={`flex items-center gap-1 px-3 py-1.5 bg-primary-600 text-white rounded-lg font-bold ${
                 compactView ? 'text-xs' : 'text-sm'
               }`}>
-                <DollarSign className={compactView ? 'w-3 h-3' : 'w-4 h-4'} />
+                <Wallet className={compactView ? 'w-3 h-3' : 'w-4 h-4'} />
                 <span>{route.price.toLocaleString()}</span>
               </div>
             </div>

@@ -3,6 +3,8 @@
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { db } from './firebase';
 
+
+import { logError } from "@/lib/logger";
 /**
  * Create a notification for a customer
  */
@@ -24,7 +26,7 @@ export async function createNotification(
       metadata: metadata || null
     });
   } catch (error) {
-    console.error('Error creating notification:', error);
+    logError("notification", error);
   }
 }
 

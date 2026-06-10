@@ -25,6 +25,10 @@ import {
   ChevronDown,
   AlertTriangle,
   CheckCircle,
+  Briefcase,
+  TrendingUp,
+  Wallet,
+  Award,
 } from "lucide-react";
 import { getAvailableBookings, acceptBooking } from "@/lib/booking-service";
 import { uploadCarPhoto, uploadProfilePhoto } from "@/lib/image-upload";
@@ -49,10 +53,11 @@ import Logo from "@/components/Logo";
 import DriverPricingManager from "@/components/DriverPricingManager";
 import ServicePackagesConfig from "@/components/ServicePackagesConfig";
 import CustomerDetailsModal from "@/components/CustomerDetailsModal";
-import { DollarSign, TrendingUp, Briefcase, Settings, Banana } from "lucide-react";
+import { Settings } from "lucide-react";
 import { KENYA_COUNTIES } from "@/lib/kenya-locations";
 
-export default function DriverDashboard() {
+
+import { logError } from "@/lib/logger";export default function DriverDashboard() {
   const { user, userProfile, logout, loading: authLoading } = useAuth();
   const router = useRouter();
   const [driver, setDriver] = useState<Driver | null>(null);
@@ -141,6 +146,8 @@ export default function DriverDashboard() {
         router.push("/admin/panel");
       } else if (userProfile.role === "customer") {
         router.push("/");
+      } else if (userProfile.role === "car_hire") {
+        router.push("/vendor/dashboard");
       }
     }
   }, [user, userProfile, authLoading, router]);
@@ -176,7 +183,7 @@ export default function DriverDashboard() {
             }
           }
         } catch (error) {
-          console.error("Error fetching driver data:", error);
+          logError("page", error);
         }
       }
       setLoading(false);
@@ -189,13 +196,13 @@ export default function DriverDashboard() {
 
   // Real-time listener for available rides
   useEffect(() => {
-    if (!driver?.currentLocation) return;
+    if (!driver?.id) return;
 
     setRidesLoading(true);
     const q = query(
       collection(db, "bookingRequests"),
-      where("status", "in", ["pending", "negotiating"]), // Catch both new and active negotiations
-      where("pickupRegion", "==", driver.currentLocation)
+      where("status", "in", ["searching", "offered", "price_pending"]),
+      where("notifiedDrivers", "array-contains", driver.id)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -207,7 +214,7 @@ export default function DriverDashboard() {
       setNewRequestsCount(snapshot.size);
       setRidesLoading(false);
     }, (error) => {
-      console.error("Error listening for rides:", error);
+      logError("page", error);
       setRidesLoading(false);
     });
 
@@ -240,7 +247,7 @@ export default function DriverDashboard() {
       setEarningsData(history);
       setActiveTripsCount(activeTrips);
     } catch (error) {
-      console.error("Error fetching statistics:", error);
+      logError("page", error);
     } finally {
       setStatsLoading(false);
     }
@@ -249,7 +256,6 @@ export default function DriverDashboard() {
   async function fetchRides() {
     // No longer needed as we use onSnapshot, but keeping the name for potential compatibility
     // if other parts of the UI still want to "trigger" a refresh (which will happen anyway)
-    console.log("Rides are now updated in real-time via onSnapshot");
   }
 
   async function updateLocation(newLocation: string) {
@@ -263,7 +269,7 @@ export default function DriverDashboard() {
         prev ? { ...prev, currentLocation: newLocation } : null
       );
     } catch (error) {
-      console.error("Error updating location:", error);
+      logError("page", error);
       alert("Failed to update location.");
     } finally {
       setLocationUpdating(false);
@@ -283,7 +289,7 @@ export default function DriverDashboard() {
         fetchRides();
       }
     } catch (error) {
-      console.error("Error accepting ride:", error);
+      logError("page", error);
       alert("Failed to accept ride.");
     }
   }
@@ -313,7 +319,7 @@ export default function DriverDashboard() {
           const result = await uploadProfilePhoto(selectedImage);
           photoUrl = result.url;
         } catch (uploadError: any) {
-          console.error("Error uploading to Firebase:", uploadError);
+          logError("page", uploadError);
           alert(`Failed to upload image: ${uploadError.message}`);
           setUploading(false);
           setSaving(false);
@@ -355,7 +361,7 @@ export default function DriverDashboard() {
       setPreviewUrl(null);
       alert("Profile updated successfully!");
     } catch (error: any) {
-      console.error("Error updating profile:", error);
+      logError("page", error);
       if (error?.code === "permission-denied" || error?.message?.includes("permission")) {
         alert("Permission denied. Please verify your email address to update your profile.");
       } else {
@@ -390,7 +396,7 @@ export default function DriverDashboard() {
           const result = await uploadCarPhoto(selectedCarImage);
           carPhotoUrl = result.url;
         } catch (uploadError: any) {
-          console.error("Error uploading car photo:", uploadError);
+          logError("page", uploadError);
           alert(`Failed to upload car photo: ${uploadError.message}`);
           setUploading(false);
           setSaving(false);
@@ -435,7 +441,7 @@ export default function DriverDashboard() {
       setCarPreviewUrl(null);
       alert("Vehicle updated successfully!");
     } catch (error) {
-      console.error("Error updating vehicle:", error);
+      logError("page", error);
       alert("Failed to update vehicle.");
     } finally {
       setSaving(false);
@@ -453,7 +459,7 @@ export default function DriverDashboard() {
       });
       setDriver((prev) => (prev ? { ...prev, status: newStatus } : null));
     } catch (error) {
-      console.error("Error updating status:", error);
+      logError("page", error);
       alert("Failed to update status.");
     }
   };
@@ -463,20 +469,34 @@ export default function DriverDashboard() {
       await logout();
       router.push("/login");
     } catch (error) {
-      console.error("Error logging out:", error);
+      logError("page", error);
     }
   };
 
   if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
       </div>
     );
   }
 
   if (!driver) {
-    return null;
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-6 text-center">
+        <AlertTriangle className="w-12 h-12 text-amber-500 mb-4" />
+        <h2 className="text-xl font-bold text-gray-800">Driver Profile Not Found</h2>
+        <p className="text-gray-500 mt-2 max-w-xs">
+          We couldn't locate your driver record. Please contact support or try logging in again.
+        </p>
+        <button 
+          onClick={handleLogout}
+          className="mt-6 px-6 py-2 bg-gray-900 text-white rounded-lg font-bold"
+        >
+          Sign Out
+        </button>
+      </div>
+    );
   }
 
   const mainVehicle = driver.vehicles?.[0];
@@ -500,14 +520,14 @@ export default function DriverDashboard() {
               <div className="hidden md:flex items-center gap-4">
                 <button
                   onClick={() => router.push("/driver/history")}
-                  className="flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors"
+                  className="flex items-center gap-2 text-gray-600 hover:text-primary-600 transition-colors"
                 >
                   <History className="w-5 h-5" />
                   <span>History</span>
                 </button>
                 <button
                   onClick={() => router.push("/driver/settings")}
-                  className="flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors"
+                  className="flex items-center gap-2 text-gray-600 hover:text-primary-600 transition-colors"
                 >
                   <Settings className="w-5 h-5" />
                   <span>Settings</span>
@@ -516,7 +536,7 @@ export default function DriverDashboard() {
                   <span
                     className={`text-sm font-medium ${
                       driver?.status === "available"
-                        ? "text-green-600"
+                        ? "text-primary-600"
                         : "text-gray-500"
                     }`}
                   >
@@ -526,7 +546,7 @@ export default function DriverDashboard() {
                     onClick={toggleStatus}
                     className={`transition-colors ${
                       driver?.status === "available"
-                        ? "text-green-600"
+                        ? "text-primary-600"
                         : "text-gray-400"
                     }`}
                   >
@@ -570,7 +590,7 @@ export default function DriverDashboard() {
                       </p>
                       <p className="text-xs text-gray-500">{driver.phone}</p>
                     </div>
-                    <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center border-2 border-green-500 overflow-hidden">
+                    <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center border-2 border-primary-500 overflow-hidden">
                       {driver.profilePhotoUrl ? (
                         <img
                           src={driver.profilePhotoUrl}
@@ -578,7 +598,7 @@ export default function DriverDashboard() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <User className="w-6 h-6 text-green-700" />
+                        <User className="w-6 h-6 text-primary-700" />
                       )}
                     </div>
                     <ChevronDown
@@ -634,7 +654,7 @@ export default function DriverDashboard() {
                           }}
                           className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors text-left"
                         >
-                          <div className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
+                          <div className="w-8 h-8 rounded-full bg-primary-50 flex items-center justify-center text-primary-600">
                             <Settings className="w-4 h-4" />
                           </div>
                           <span className="text-sm font-medium">Settings</span>
@@ -671,7 +691,7 @@ export default function DriverDashboard() {
                   <span
                     className={`text-xs font-medium ${
                       driver?.status === "available"
-                        ? "text-green-600"
+                        ? "text-primary-600"
                         : "text-gray-500"
                     }`}
                   >
@@ -681,7 +701,7 @@ export default function DriverDashboard() {
                     onClick={toggleStatus}
                     className={`transition-colors ${
                       driver?.status === "available"
-                        ? "text-green-600"
+                        ? "text-primary-600"
                         : "text-gray-400"
                     }`}
                   >
@@ -764,7 +784,7 @@ export default function DriverDashboard() {
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left: Profile Photo & Personal Info */}
             <div className="flex flex-col items-center lg:items-start gap-4 flex-shrink-0 w-full lg:w-auto">
-              <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden border-4 border-green-500">
+              <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden border-4 border-primary-500">
                 {driver.profilePhotoUrl ? (
                   <img
                     src={driver.profilePhotoUrl}
@@ -800,7 +820,7 @@ export default function DriverDashboard() {
               {/* Vehicle Info */}
               <div className="bg-gray-50 rounded-lg p-4">
                 <h3 className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                  <Car className="w-4 h-4 text-green-600" />
+                  <Car className="w-4 h-4 text-primary-600" />
                   Vehicle
                 </h3>
                 {mainVehicle ? (
@@ -835,7 +855,7 @@ export default function DriverDashboard() {
                     <p className="text-xs text-gray-500 mb-2">No vehicle</p>
                     <button
                       onClick={() => setIsEditingVehicle(true)}
-                      className="px-3 py-1.5 bg-green-600 text-white rounded text-xs hover:bg-green-700 transition"
+                      className="px-3 py-1.5 bg-primary-600 text-white rounded text-xs hover:bg-primary-700 transition"
                     >
                       Add Vehicle
                     </button>
@@ -852,7 +872,7 @@ export default function DriverDashboard() {
                     <span
                       className={`font-medium capitalize ${
                         driver.subscriptionStatus === "active"
-                          ? "text-green-600"
+                          ? "text-primary-600"
                           : "text-red-600"
                       }`}
                     >
@@ -864,7 +884,7 @@ export default function DriverDashboard() {
                     <span
                       className={`font-medium ${
                         driver.isVisibleToPublic
-                          ? "text-green-600"
+                          ? "text-primary-600"
                           : "text-gray-600"
                       }`}
                     >
@@ -876,7 +896,7 @@ export default function DriverDashboard() {
                     <span
                       className={`font-medium capitalize ${
                         driver.status === "available"
-                          ? "text-green-600"
+                          ? "text-primary-600"
                           : "text-gray-600"
                       }`}
                     >
@@ -894,7 +914,7 @@ export default function DriverDashboard() {
                     className={`w-full mt-2 px-3 py-1.5 rounded text-xs transition ${
                       !user?.emailVerified
                         ? "bg-yellow-500 hover:bg-yellow-600 text-white"
-                        : "bg-green-600 hover:bg-green-700 text-white"
+                        : "bg-primary-600 hover:bg-primary-700 text-white"
                     }`}
                   >
                     {!user?.emailVerified
@@ -949,9 +969,9 @@ export default function DriverDashboard() {
           )}
 
           <div className="flex items-center gap-3">
-            <MapPin className="w-5 h-5 text-green-600" />
+            <MapPin className="w-5 h-5 text-primary-600" />
             <select
-              className={`flex-1 p-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+              className={`flex-1 p-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
                 !driver.currentLocation
                   ? "border-yellow-400 bg-yellow-50"
                   : "border-gray-300"
@@ -972,7 +992,7 @@ export default function DriverDashboard() {
 
           {/* Location set confirmation */}
           {driver.currentLocation && (
-            <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
+            <p className="text-xs text-primary-600 mt-2 flex items-center gap-1">
               <CheckCircle className="w-3 h-3" />
               You're receiving requests for {driver.currentLocation}
             </p>
@@ -1005,7 +1025,7 @@ export default function DriverDashboard() {
               <h3 className="text-sm font-semibold text-gray-600">
                 Active Trips
               </h3>
-              <Car className="w-5 h-5 text-green-600" />
+              <Car className="w-5 h-5 text-primary-600" />
             </div>
             {statsLoading ? (
               <div className="h-8 bg-gray-200 rounded animate-pulse"></div>
@@ -1023,7 +1043,7 @@ export default function DriverDashboard() {
               <h3 className="text-sm font-semibold text-gray-600">
                 Today's Earnings
               </h3>
-              <DollarSign className="w-5 h-5 text-purple-600" />
+              <Wallet className="w-5 h-5 text-primary-600" />
             </div>
             {statsLoading ? (
               <div className="h-8 bg-gray-200 rounded animate-pulse"></div>
@@ -1095,21 +1115,21 @@ export default function DriverDashboard() {
               onClick={() => setIsPricingOpen(true)}
               className="flex flex-col items-center gap-2 p-4 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition"
             >
-              <DollarSign className="w-6 h-6 text-indigo-600" />
+              <Wallet className="w-6 h-6 text-indigo-600" />
               <span className="text-sm font-medium text-gray-700">Pricing</span>
             </button>
             <button
               onClick={() => router.push("/driver/marketing-poster")}
               className="flex flex-col items-center gap-2 p-4 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition border border-yellow-200"
             >
-              <Banana className="w-6 h-6 text-yellow-600" />
+              <Award className="w-6 h-6 text-yellow-600" />
               <span className="text-sm font-medium text-gray-700">Poster</span>
             </button>
             <button
               onClick={() => router.push("/driver/history")}
-              className="flex flex-col items-center gap-2 p-4 bg-green-50 hover:bg-green-100 rounded-lg transition"
+              className="flex flex-col items-center gap-2 p-4 bg-primary-50 hover:bg-primary-100 rounded-lg transition"
             >
-              <History className="w-6 h-6 text-green-600" />
+              <History className="w-6 h-6 text-primary-600" />
               <span className="text-sm font-medium text-gray-700">
                 View History
               </span>
@@ -1127,9 +1147,9 @@ export default function DriverDashboard() {
               href="https://wa.me/254710450640"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex flex-col items-center gap-2 p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition"
+              className="flex flex-col items-center gap-2 p-4 bg-primary-50 hover:bg-primary-100 rounded-lg transition"
             >
-              <Phone className="w-6 h-6 text-purple-600" />
+              <Phone className="w-6 h-6 text-primary-600" />
               <span className="text-sm font-medium text-gray-700">Support</span>
             </a>
             <button
@@ -1151,12 +1171,12 @@ export default function DriverDashboard() {
             <div className="bg-white rounded-xl shadow-md p-6 mb-8">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                  <Car className="w-5 h-5 text-green-600" />
+                  <Car className="w-5 h-5 text-primary-600" />
                   Available Rides in {driver.currentLocation}
                 </h3>
                 <button
                   onClick={fetchRides}
-                  className="text-sm text-green-600 hover:text-green-700 font-medium flex items-center gap-1"
+                  className="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
                   disabled={ridesLoading}
                 >
                   <RefreshCw
@@ -1181,17 +1201,28 @@ export default function DriverDashboard() {
                   {availableRides.map((ride) => (
                     <div
                       key={ride.id}
-                      className="border border-green-100 rounded-lg p-4 hover:shadow-md transition"
+                      className="border border-primary-100 rounded-lg p-4 hover:shadow-md transition"
                     >
                       <div className="flex items-start gap-3 mb-3">
-                        <div className="p-2 bg-green-50 rounded-lg">
-                          <User className="w-4 h-4 text-green-600" />
+                        <div className="p-2 bg-primary-50 rounded-lg">
+                          <User className="w-4 h-4 text-primary-600" />
                         </div>
-                        <div>
-                          <h4 className="font-bold text-gray-800">
-                            {ride.customerName}
-                          </h4>
-                          <p className="text-sm text-gray-500 flex items-center gap-1">
+                        <div className="flex-1 w-full">
+                          <div className="flex justify-between items-start">
+                            <h4 className="font-bold text-gray-800">
+                              {ride.customerName}
+                            </h4>
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                              ride.status === 'searching' ? 'bg-blue-100 text-blue-700' :
+                              ride.status === 'price_pending' ? 'bg-orange-100 text-orange-700' :
+                              'bg-primary-100 text-primary-700'
+                            }`}>
+                              {ride.status === 'searching' ? 'New Request' :
+                               ride.status === 'price_pending' ? 'Negotiating' :
+                               ride.status}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-500 flex items-center gap-1 mt-0.5">
                             <Phone className="w-3 h-3" /> {ride.customerPhone}
                           </p>
                         </div>
@@ -1199,7 +1230,7 @@ export default function DriverDashboard() {
 
                       <div className="space-y-2 mb-4">
                         <div className="flex items-start gap-2 text-sm">
-                          <div className="w-2 h-2 rounded-full bg-green-500 mt-1.5"></div>
+                          <div className="w-2 h-2 rounded-full bg-primary-500 mt-1.5"></div>
                           <div>
                             <p className="text-xs text-gray-500 uppercase font-bold">
                               Pickup
@@ -1227,7 +1258,7 @@ export default function DriverDashboard() {
 
                       <button
                         onClick={() => handleAcceptRide(ride.id)}
-                        className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg transition"
+                        className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 rounded-lg transition"
                       >
                         Accept Ride
                       </button>
@@ -1253,7 +1284,7 @@ export default function DriverDashboard() {
               <p
                 className={`text-xl font-bold ${
                   driver.subscriptionStatus === "active"
-                    ? "text-green-600"
+                    ? "text-primary-600"
                     : "text-red-600"
                 }`}
               >
@@ -1298,7 +1329,7 @@ export default function DriverDashboard() {
               </p>
               <p
                 className={`text-xl font-bold ${
-                  driver.isVisibleToPublic ? "text-green-600" : "text-red-600"
+                  driver.isVisibleToPublic ? "text-primary-600" : "text-red-600"
                 }`}
               >
                 {driver.isVisibleToPublic ? "Public" : "Hidden"}
@@ -1307,15 +1338,15 @@ export default function DriverDashboard() {
           </div>
 
           {/* M-Pesa Till Section */}
-          <div className="mt-6 p-4 bg-green-50 border-l-4 border-green-600 rounded-lg">
+          <div className="mt-6 p-4 bg-primary-50 border-l-4 border-primary-600 rounded-lg">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
                 <p className="text-sm font-semibold text-gray-700 mb-1">
                   Pay via M-Pesa Till
                 </p>
                 <div className="flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-green-600" />
-                  <p className="text-2xl font-bold text-green-700">7323090</p>
+                  <Phone className="w-4 h-4 text-primary-600" />
+                  <p className="text-2xl font-bold text-primary-700">7323090</p>
                 </div>
                 <p className="text-xs text-gray-600 mt-1">
                   Account Name: Titus Kipkirui
@@ -1325,7 +1356,7 @@ export default function DriverDashboard() {
                 href="https://wa.me/254710450640"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors text-sm"
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors text-sm"
               >
                 Contact Support
               </a>
@@ -1418,7 +1449,7 @@ export default function DriverDashboard() {
                       onChange={(e) =>
                         setEditForm({ ...editForm, name: e.target.value })
                       }
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       required
                     />
                   </div>
@@ -1433,7 +1464,7 @@ export default function DriverDashboard() {
                       onChange={(e) =>
                         setEditForm({ ...editForm, phone: e.target.value })
                       }
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       required
                     />
                   </div>
@@ -1451,7 +1482,7 @@ export default function DriverDashboard() {
                           businessLocation: e.target.value,
                         })
                       }
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       placeholder="e.g., Nairobi CBD"
                     />
                   </div>
@@ -1471,7 +1502,7 @@ export default function DriverDashboard() {
                     <button
                       type="submit"
                       disabled={saving || uploading}
-                      className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+                      className="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
                     >
                       {(saving || uploading) && (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -1552,7 +1583,7 @@ export default function DriverDashboard() {
                             make: e.target.value,
                           })
                         }
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         placeholder="e.g., Toyota"
                         required
                       />
@@ -1571,7 +1602,7 @@ export default function DriverDashboard() {
                             model: e.target.value,
                           })
                         }
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         placeholder="e.g., Corolla"
                         required
                       />
@@ -1590,7 +1621,7 @@ export default function DriverDashboard() {
                             year: e.target.value,
                           })
                         }
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         placeholder="e.g., 2020"
                         required
                       />
@@ -1609,7 +1640,7 @@ export default function DriverDashboard() {
                             plate: e.target.value,
                           })
                         }
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         placeholder="e.g., KAA 123B"
                         required
                       />
@@ -1628,7 +1659,7 @@ export default function DriverDashboard() {
                             color: e.target.value,
                           })
                         }
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         placeholder="e.g., White"
                         required
                       />
@@ -1646,7 +1677,7 @@ export default function DriverDashboard() {
                             type: e.target.value as any,
                           })
                         }
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         required
                       >
                         <option value="sedan">Sedan</option>
@@ -1673,7 +1704,7 @@ export default function DriverDashboard() {
                     <button
                       type="submit"
                       disabled={saving || uploading}
-                      className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+                      className="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
                     >
                       {(saving || uploading) && (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -1696,7 +1727,7 @@ export default function DriverDashboard() {
                       onChange={(e) =>
                         setEditForm({ ...editForm, phone: e.target.value })
                       }
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       required
                     />
                   </div>
@@ -1714,7 +1745,7 @@ export default function DriverDashboard() {
                           businessLocation: e.target.value,
                         })
                       }
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       placeholder="e.g., Nairobi CBD"
                     />
                   </div>
@@ -1734,7 +1765,7 @@ export default function DriverDashboard() {
                     <button
                       type="submit"
                       disabled={saving || uploading}
-                      className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+                      className="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
                     >
                       {(saving || uploading) && (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -1815,7 +1846,7 @@ export default function DriverDashboard() {
                             make: e.target.value,
                           })
                         }
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         placeholder="e.g., Toyota"
                         required
                       />
@@ -1834,7 +1865,7 @@ export default function DriverDashboard() {
                             model: e.target.value,
                           })
                         }
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         placeholder="e.g., Corolla"
                         required
                       />
@@ -1853,7 +1884,7 @@ export default function DriverDashboard() {
                             year: e.target.value,
                           })
                         }
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         placeholder="e.g., 2020"
                         required
                       />
@@ -1872,7 +1903,7 @@ export default function DriverDashboard() {
                             plate: e.target.value,
                           })
                         }
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         placeholder="e.g., KAA 123B"
                         required
                       />
@@ -1891,7 +1922,7 @@ export default function DriverDashboard() {
                             color: e.target.value,
                           })
                         }
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         placeholder="e.g., White"
                         required
                       />
@@ -1909,7 +1940,7 @@ export default function DriverDashboard() {
                             type: e.target.value as any,
                           })
                         }
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         required
                       >
                         <option value="sedan">Sedan</option>
@@ -1936,7 +1967,7 @@ export default function DriverDashboard() {
                     <button
                       type="submit"
                       disabled={saving || uploading}
-                      className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+                      className="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
                     >
                       {(saving || uploading) && (
                         <Loader2 className="w-4 h-4 animate-spin" />

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Share2, Check, Copy } from "lucide-react";
 
-interface ShareTripButtonProps {
+
+import { logError } from "@/lib/logger";interface ShareTripButtonProps {
   bookingId: string;
   driverName?: string;
   vehicleDetails?: string;
@@ -28,7 +29,9 @@ export default function ShareTripButton({
           url: shareUrl,
         });
       } catch (error) {
-        console.log("Error sharing:", error);
+        if (process.env.NODE_ENV === "development") {
+          console.log("Error sharing:", error);
+        }
       }
     } else {
       // Fallback to clipboard
@@ -37,7 +40,7 @@ export default function ShareTripButton({
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       } catch (error) {
-        console.error("Failed to copy:", error);
+        logError("ShareTripButton", error);
       }
     }
   };
@@ -49,7 +52,7 @@ export default function ShareTripButton({
     >
       {copied ? (
         <>
-          <Check size={16} className="text-green-600" />
+          <Check size={16} className="text-primary-600" />
           Copied!
         </>
       ) : (

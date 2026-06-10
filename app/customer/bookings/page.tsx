@@ -21,7 +21,8 @@ import { Timestamp, doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Driver } from "@/lib/types";
 
-export default function CustomerBookingsPage() {
+
+import { logError } from "@/lib/logger";export default function CustomerBookingsPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
   const router = useRouter();
   const [bookings, setBookings] = useState<BookingRequest[]>([]);
@@ -84,7 +85,7 @@ export default function CustomerBookingsPage() {
               } as Driver);
             }
           } catch (error) {
-            console.error("Error fetching driver details:", error);
+            logError("page", error);
           }
         }
       }
@@ -123,7 +124,6 @@ export default function CustomerBookingsPage() {
       // Let's try fetching by customerId if phone is missing, or just show empty.
       // Ideally getCustomerBookings should support customerId.
       // For now, let's assume we need phone.
-      console.log("No phone number found for user");
       setLoading(false);
       return;
     }
@@ -133,7 +133,7 @@ export default function CustomerBookingsPage() {
       const customerBookings = await getCustomerBookings(phone);
       setBookings(customerBookings);
     } catch (error) {
-      console.error("Error loading bookings:", error);
+      logError("page", error);
     } finally {
       setLoading(false);
     }
@@ -163,7 +163,7 @@ export default function CustomerBookingsPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "completed":
-        return "bg-green-100 text-green-700";
+        return "bg-primary-100 text-primary-700";
       case "accepted":
         return "bg-blue-100 text-blue-700";
       case "pending":
@@ -179,7 +179,7 @@ export default function CustomerBookingsPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-green-600 mx-auto mb-4" />
+          <Loader2 className="w-12 h-12 animate-spin text-primary-600 mx-auto mb-4" />
           <p className="text-gray-600">Loading your bookings...</p>
         </div>
       </div>
@@ -209,7 +209,7 @@ export default function CustomerBookingsPage() {
             </p>
             <button
               onClick={() => router.push("/booking")}
-              className="px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition"
+              className="px-6 py-3 bg-primary-600 text-white font-bold rounded-lg hover:bg-primary-700 transition"
             >
               Book a Ride
             </button>
@@ -241,7 +241,7 @@ export default function CustomerBookingsPage() {
 
                     <div className="space-y-2 mb-4">
                       <div className="flex items-start gap-2 text-sm">
-                        <div className="w-2 h-2 rounded-full bg-green-500 mt-1.5"></div>
+                        <div className="w-2 h-2 rounded-full bg-primary-500 mt-1.5"></div>
                         <div>
                           <p className="text-xs text-gray-500 uppercase font-bold">
                             Pickup
@@ -291,22 +291,22 @@ export default function CustomerBookingsPage() {
                         if (!mpesa) return null;
 
                         return (
-                          <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                          <div className="mt-4 p-4 bg-primary-50 border border-primary-200 rounded-lg">
                             <div className="flex items-center gap-2 mb-2">
-                              <CreditCard className="w-4 h-4 text-green-700" />
-                              <h4 className="font-bold text-green-900 text-sm">
+                              <CreditCard className="w-4 h-4 text-primary-700" />
+                              <h4 className="font-bold text-primary-900 text-sm">
                                 Payment Details
                               </h4>
                             </div>
                             {mpesa.type === "till" && mpesa.tillNumber && (
                               <div className="space-y-1">
-                                <p className="text-xs text-green-700 font-medium">
+                                <p className="text-xs text-primary-700 font-medium">
                                   Till Number
                                 </p>
-                                <p className="text-lg font-bold text-green-900">
+                                <p className="text-lg font-bold text-primary-900">
                                   {mpesa.tillNumber}
                                 </p>
-                                <p className="text-xs text-green-600 italic">
+                                <p className="text-xs text-primary-600 italic">
                                   Send payment: Amount → Pay
                                 </p>
                               </div>
@@ -317,23 +317,23 @@ export default function CustomerBookingsPage() {
                                 <div className="space-y-1">
                                   <div className="grid grid-cols-2 gap-3">
                                     <div>
-                                      <p className="text-xs text-green-700 font-medium">
+                                      <p className="text-xs text-primary-700 font-medium">
                                         Paybill
                                       </p>
-                                      <p className="text-base font-bold text-green-900">
+                                      <p className="text-base font-bold text-primary-900">
                                         {mpesa.paybillNumber}
                                       </p>
                                     </div>
                                     <div>
-                                      <p className="text-xs text-green-700 font-medium">
+                                      <p className="text-xs text-primary-700 font-medium">
                                         Account
                                       </p>
-                                      <p className="text-base font-bold text-green-900">
+                                      <p className="text-base font-bold text-primary-900">
                                         {mpesa.accountNumber}
                                       </p>
                                     </div>
                                   </div>
-                                  <p className="text-xs text-green-600 italic mt-2">
+                                  <p className="text-xs text-primary-600 italic mt-2">
                                     Send payment: Paybill → Account → Amount →
                                     Pay
                                   </p>
@@ -353,7 +353,7 @@ export default function CustomerBookingsPage() {
                     {booking.fare && (
                       <div className="text-right">
                         <p className="text-sm text-gray-600">Fare</p>
-                        <p className="text-2xl font-bold text-green-600">
+                        <p className="text-2xl font-bold text-primary-600">
                           KSH {booking.fare.toLocaleString()}
                         </p>
                       </div>
@@ -387,7 +387,7 @@ export default function CustomerBookingsPage() {
                         ) : (
                           <button
                             onClick={() => setSelectedBooking(booking)}
-                            className="px-4 py-2 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition flex items-center gap-2"
+                            className="px-4 py-2 bg-primary-600 text-white font-bold rounded-lg hover:bg-primary-700 transition flex items-center gap-2"
                           >
                             <Star className="w-4 h-4" />
                             Rate Ride
@@ -424,12 +424,12 @@ export default function CustomerBookingsPage() {
                       "en_route",
                       "arrived",
                       "in_progress",
-                    ].includes(booking.rideStatus || booking.status) && (
+                    ].includes(booking.status) && (
                       <button
                         onClick={() =>
                           router.push(`/customer/track/${booking.id}`)
                         }
-                        className="px-4 py-2 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition flex items-center justify-center gap-2 text-sm w-full md:w-auto"
+                        className="px-4 py-2 bg-primary-600 text-white font-bold rounded-lg hover:bg-primary-700 transition flex items-center justify-center gap-2 text-sm w-full md:w-auto"
                       >
                         <MapPin className="w-4 h-4" />
                         Track Ride
@@ -457,7 +457,7 @@ export default function CustomerBookingsPage() {
         <div className="mt-8 text-center">
           <button
             onClick={() => router.push("/")}
-            className="text-green-600 hover:text-green-700 font-semibold"
+            className="text-primary-600 hover:text-primary-700 font-semibold"
           >
             ← Back to Home
           </button>

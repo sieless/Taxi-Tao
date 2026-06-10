@@ -6,6 +6,8 @@ import { db } from '@/lib/firebase';
 import { Notification } from '@/lib/types';
 import { Bell, TrendingUp, AlertCircle, CheckCircle, MessageSquare } from 'lucide-react';
 
+
+import { logError } from "@/lib/logger";
 interface NotificationsFeedProps {
   driverId: string;
 }
@@ -51,7 +53,7 @@ export default function NotificationsFeed({ driverId }: NotificationsFeedProps) 
 
       setNotifications(notifs.slice(0, 10));
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      logError("NotificationsFeed", error);
     } finally {
       setLoading(false);
     }
@@ -64,7 +66,7 @@ export default function NotificationsFeed({ driverId }: NotificationsFeedProps) 
       case 'high_demand_zone':
         return <TrendingUp className="w-4 h-4 text-orange-600" />;
       case 'payment_verified':
-        return <CheckCircle className="w-4 h-4 text-green-600" />;
+        return <CheckCircle className="w-4 h-4 text-primary-600" />;
       case 'compliance_alert':
         return <AlertCircle className="w-4 h-4 text-red-600" />;
       default:

@@ -33,7 +33,7 @@ export default function DriverProfilePage() {
   if (loading || !driverProfile) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
       </div>
     );
   }
@@ -64,14 +64,14 @@ export default function DriverProfilePage() {
                 <Sparkles className="w-7 h-7 text-white" />
               </div>
               <div>
-                <h4 className="font-black text-gray-900 text-lg mb-1">Grow Your Business! 🚀</h4>
+                <h4 className="font-bold text-gray-900 text-lg mb-1">Grow Your Business!</h4>
                 <p className="text-sm text-gray-700 font-medium">Create professional marketing posters for WhatsApp, Instagram & Facebook</p>
-                <p className="text-xs text-gray-600 mt-1">✨ 3 stunning templates • Ready in seconds • Free forever</p>
+                <p className="text-xs text-gray-600 mt-1">3 stunning templates - Ready in seconds - Free forever</p>
               </div>
             </div>
             <Link
               href="/driver/marketing-poster"
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-bold transition-all shadow-md hover:shadow-lg flex-shrink-0"
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white rounded-xl font-bold transition-all shadow-md hover:shadow-lg flex-shrink-0"
             >
               <Share2 className="w-5 h-5" />
               <span className="hidden sm:inline">Create Poster</span>
@@ -82,7 +82,7 @@ export default function DriverProfilePage() {
 
         {/* Profile Card */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="bg-gradient-to-r from-green-600 to-green-700 h-32 relative">
+          <div className="bg-gradient-to-r from-primary-600 to-primary-700 h-32 relative">
             <div className="absolute -bottom-12 left-6">
               <div className="w-24 h-24 rounded-full border-4 border-white bg-white shadow-md overflow-hidden">
                 {driverProfile.profilePhotoUrl ? (
@@ -105,7 +105,7 @@ export default function DriverProfilePage() {
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">{driverProfile.name}</h2>
                 <p className="text-gray-500 flex items-center gap-1 mt-1">
-                  <span className={`w-2 h-2 rounded-full ${driverProfile.active ? 'bg-green-500' : 'bg-gray-400'}`}></span>
+                  <span className={`w-2 h-2 rounded-full ${driverProfile.active ? 'bg-primary-500' : 'bg-gray-400'}`}></span>
                   {driverProfile.active ? 'Active Driver' : 'Inactive'}
                 </p>
               </div>
@@ -225,7 +225,7 @@ export default function DriverProfilePage() {
               <p className="text-gray-600 font-medium">No vehicle registered</p>
               <Link 
                 href="/driver/dashboard"
-                className="text-green-600 hover:text-green-700 text-sm font-medium mt-2 inline-block"
+                className="text-primary-600 hover:text-primary-700 text-sm font-medium mt-2 inline-block"
               >
                 Add Vehicle in Dashboard
               </Link>
@@ -236,8 +236,8 @@ export default function DriverProfilePage() {
         {/* Subscription Status */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-              <CheckCircle className="w-5 h-5 text-purple-600" />
+            <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+              <CheckCircle className="w-5 h-5 text-primary-600" />
             </div>
             <div>
               <h3 className="text-lg font-bold text-gray-900">Subscription Status</h3>
@@ -247,7 +247,7 @@ export default function DriverProfilePage() {
 
           <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
             {driverProfile.subscriptionStatus === 'active' ? (
-              <CheckCircle className="w-8 h-8 text-green-500" />
+              <CheckCircle className="w-8 h-8 text-primary-500" />
             ) : (
               <AlertTriangle className="w-8 h-8 text-yellow-500" />
             )}

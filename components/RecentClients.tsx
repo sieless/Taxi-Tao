@@ -6,6 +6,8 @@ import { db } from '@/lib/firebase';
 import { BookingRequest } from '@/lib/types';
 import { User } from 'lucide-react';
 
+
+import { logError } from "@/lib/logger";
 interface RecentClientsProps {
   driverId: string;
 }
@@ -45,7 +47,7 @@ export default function RecentClients({ driverId }: RecentClientsProps) {
 
       setClients(clientsList);
     } catch (error) {
-      console.error('Error fetching recent clients:', error);
+      logError("RecentClients", error);
     } finally {
       setLoading(false);
     }
@@ -100,8 +102,8 @@ export default function RecentClients({ driverId }: RecentClientsProps) {
       <div className="space-y-3">
         {clients.map((client, index) => (
           <div key={index} className="flex items-center gap-3 hover:bg-gray-50 p-2 rounded-lg transition">
-            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-              <span className="text-green-700 font-bold text-sm">
+            <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+              <span className="text-primary-700 font-bold text-sm">
                 {(client.name || 'User').charAt(0).toUpperCase()}
               </span>
             </div>

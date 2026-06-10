@@ -59,7 +59,7 @@ export default function MobileMenu({
         {/* Header / Profile Section */}
         <div className="p-6 bg-gray-50 border-b border-gray-100">
           <div className="flex justify-between items-start mb-6">
-            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center border-2 border-green-500 overflow-hidden shadow-sm">
+            <div className="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center border-2 border-primary-500 overflow-hidden shadow-sm">
               {driver.profilePhotoUrl ? (
                 <img
                   src={driver.profilePhotoUrl}
@@ -67,7 +67,7 @@ export default function MobileMenu({
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <User className="w-8 h-8 text-green-700" />
+                <User className="w-8 h-8 text-primary-700" />
               )}
             </div>
             <button
@@ -86,7 +86,7 @@ export default function MobileMenu({
               <span
                 className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                   driver.status === "available"
-                    ? "bg-green-100 text-green-800"
+                    ? "bg-primary-100 text-primary-800"
                     : "bg-gray-100 text-gray-800"
                 }`}
               >
@@ -145,8 +145,8 @@ export default function MobileMenu({
             className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 active:bg-gray-100 transition-colors group"
           >
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center group-hover:bg-purple-100 transition-colors">
-                <Settings className="w-5 h-5 text-purple-600" />
+              <div className="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center group-hover:bg-primary-100 transition-colors">
+                <Settings className="w-5 h-5 text-primary-600" />
               </div>
               <span className="font-medium text-gray-700">Settings</span>
             </div>
@@ -178,7 +178,7 @@ export default function MobileMenu({
             <button
               onClick={onToggleStatus}
               className={`transition-colors ${
-                driver.status === "available" ? "text-green-600" : "text-gray-400"
+                driver.status === "available" ? "text-primary-600" : "text-gray-400"
               }`}
               aria-pressed={driver.status === "available"}
             >

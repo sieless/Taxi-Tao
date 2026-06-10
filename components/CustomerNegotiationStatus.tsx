@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { Clock, CheckCircle, XCircle, DollarSign, Loader2 } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, Wallet, Loader2 } from 'lucide-react';
 import { getNegotiation, acceptOffer } from '../lib/negotiation-service';
 import { Negotiation } from '../lib/types';
 
+
+import { logError } from "@/lib/logger";
 interface CustomerNegotiationStatusProps {
   negotiationId: string;
   onAccepted?: () => void;
@@ -33,7 +35,7 @@ export default function CustomerNegotiationStatus({ negotiationId, onAccepted }:
         onAccepted();
       }
     } catch (error) {
-      console.error('Error loading negotiation:', error);
+      logError("CustomerNegotiationStatus", error);
       setLoading(false);
     }
   };
@@ -46,7 +48,7 @@ export default function CustomerNegotiationStatus({ negotiationId, onAccepted }:
       loadNegotiation();
       if (onAccepted) onAccepted();
     } catch (error) {
-      console.error('Error accepting counter-offer:', error);
+      logError("CustomerNegotiationStatus", error);
       alert('Failed to accept counter-offer');
     }
   };
@@ -69,7 +71,7 @@ export default function CustomerNegotiationStatus({ negotiationId, onAccepted }:
 
   const getStatusColor = () => {
     switch (negotiation.status) {
-      case 'accepted': return 'bg-green-100 text-green-800';
+      case 'accepted': return 'bg-primary-100 text-primary-800';
       case 'declined': return 'bg-red-100 text-red-800';
       case 'counter_offered': return 'bg-blue-100 text-blue-800';
       case 'expired': return 'bg-gray-100 text-gray-800';
@@ -81,7 +83,7 @@ export default function CustomerNegotiationStatus({ negotiationId, onAccepted }:
     switch (negotiation.status) {
       case 'accepted': return <CheckCircle className="w-5 h-5" />;
       case 'declined': return <XCircle className="w-5 h-5" />;
-      case 'counter_offered': return <DollarSign className="w-5 h-5" />;
+      case 'counter_offered': return <Wallet className="w-5 h-5" />;
       default: return <Clock className="w-5 h-5" />;
     }
   };
@@ -121,7 +123,7 @@ export default function CustomerNegotiationStatus({ negotiationId, onAccepted }:
       {negotiation.status === 'counter_offered' && (
         <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mb-4">
           <p className="text-sm text-blue-800 mb-3">
-            <DollarSign className="w-4 h-4 inline mr-2" />
+            <Wallet className="w-4 h-4 inline mr-2" />
             Driver has counter-offered: <strong>KES {negotiation.currentOffer.toLocaleString()}</strong>
           </p>
           <button
@@ -134,8 +136,8 @@ export default function CustomerNegotiationStatus({ negotiationId, onAccepted }:
       )}
 
       {negotiation.status === 'accepted' && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg mb-4">
-          <p className="text-sm text-green-800">
+        <div className="p-4 bg-primary-50 border border-primary-200 rounded-lg mb-4">
+          <p className="text-sm text-primary-800">
             <CheckCircle className="w-4 h-4 inline mr-2" />
             Price agreed! Final price: <strong>KES {negotiation.currentOffer.toLocaleString()}</strong>
           </p>

@@ -3,17 +3,18 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import { MapPin, Search, Loader2, Phone, Info, Send, Car, Star, MessageSquare } from 'lucide-react';
+import { MapPin, Search, Loader2, Phone, Info, Send, Car, Star, MessageSquare, User, Navigation } from 'lucide-react';
 import PriceRecommendations from '@/components/PriceRecommendations';
 import { getRecommendations, DriverMatch } from '@/lib/matching-service';
-import { createRideRequest } from '@/lib/ride-request-service';
+import { createBookingRequest } from '@/lib/booking-service';
 import { KENYA_COUNTIES, COMMON_LOCATIONS } from '@/lib/kenya-locations';
 import Link from 'next/link';
 import NegotiationModal from '@/components/NegotiationModal';
 import Logo from "@/components/Logo";
-import LiveMap from '@/components/LiveMap';
 
 
+
+import { logError } from "@/lib/logger";
 // Simple Ride Request Form Component
 function RideRequestForm({ from, to }: { from: string; to: string }) {
   const { user } = useAuth();
@@ -29,15 +30,6 @@ function RideRequestForm({ from, to }: { from: string; to: string }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Check if user is logged in
-    if (!user) {
-      const shouldLogin = confirm('You must be logged in to send ride requests. Would you like to log in now?');
-      if (shouldLogin) {
-        router.push('/login');
-      }
-      return;
-    }
-
     if (!name || !phone || !date || !time) {
       alert('Please fill in all fields');
       return;
@@ -45,29 +37,54 @@ function RideRequestForm({ from, to }: { from: string; to: string }) {
 
     setSubmitting(true);
     try {
-      await createRideRequest({
+      await createBookingRequest({
+        customerId: user?.uid,
         customerName: name,
         customerPhone: phone,
-        from,
-        to,
-        date,
-        time,
-        passengers,
+        pickupLocation: from,
+        pickupLat: -1.286389,
+        pickupLng: 36.817223,
+        pickupRegion: "Custom",
+        destination: to,
+        destinationLat: -1.286389,
+        destinationLng: 36.817223,
+        pickupDate: date,
+        pickupTime: time,
       });
       setSuccess(true);
     } catch (error) {
-      console.error('Error posting request:', error);
+      logError("page", error);
       alert('Failed to post request. Please try again.');
     } finally {
       setSubmitting(false);
     }
   };
 
+  if (!user) {
+    return (
+      <div className="bg-white border border-gray-100 rounded-2xl p-8 text-center shadow-lg">
+        <div className="w-16 h-16 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-4">
+          <User className="w-8 h-8 text-primary-600" />
+        </div>
+        <h3 className="text-xl font-bold text-gray-800 mb-2">Login Required</h3>
+        <p className="text-gray-600 mb-6 max-w-sm mx-auto">
+          Please log in or create an account to post ride requests and connect with our drivers.
+        </p>
+        <button
+          onClick={() => router.push('/login')}
+          className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-8 rounded-full transition shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+        >
+          Sign In
+        </button>
+      </div>
+    );
+  }
+
   if (success) {
     return (
-      <div className="text-center py-8 bg-green-50 rounded-xl border border-green-200">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Send className="w-8 h-8 text-green-600" />
+      <div className="text-center py-8 bg-gradient-to-br from-primary-50 to-primary-50 rounded-2xl border border-primary-200 shadow-sm">
+        <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Send className="w-8 h-8 text-primary-600" />
         </div>
         <h3 className="text-xl font-bold text-gray-800 mb-2">Request Posted!</h3>
         <p className="text-gray-600 mb-4">
@@ -75,7 +92,7 @@ function RideRequestForm({ from, to }: { from: string; to: string }) {
         </p>
         <button 
           onClick={() => window.location.reload()}
-          className="text-green-600 font-semibold hover:underline"
+          className="text-primary-600 font-semibold hover:underline"
         >
           Post another request
         </button>
@@ -91,7 +108,7 @@ function RideRequestForm({ from, to }: { from: string; to: string }) {
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
           placeholder="John Doe"
         />
       </div>
@@ -101,7 +118,7 @@ function RideRequestForm({ from, to }: { from: string; to: string }) {
           type="tel"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
           placeholder="0712 345 678"
         />
       </div>
@@ -112,7 +129,7 @@ function RideRequestForm({ from, to }: { from: string; to: string }) {
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
           />
         </div>
         <div>
@@ -121,7 +138,7 @@ function RideRequestForm({ from, to }: { from: string; to: string }) {
             type="time"
             value={time}
             onChange={(e) => setTime(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
           />
         </div>
       </div>
@@ -130,7 +147,7 @@ function RideRequestForm({ from, to }: { from: string; to: string }) {
         <select
           value={passengers}
           onChange={(e) => setPassengers(parseInt(e.target.value))}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
         >
           {[1, 2, 3, 4, 5, 6, 7, 8].map(n => (
             <option key={n} value={n}>{n} Passenger{n > 1 ? 's' : ''}</option>
@@ -140,7 +157,7 @@ function RideRequestForm({ from, to }: { from: string; to: string }) {
       <button
         type="submit"
         disabled={submitting}
-        className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition disabled:opacity-50 flex items-center justify-center gap-2"
+        className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-6 rounded-lg transition disabled:opacity-50 flex items-center justify-center gap-2"
       >
         {submitting ? (
           <>
@@ -160,6 +177,7 @@ function RideRequestForm({ from, to }: { from: string; to: string }) {
 
 export default function PricedBookingPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [fromLocation, setFromLocation] = useState('');
   const [toLocation, setToLocation] = useState('');
   const [customFrom, setCustomFrom] = useState('');
@@ -176,10 +194,6 @@ export default function PricedBookingPage() {
   const [negotiationModalOpen, setNegotiationModalOpen] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState<DriverMatch | null>(null);
 
-  // Map state
-  const [showMap, setShowMap] = useState(false);
-  const [pickupCoords, setPickupCoords] = useState<{lat: number, lng: number} | undefined>(undefined);
-  const [destCoords, setDestCoords] = useState<{lat: number, lng: number} | undefined>(undefined);
 
   // Combine counties and common locations for dropdown
   const allLocations = [...KENYA_COUNTIES, ...COMMON_LOCATIONS].sort();
@@ -194,13 +208,12 @@ export default function PricedBookingPage() {
     }
 
     setLoading(true);
-    setShowMap(true);
     
     try {
       const results = await getRecommendations(from, to);
       setRecommendations(results);
     } catch (error) {
-      console.error('Error finding drivers:', error);
+      logError("page", error);
       alert('Failed to find drivers. Please try again.');
     } finally {
       setLoading(false);
@@ -208,6 +221,10 @@ export default function PricedBookingPage() {
   };
 
   const handleSelectDriver = (driverId: string, price: number) => {
+    if (!user) {
+      router.push('/login');
+      return;
+    }
     const from = useCustomLocations ? customFrom : fromLocation;
     const to = useCustomLocations ? customTo : toLocation;
     
@@ -226,14 +243,18 @@ export default function PricedBookingPage() {
   };
 
   const handleNegotiate = (driver: DriverMatch) => {
+    if (!user) {
+      router.push('/login');
+      return;
+    }
     setSelectedDriver(driver);
     setNegotiationModalOpen(true);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-green-50 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-primary-50 py-12">
       <div className="max-w-6xl mx-auto px-4">
-        <Link href="/" className="text-green-600 hover:underline font-semibold mb-6 inline-block">
+        <Link href="/" className="text-primary-600 hover:underline font-semibold mb-6 inline-block">
           ← Back to Home
         </Link>
 
@@ -247,18 +268,16 @@ export default function PricedBookingPage() {
           </p>
         </div>
 
-        {/* Map / Banner Section */}
-        <div className="mb-12 h-[400px] rounded-2xl overflow-hidden shadow-2xl border-4 border-white">
-          <LiveMap 
-            pickupLocation={pickupCoords}
-            destinationLocation={destCoords}
-            showPlaceholder={!showMap}
-          />
-        </div>
+
 
         {/* Route Selection Card */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 mb-12">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Select Your Route</h2>
+        <div className="bg-white rounded-3xl shadow-xl p-8 mb-12 border border-gray-100">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+              <Navigation className="w-5 h-5 text-primary-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800">Select Your Route</h2>
+          </div>
           
           {/* Toggle between dropdown and custom input */}
           <div className="flex items-center gap-4 mb-6">
@@ -266,7 +285,7 @@ export default function PricedBookingPage() {
               onClick={() => setUseCustomLocations(false)}
               className={`px-4 py-2 rounded-lg font-medium transition ${
                 !useCustomLocations
-                  ? 'bg-green-600 text-white'
+                  ? 'bg-primary-600 text-white'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
@@ -276,7 +295,7 @@ export default function PricedBookingPage() {
               onClick={() => setUseCustomLocations(true)}
               className={`px-4 py-2 rounded-lg font-medium transition ${
                 useCustomLocations
-                  ? 'bg-green-600 text-white'
+                  ? 'bg-primary-600 text-white'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
@@ -297,7 +316,7 @@ export default function PricedBookingPage() {
                   value={customFrom}
                   onChange={(e) => setCustomFrom(e.target.value)}
                   placeholder="Enter pickup location (e.g., Machakos Town)"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
 
@@ -311,7 +330,7 @@ export default function PricedBookingPage() {
                   value={customTo}
                   onChange={(e) => setCustomTo(e.target.value)}
                   placeholder="Enter destination (e.g., Masii Market)"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
             </div>
@@ -326,7 +345,7 @@ export default function PricedBookingPage() {
                 <select
                   value={fromLocation}
                   onChange={(e) => setFromLocation(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 >
                   <option value="">Select pickup location</option>
                   {allLocations.map((loc) => (
@@ -345,7 +364,7 @@ export default function PricedBookingPage() {
                 <select
                   value={toLocation}
                   onChange={(e) => setToLocation(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 >
                   <option value="">Select destination</option>
                   {allLocations.map((loc) => (
@@ -362,7 +381,7 @@ export default function PricedBookingPage() {
           <button
             onClick={handleFindDrivers}
             disabled={loading || (!useCustomLocations && (!fromLocation || !toLocation)) || (useCustomLocations && (!customFrom || !customTo))}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-4 px-6 rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2 mt-4"
           >
             {loading ? (
               <>
@@ -394,39 +413,42 @@ export default function PricedBookingPage() {
                     if (!driver) return null;
                     
                     return (
-                      <div key={`${label}-${driver.driverId}`} className="bg-white border-2 rounded-xl shadow-lg relative overflow-hidden min-w-[350px] max-w-[400px] flex-shrink-0">
+                      <div key={`${label}-${driver.driverId}`} className="bg-white border-2 rounded-xl shadow-lg relative overflow-hidden min-w-[280px] max-w-[320px] flex-shrink-0">
                         {/* Driver/Car Photo Header */}
-                        <div className="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200">
-                          {driver.vehicle?.carPhotoUrl ? (
-                            <img 
-                              src={driver.vehicle.carPhotoUrl} 
-                              alt={`${driver.vehicle.make} ${driver.vehicle.model}`}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <Car className="w-20 h-20 text-gray-400" />
-                            </div>
-                          )}
+                        <div className="relative h-40 bg-white">
+                          {/* Image container - standalone with curved corners */}
+                          <div className="absolute inset-3 overflow-hidden rounded-xl shadow-sm border border-gray-100">
+                            {driver.vehicle?.carPhotoUrl ? (
+                              <img 
+                                src={driver.vehicle.carPhotoUrl} 
+                                alt={`${driver.vehicle.make} ${driver.vehicle.model}`}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-gray-50">
+                                <Car className="w-12 h-12 text-gray-300" />
+                              </div>
+                            )}
+                          </div>
                           
-                          {/* Driver Profile Photo Overlay */}
+                          {/* Driver Profile Photo Overlay (Overlapping edge) */}
                           {driver.profilePhotoUrl && (
-                            <div className="absolute bottom-4 left-4">
+                            <div className="absolute -bottom-4 left-6 z-10">
                               <img 
                                 src={driver.profilePhotoUrl} 
                                 alt={driver.driverName}
-                                className="w-16 h-16 rounded-full border-4 border-white shadow-lg object-cover"
+                                className="w-14 h-14 rounded-full border-4 border-white shadow-md object-cover bg-white"
                               />
                             </div>
                           )}
                           
                           {/* Badges */}
-                          <div className="absolute top-4 right-4 flex flex-col gap-2">
-                            <span className="text-xs font-bold bg-white px-3 py-1 rounded-full shadow-md">
+                          <div className="absolute top-3 right-3 flex flex-col gap-2 z-10">
+                            <span className="text-[10px] font-bold bg-white px-2 py-1 rounded-full shadow-md">
                               {badge} {label}
                             </span>
                             {driver.matchType === 'nearby' && (
-                              <span className="text-xs font-bold bg-amber-100 text-amber-800 px-2 py-1 rounded-full flex items-center gap-1 shadow-md">
+                              <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-1 rounded-full flex items-center gap-1 shadow-md">
                                 <Info className="w-3 h-3" />
                                 Nearby Match
                               </span>
@@ -435,8 +457,8 @@ export default function PricedBookingPage() {
                         </div>
 
                         {/* Driver Details */}
-                        <div className="p-6">
-                          <h3 className="text-xl font-bold text-gray-800 mb-1">{driver.driverName}</h3>
+                        <div className="px-5 pb-5 pt-6 relative">
+                          <h3 className="text-base font-bold text-gray-800 mb-1">{driver.driverName}</h3>
                           
                           {/* Rating */}
                           <div className="flex items-center gap-2 mb-3">
@@ -483,33 +505,33 @@ export default function PricedBookingPage() {
                           )}
 
                           {/* Price */}
-                          <div className="text-3xl font-bold text-green-600 mb-4">
-                            KES {driver.price.toLocaleString()}
+                          <div className="text-xl font-bold text-primary-600 mb-3">
+                            {driver.price > 0 ? `KES ${driver.price.toLocaleString()}` : "Price Negotiable"}
                           </div>
                           
                           {/* Action Buttons */}
                           <div className="space-y-2">
                             <button
                               onClick={() => handleSelectDriver(driver.driverId, driver.price)}
-                              className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition"
+                              className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-2.5 px-4 rounded-xl transition shadow-sm hover:shadow-md text-sm"
                             >
                               Book Now
                             </button>
                             <div className="grid grid-cols-2 gap-2">
                               <button
                                 onClick={() => handleCallDriver(driver)}
-                                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition flex items-center justify-center gap-2"
+                                className="bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-1.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5 border border-blue-200 text-xs"
                                 title="Call Driver"
                               >
-                                <Phone className="w-4 h-4" />
+                                <Phone className="w-3.5 h-3.5" />
                                 Call
                               </button>
                               <button
                                 onClick={() => handleNegotiate(driver)}
-                                className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition flex items-center justify-center gap-2"
+                                className="bg-primary-50 hover:bg-primary-100 text-primary-700 font-bold py-1.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5 border border-primary-200 text-xs"
                                 title="Negotiate Price"
                               >
-                                <MessageSquare className="w-4 h-4" />
+                                <MessageSquare className="w-3.5 h-3.5" />
                                 Negotiate
                               </button>
                             </div>
@@ -527,7 +549,7 @@ export default function PricedBookingPage() {
                   <p className="text-gray-500">
                     No drivers have set pricing for this route yet. 
                     <br />
-                    <span className="font-semibold text-green-600">Post a request and we'll notify nearby drivers!</span>
+                    <span className="font-semibold text-primary-600">Post a request and we'll notify nearby drivers!</span>
                   </p>
                 </div>
 

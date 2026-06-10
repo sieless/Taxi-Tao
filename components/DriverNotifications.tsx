@@ -15,7 +15,8 @@ import { useAuth } from "@/lib/auth-context";
 import { X, Bell, CheckCircle, MapPin, Calendar, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-interface DriverNotification {
+
+import { logError } from "@/lib/logger";interface DriverNotification {
   id: string;
   type: "new_booking" | "booking_cancelled" | "fare_accepted" | "system";
   title: string;
@@ -78,7 +79,7 @@ export default function DriverNotifications({
         setLoading(false);
       },
       (error) => {
-        console.error("Error fetching driver notifications:", error);
+        logError("DriverNotifications", error);
         setLoading(false);
       }
     );
@@ -91,7 +92,7 @@ export default function DriverNotifications({
       const notifRef = doc(db, "driverNotifications", notificationId);
       await writeBatch(db).update(notifRef, { read: true }).commit();
     } catch (error) {
-      console.error("Error marking notification as read:", error);
+      logError("DriverNotifications", error);
     }
   };
 
@@ -106,7 +107,7 @@ export default function DriverNotifications({
         });
       await batch.commit();
     } catch (error) {
-      console.error("Error marking all as read:", error);
+      logError("DriverNotifications", error);
     }
   };
 
@@ -154,7 +155,7 @@ export default function DriverNotifications({
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case "new_booking":
-        return <MapPin className="w-5 h-5 text-green-600" />;
+        return <MapPin className="w-5 h-5 text-primary-600" />;
       case "booking_cancelled":
         return <X className="w-5 h-5 text-red-600" />;
       case "fare_accepted":
@@ -188,11 +189,11 @@ export default function DriverNotifications({
       />
       <div className="relative bg-white w-full sm:max-w-md h-full shadow-2xl flex flex-col">
         {/* Header */}
-        <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-green-600 text-white">
+        <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-primary-600 text-white">
           <h2 className="text-lg font-bold">Driver Notifications</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-green-700 rounded-lg transition"
+            className="p-2 hover:bg-primary-700 rounded-lg transition"
             aria-label="Close"
           >
             <X className="w-5 h-5" />
@@ -204,7 +205,7 @@ export default function DriverNotifications({
           <div className="p-3 border-b border-gray-200 bg-gray-50">
             <button
               onClick={markAllAsRead}
-              className="text-sm text-green-600 hover:text-green-700 font-medium"
+              className="text-sm text-primary-600 hover:text-primary-700 font-medium"
             >
               Mark all as read
             </button>
@@ -215,7 +216,7 @@ export default function DriverNotifications({
         <div className="flex-1 overflow-y-auto">
           {loading ? (
             <div className="p-8 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
               <p className="text-gray-500 mt-4">Loading...</p>
             </div>
           ) : notifications.length === 0 ? (
@@ -243,7 +244,7 @@ export default function DriverNotifications({
                           {notification.title}
                         </h3>
                         {!notification.read && (
-                          <div className="w-2 h-2 bg-green-600 rounded-full ml-2"></div>
+                          <div className="w-2 h-2 bg-primary-600 rounded-full ml-2"></div>
                         )}
                       </div>
                       <p className="text-sm text-gray-600 mt-1">

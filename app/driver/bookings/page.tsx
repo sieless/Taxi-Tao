@@ -7,7 +7,8 @@ import { useAuth } from "@/lib/auth-context";
 import { Calendar, MapPin, Clock, User, Phone } from "lucide-react";
 import { BookingRequest } from "@/lib/types";
 
-export default function DriverBookingsPage() {
+
+import { logError } from "@/lib/logger";export default function DriverBookingsPage() {
   const { user } = useAuth();
   const [bookings, setBookings] = useState<BookingRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,16 +38,17 @@ export default function DriverBookingsPage() {
       
       setBookings(bookingsList);
     } catch (error) {
-      console.error("Error loading driver bookings:", error);
+      logError("page", error);
     } finally {
       setLoading(false);
     }
   };
 
   const filteredBookings = bookings.filter(b => {
+    const currentStatus = b.status;
     if (filter === "all") return true;
-    if (filter === "active") return !b.rideStatus || ['confirmed', 'en_route', 'arrived', 'in_progress'].includes(b.rideStatus);
-    if (filter === "completed") return b.rideStatus === 'completed' || b.rideStatus === 'cancelled';
+    if (filter === "active") return ['accepted', 'confirmed', 'en_route', 'arrived', 'in_progress'].includes(currentStatus);
+    if (filter === "completed") return currentStatus === 'completed' || currentStatus === 'cancelled';
     return true;
   });
 
@@ -64,8 +66,11 @@ export default function DriverBookingsPage() {
     switch (status) {
       case "completed": return "bg-blue-100 text-blue-800";
       case "cancelled": return "bg-red-100 text-red-800";
-      case "in_progress": return "bg-green-100 text-green-800";
-      case "confirmed": return "bg-yellow-100 text-yellow-800";
+      case "in_progress": return "bg-primary-100 text-primary-800";
+      case "confirmed":
+      case "accepted": return "bg-yellow-100 text-yellow-800";
+      case "en_route": return "bg-primary-100 text-primary-800";
+      case "arrived": return "bg-orange-100 text-orange-800";
       default: return "bg-gray-100 text-gray-800";
     }
   };
@@ -88,7 +93,7 @@ export default function DriverBookingsPage() {
                 onClick={() => setFilter(f)}
                 className={`px-4 py-2 rounded-lg font-medium transition capitalize ${
                   filter === f
-                    ? "bg-green-600 text-white"
+                    ? "bg-primary-600 text-white"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
@@ -101,7 +106,7 @@ export default function DriverBookingsPage() {
         {/* Bookings List */}
         {loading ? (
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Loading bookings...</p>
           </div>
         ) : filteredBookings.length === 0 ? (
@@ -119,8 +124,8 @@ export default function DriverBookingsPage() {
                 <div className="flex flex-col md:flex-row gap-4 justify-between items-start">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-3">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${getStatusColor(booking.rideStatus || booking.status)}`}>
-                        {booking.rideStatus?.replace(/_/g, " ") || booking.status}
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${getStatusColor(booking.status)}`}>
+                        {booking.status?.replace(/_/g, " ")}
                       </span>
                       <span className="text-sm text-gray-500 flex items-center gap-1">
                         <Calendar size={14} />
@@ -131,7 +136,7 @@ export default function DriverBookingsPage() {
                     <div className="space-y-3">
                       <div className="flex items-start gap-3">
                         <div className="mt-1">
-                          <div className="w-2 h-2 rounded-full bg-green-500 mb-1"></div>
+                          <div className="w-2 h-2 rounded-full bg-primary-500 mb-1"></div>
                           <div className="w-0.5 h-6 bg-gray-200 mx-auto"></div>
                           <div className="w-2 h-2 rounded-full bg-red-500 mt-1"></div>
                         </div>
@@ -157,7 +162,7 @@ export default function DriverBookingsPage() {
                     {booking.customerPhone && (
                       <a 
                         href={`tel:${booking.customerPhone}`}
-                        className="flex items-center gap-2 text-green-600 hover:text-green-700 font-medium"
+                        className="flex items-center gap-2 text-primary-600 hover:text-primary-700 font-medium"
                       >
                         <Phone className="w-4 h-4" />
                         {booking.customerPhone}
@@ -165,7 +170,7 @@ export default function DriverBookingsPage() {
                     )}
                     <div className="mt-2">
                       <p className="text-xs text-gray-500">Fare</p>
-                      <p className="text-xl font-bold text-green-600">
+                      <p className="text-xl font-bold text-primary-600">
                         {booking.fare
                           ? `KES ${booking.fare?.toLocaleString()}`
                           : 'TBD'}

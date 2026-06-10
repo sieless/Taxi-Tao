@@ -160,7 +160,7 @@ export default function PrivacyPolicyPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-12 py-12">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm text-gray-500 mb-8">
-            <Link href="/" className="hover:text-green-600">
+            <Link href="/" className="hover:text-primary-600">
               Home
             </Link>
             <ChevronRight className="w-4 h-4" />
@@ -183,7 +183,7 @@ export default function PrivacyPolicyPage() {
             {/* Section 1 */}
             <section id="section-1" className="mb-12 scroll-mt-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-                <span className="flex-shrink-0 w-10 h-10 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-lg font-bold">
+                <span className="flex-shrink-0 w-10 h-10 bg-primary-100 text-primary-700 rounded-lg flex items-center justify-center text-lg font-bold">
                   1
                 </span>
                 Introduction
@@ -207,7 +207,7 @@ export default function PrivacyPolicyPage() {
             {/* Section 2 - Data We Collect */}
             <section id="section-2" className="mb-12 scroll-mt-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-                <span className="flex-shrink-0 w-10 h-10 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-lg font-bold">
+                <span className="flex-shrink-0 w-10 h-10 bg-primary-100 text-primary-700 rounded-lg flex items-center justify-center text-lg font-bold">
                   2
                 </span>
                 Data We Collect
@@ -252,7 +252,7 @@ export default function PrivacyPolicyPage() {
             {/* Section 3 - How We Use Your Data */}
             <section id="section-3" className="mb-12 scroll-mt-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-                <span className="flex-shrink-0 w-10 h-10 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-lg font-bold">
+                <span className="flex-shrink-0 w-10 h-10 bg-primary-100 text-primary-700 rounded-lg flex items-center justify-center text-lg font-bold">
                   3
                 </span>
                 How We Use Your Data
@@ -287,7 +287,7 @@ export default function PrivacyPolicyPage() {
             {/* Section 4 - Legal Basis */}
             <section id="section-4" className="mb-12 scroll-mt-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-                <span className="flex-shrink-0 w-10 h-10 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-lg font-bold">
+                <span className="flex-shrink-0 w-10 h-10 bg-primary-100 text-primary-700 rounded-lg flex items-center justify-center text-lg font-bold">
                   4
                 </span>
                 Legal Basis for Processing
@@ -306,7 +306,7 @@ export default function PrivacyPolicyPage() {
             {/* Section 5 - Data Sharing */}
             <section id="section-5" className="mb-12 scroll-mt-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-                <span className="flex-shrink-0 w-10 h-10 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-lg font-bold">
+                <span className="flex-shrink-0 w-10 h-10 bg-primary-100 text-primary-700 rounded-lg flex items-center justify-center text-lg font-bold">
                   5
                 </span>
                 Data Sharing and Third Parties
@@ -341,7 +341,7 @@ export default function PrivacyPolicyPage() {
             {/* Section 6 - Data Retention */}
             <section id="section-6" className="mb-12 scroll-mt-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-                <span className="flex-shrink-0 w-10 h-10 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-lg font-bold">
+                <span className="flex-shrink-0 w-10 h-10 bg-primary-100 text-primary-700 rounded-lg flex items-center justify-center text-lg font-bold">
                   6
                 </span>
                 Data Retention
@@ -371,7 +371,7 @@ export default function PrivacyPolicyPage() {
             {/* Section 7 - Your Rights */}
             <section id="section-7" className="mb-12 scroll-mt-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-                <span className="flex-shrink-0 w-10 h-10 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-lg font-bold">
+                <span className="flex-shrink-0 w-10 h-10 bg-primary-100 text-primary-700 rounded-lg flex items-center justify-center text-lg font-bold">
                   7
                 </span>
                 Your Rights
@@ -395,16 +395,16 @@ export default function PrivacyPolicyPage() {
             {/* Section 8 - Data Security */}
             <section id="section-8" className="mb-12 scroll-mt-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-                <span className="flex-shrink-0 w-10 h-10 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-lg font-bold">
+                <span className="flex-shrink-0 w-10 h-10 bg-primary-100 text-primary-700 rounded-lg flex items-center justify-center text-lg font-bold">
                   8
                 </span>
                 Data Security
               </h2>
               <div className="space-y-3 text-gray-700">
-                <div className="bg-green-50 border-l-4 border-green-600 p-4 mb-4">
+                <div className="bg-primary-50 border-l-4 border-primary-600 p-4 mb-4">
                   <div className="flex">
-                    <Lock className="w-5 h-5 text-green-700 mr-3 mt-0.5" />
-                    <div className="text-sm text-green-900">
+                    <Lock className="w-5 h-5 text-primary-700 mr-3 mt-0.5" />
+                    <div className="text-sm text-primary-900">
                       <p className="font-semibold mb-1">
                         We take reasonable technical and organizational measures
                         to protect your data, but no system is 100% secure.
@@ -423,7 +423,7 @@ export default function PrivacyPolicyPage() {
             {/* Section 9 - Children */}
             <section id="section-9" className="mb-12 scroll-mt-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-                <span className="flex-shrink-0 w-10 h-10 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-lg font-bold">
+                <span className="flex-shrink-0 w-10 h-10 bg-primary-100 text-primary-700 rounded-lg flex items-center justify-center text-lg font-bold">
                   9
                 </span>
                 Children&apos;s Privacy
@@ -441,7 +441,7 @@ export default function PrivacyPolicyPage() {
             {/* Section 10-11 Summary */}
             <section id="section-11" className="mb-12 scroll-mt-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-                <span className="flex-shrink-0 w-10 h-10 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-lg font-bold">
+                <span className="flex-shrink-0 w-10 h-10 bg-primary-100 text-primary-700 rounded-lg flex items-center justify-center text-lg font-bold">
                   11
                 </span>
                 Changes to this Policy
@@ -465,7 +465,7 @@ export default function PrivacyPolicyPage() {
             {/* Section 12 - Contact */}
             <section id="section-12" className="mb-12 scroll-mt-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-                <span className="flex-shrink-0 w-10 h-10 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-lg font-bold">
+                <span className="flex-shrink-0 w-10 h-10 bg-primary-100 text-primary-700 rounded-lg flex items-center justify-center text-lg font-bold">
                   12
                 </span>
                 Contact Information
@@ -485,7 +485,7 @@ export default function PrivacyPolicyPage() {
                       Email:{" "}
                       <a
                         href="mailto:privacy@taxitao.co.ke"
-                        className="text-green-600 hover:text-green-700 font-medium"
+                        className="text-primary-600 hover:text-primary-700 font-medium"
                       >
                         privacy@taxitao.co.ke
                       </a>
@@ -494,7 +494,7 @@ export default function PrivacyPolicyPage() {
                       Support Email:{" "}
                       <a
                         href="mailto:support@taxitao.co.ke"
-                        className="text-green-600 hover:text-green-700 font-medium"
+                        className="text-primary-600 hover:text-primary-700 font-medium"
                       >
                         support@taxitao.co.ke
                       </a>
@@ -503,7 +503,7 @@ export default function PrivacyPolicyPage() {
                       Phone:{" "}
                       <a
                         href="tel:+254708674665"
-                        className="text-green-600 hover:text-green-700 font-medium"
+                        className="text-primary-600 hover:text-primary-700 font-medium"
                       >
                         +254 708 674 665
                       </a>

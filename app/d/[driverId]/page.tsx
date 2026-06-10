@@ -1,9 +1,8 @@
-import { getDriver, getDriverVehicles } from "@/lib/firestore";
+import { getDriverWithVehiclesServer } from "@/lib/firestore-server";
 import { Driver, Vehicle } from "@/lib/types";
 import { Phone, Star, Shield, Car, MapPin } from "lucide-react";
 import Link from "next/link";
 import BookingForm from "@/components/BookingForm";
-import { Timestamp } from "firebase/firestore";
 
 export default async function DriverPage({
   params,
@@ -12,9 +11,9 @@ export default async function DriverPage({
 }) {
   const { driverId } = await params;
 
-  // Fetch real data
-  const driver = await getDriver(driverId);
-  const vehicles = await getDriverVehicles(driverId);
+  // Fetch driver + vehicles in a single parallel call via Admin SDK (no gRPC)
+  const { driver, vehicles } = await getDriverWithVehiclesServer(driverId);
+
 
   if (!driver) {
     return (

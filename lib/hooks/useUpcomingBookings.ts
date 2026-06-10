@@ -8,6 +8,9 @@ import { BookingRequest } from '../types';
 import { updateRideStatus, startLocationTracking, stopLocationTracking } from '../ride-tracking';
 import { createNotification, getNotificationMessage } from '../notification-service';
 
+
+import { logError } from "@/lib/logger";
+
 export function useUpcomingBookings(driverId: string) {
   const [bookings, setBookings] = useState<BookingRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,7 +37,7 @@ export function useUpcomingBookings(driverId: string) {
         setLoading(false);
       },
       (error) => {
-        console.error('Error fetching bookings:', error);
+        logError("useUpcomingBookings", error);
         setLoading(false);
       }
     );
@@ -66,7 +69,7 @@ export function useUpcomingBookings(driverId: string) {
       if (newStatus === 'en_route') startLocationTracking(bookingId);
       if (newStatus === 'completed') stopLocationTracking();
     } catch (error) {
-      console.error('Failed to update ride status:', error);
+      logError("useUpcomingBookings", error);
       alert('Failed to update ride status. Try again.');
     } finally {
       setUpdatingStatus(null);

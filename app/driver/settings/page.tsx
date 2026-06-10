@@ -8,8 +8,10 @@ import { db } from "@/lib/firebase";
 import { Driver } from "@/lib/types";
 import { ArrowLeft, User, Bell, Clock, CreditCard, Shield, Globe, Save, Loader2, Phone } from "lucide-react";
 import { sanitizeAuthError } from "@/lib/error-utils";
+import AccountDeletionRequestPanel from "@/components/AccountDeletionRequestPanel";
 
-export default function DriverSettings() {
+
+import { logError } from "@/lib/logger";export default function DriverSettings() {
   const { user, userProfile, loading: authLoading, refreshUserProfile } = useAuth();
   const router = useRouter();
   const [driver, setDriver] = useState<Driver | null>(null);
@@ -90,7 +92,7 @@ export default function DriverSettings() {
             }
           }
         } catch (error) {
-          console.error("Error fetching driver data:", error);
+          logError("page", error);
         }
       }
       setLoading(false);
@@ -137,7 +139,7 @@ export default function DriverSettings() {
       await refreshUserProfile();
       alert("Profile updated successfully!");
     } catch (error: any) {
-      console.error("Error updating profile:", error);
+      logError("page", error);
       
       // Enhanced error handling
       if (error?.code?.includes('permission-denied') || error?.message?.includes('permission')) {
@@ -192,7 +194,7 @@ export default function DriverSettings() {
       } : null);
       alert("M-Pesa details updated successfully!");
     } catch (error: any) {
-      console.error("Error updating M-Pesa details:", error);
+      logError("page", error);
       
       // Enhanced error handling
       if (error?.code?.includes('permission-denied') || error?.message?.includes('permission')) {
@@ -214,7 +216,7 @@ export default function DriverSettings() {
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
       </div>
     );
   }
@@ -246,7 +248,7 @@ export default function DriverSettings() {
               <button
                 onClick={() => setActiveTab('profile')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-                  activeTab === 'profile' ? 'bg-green-50 text-green-700 font-semibold' : 'text-gray-700 hover:bg-gray-50'
+                  activeTab === 'profile' ? 'bg-primary-50 text-primary-700 font-semibold' : 'text-gray-700 hover:bg-gray-50'
                 }`}
               >
                 <User className="w-5 h-5" />
@@ -255,7 +257,7 @@ export default function DriverSettings() {
               <button
                 onClick={() => setActiveTab('notifications')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-                  activeTab === 'notifications' ? 'bg-green-50 text-green-700 font-semibold' : 'text-gray-700 hover:bg-gray-50'
+                  activeTab === 'notifications' ? 'bg-primary-50 text-primary-700 font-semibold' : 'text-gray-700 hover:bg-gray-50'
                 }`}
               >
                 <Bell className="w-5 h-5" />
@@ -264,7 +266,7 @@ export default function DriverSettings() {
               <button
                 onClick={() => setActiveTab('availability')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-                  activeTab === 'availability' ? 'bg-green-50 text-green-700 font-semibold' : 'text-gray-700 hover:bg-gray-50'
+                  activeTab === 'availability' ? 'bg-primary-50 text-primary-700 font-semibold' : 'text-gray-700 hover:bg-gray-50'
                 }`}
               >
                 <Clock className="w-5 h-5" />
@@ -273,7 +275,7 @@ export default function DriverSettings() {
               <button
                 onClick={() => setActiveTab('payment')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-                  activeTab === 'payment' ? 'bg-green-50 text-green-700 font-semibold' : 'text-gray-700 hover:bg-gray-50'
+                  activeTab === 'payment' ? 'bg-primary-50 text-primary-700 font-semibold' : 'text-gray-700 hover:bg-gray-50'
                 }`}
               >
                 <CreditCard className="w-5 h-5" />
@@ -282,7 +284,7 @@ export default function DriverSettings() {
               <button
                 onClick={() => setActiveTab('privacy')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-                  activeTab === 'privacy' ? 'bg-green-50 text-green-700 font-semibold' : 'text-gray-700 hover:bg-gray-50'
+                  activeTab === 'privacy' ? 'bg-primary-50 text-primary-700 font-semibold' : 'text-gray-700 hover:bg-gray-50'
                 }`}
               >
                 <Shield className="w-5 h-5" />
@@ -291,7 +293,7 @@ export default function DriverSettings() {
               <button
                 onClick={() => setActiveTab('help')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-                  activeTab === 'help' ? 'bg-green-50 text-green-700 font-semibold' : 'text-gray-700 hover:bg-gray-50'
+                  activeTab === 'help' ? 'bg-primary-50 text-primary-700 font-semibold' : 'text-gray-700 hover:bg-gray-50'
                 }`}
               >
                 <Globe className="w-5 h-5" />
@@ -314,7 +316,7 @@ export default function DriverSettings() {
                         type="text"
                         value={profileForm.name}
                         onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       />
                     </div>
                     <div>
@@ -323,7 +325,7 @@ export default function DriverSettings() {
                         type="tel"
                         value={profileForm.phone}
                         onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       />
                     </div>
                     <div>
@@ -332,7 +334,7 @@ export default function DriverSettings() {
                         type="email"
                         value={profileForm.email}
                         onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       />
                     </div>
                     <div>
@@ -341,7 +343,7 @@ export default function DriverSettings() {
                         type="text"
                         value={profileForm.businessLocation}
                         onChange={(e) => setProfileForm({ ...profileForm, businessLocation: e.target.value })}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         placeholder="e.g., Nairobi CBD"
                       />
                     </div>
@@ -351,7 +353,7 @@ export default function DriverSettings() {
                         type="number"
                         value={profileForm.experienceYears}
                         onChange={(e) => setProfileForm({ ...profileForm, experienceYears: parseInt(e.target.value) || 0 })}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         min="0"
                       />
                     </div>
@@ -360,7 +362,7 @@ export default function DriverSettings() {
                       <textarea
                         value={profileForm.bio}
                         onChange={(e) => setProfileForm({ ...profileForm, bio: e.target.value })}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         rows={4}
                         placeholder="Tell customers a little about yourself..."
                       />
@@ -369,7 +371,7 @@ export default function DriverSettings() {
                     <button
                       onClick={handleSaveProfile}
                       disabled={saving}
-                      className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition flex items-center justify-center gap-2 disabled:opacity-50"
+                      className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 rounded-lg transition flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                       {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                       {saving ? 'Saving...' : 'Save Changes'}
@@ -392,7 +394,7 @@ export default function DriverSettings() {
                         type="checkbox"
                         checked={notificationPrefs.emailNotifications}
                         onChange={(e) => setNotificationPrefs({ ...notificationPrefs, emailNotifications: e.target.checked })}
-                        className="w-5 h-5 text-green-600"
+                        className="w-5 h-5 text-primary-600"
                       />
                     </div>
                     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -404,7 +406,7 @@ export default function DriverSettings() {
                         type="checkbox"
                         checked={notificationPrefs.smsAlerts}
                         onChange={(e) => setNotificationPrefs({ ...notificationPrefs, smsAlerts: e.target.checked })}
-                        className="w-5 h-5 text-green-600"
+                        className="w-5 h-5 text-primary-600"
                       />
                     </div>
                     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -416,7 +418,7 @@ export default function DriverSettings() {
                         type="checkbox"
                         checked={notificationPrefs.rideRequests}
                         onChange={(e) => setNotificationPrefs({ ...notificationPrefs, rideRequests: e.target.checked })}
-                        className="w-5 h-5 text-green-600"
+                        className="w-5 h-5 text-primary-600"
                       />
                     </div>
                     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -428,7 +430,7 @@ export default function DriverSettings() {
                         type="checkbox"
                         checked={notificationPrefs.paymentUpdates}
                         onChange={(e) => setNotificationPrefs({ ...notificationPrefs, paymentUpdates: e.target.checked })}
-                        className="w-5 h-5 text-green-600"
+                        className="w-5 h-5 text-primary-600"
                       />
                     </div>
                   </div>
@@ -449,7 +451,7 @@ export default function DriverSettings() {
                         type="checkbox"
                         checked={availabilitySettings.autoAcceptRides}
                         onChange={(e) => setAvailabilitySettings({ ...availabilitySettings, autoAcceptRides: e.target.checked })}
-                        className="w-5 h-5 text-green-600"
+                        className="w-5 h-5 text-primary-600"
                       />
                     </div>
                     <div>
@@ -458,7 +460,7 @@ export default function DriverSettings() {
                         type="number"
                         value={availabilitySettings.maxDistance}
                         onChange={(e) => setAvailabilitySettings({ ...availabilitySettings, maxDistance: parseInt(e.target.value) || 0 })}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         min="1"
                       />
                       <p className="text-sm text-gray-500 mt-1">Maximum distance you're willing to travel for a pickup</p>
@@ -472,7 +474,7 @@ export default function DriverSettings() {
                         type="checkbox"
                         checked={availabilitySettings.workingHoursEnabled}
                         onChange={(e) => setAvailabilitySettings({ ...availabilitySettings, workingHoursEnabled: e.target.checked })}
-                        className="w-5 h-5 text-green-600"
+                        className="w-5 h-5 text-primary-600"
                       />
                     </div>
                     {availabilitySettings.workingHoursEnabled && (
@@ -483,7 +485,7 @@ export default function DriverSettings() {
                             type="time"
                             value={availabilitySettings.workingHoursStart}
                             onChange={(e) => setAvailabilitySettings({ ...availabilitySettings, workingHoursStart: e.target.value })}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                           />
                         </div>
                         <div>
@@ -492,7 +494,7 @@ export default function DriverSettings() {
                             type="time"
                             value={availabilitySettings.workingHoursEnd}
                             onChange={(e) => setAvailabilitySettings({ ...availabilitySettings, workingHoursEnd: e.target.value })}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                           />
                         </div>
                       </div>
@@ -610,6 +612,7 @@ export default function DriverSettings() {
                       <p className="text-gray-800 font-semibold mb-2">Data Privacy</p>
                       <p className="text-sm text-gray-600">Your data is encrypted and secure. We never share your personal information with third parties.</p>
                     </div>
+                    <AccountDeletionRequestPanel user={user} userProfile={userProfile} />
                   </div>
                 </div>
               )}
@@ -621,16 +624,16 @@ export default function DriverSettings() {
                   
                   <div className="space-y-6">
                     {/* Contact Info */}
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-                      <h3 className="font-semibold text-green-800 mb-4">Contact Us</h3>
+                    <div className="bg-primary-50 border border-primary-200 rounded-lg p-6">
+                      <h3 className="font-semibold text-primary-800 mb-4">Contact Us</h3>
                       <div className="space-y-3">
-                        <div className="flex items-center gap-3 text-green-700">
+                        <div className="flex items-center gap-3 text-primary-700">
                           <div className="p-2 bg-white rounded-full">
                             <Phone className="w-4 h-4" />
                           </div>
                           <span>0708674665</span>
                         </div>
-                        <div className="flex items-center gap-3 text-green-700">
+                        <div className="flex items-center gap-3 text-primary-700">
                           <div className="p-2 bg-white rounded-full">
                             <Globe className="w-4 h-4" />
                           </div>

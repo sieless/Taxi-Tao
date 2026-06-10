@@ -7,6 +7,9 @@ import { RideRequest } from '@/lib/types';
 import { Loader2, MapPin, Calendar, Clock, Users, CheckCircle, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 
+
+import { logError } from "@/lib/logger";
+
 export default function DriverRequestsPage() {
   const { user } = useAuth();
   const [requests, setRequests] = useState<RideRequest[]>([]);
@@ -22,7 +25,7 @@ export default function DriverRequestsPage() {
       const data = await getOpenRequests();
       setRequests(data);
     } catch (error) {
-      console.error('Error fetching requests:', error);
+      logError("page", error);
     } finally {
       setLoading(false);
     }
@@ -44,7 +47,7 @@ export default function DriverRequestsPage() {
       setRequests(prev => prev.filter(r => r.id !== request.id));
       alert('Ride accepted! You can now contact the customer.');
     } catch (error) {
-      console.error('Error accepting ride:', error);
+      logError("page", error);
       alert('Failed to accept ride. It may have been taken by another driver.');
       fetchRequests(); // Refresh list
     } finally {
@@ -55,7 +58,7 @@ export default function DriverRequestsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
       </div>
     );
   }
@@ -67,7 +70,7 @@ export default function DriverRequestsPage() {
           <h1 className="text-2xl font-bold text-gray-800">Open Ride Requests</h1>
           <Link 
             href="/driver/dashboard"
-            className="text-green-600 hover:underline font-medium"
+            className="text-primary-600 hover:underline font-medium"
           >
             Back to Dashboard
           </Link>
@@ -84,13 +87,13 @@ export default function DriverRequestsPage() {
         ) : (
           <div className="grid gap-6">
             {requests.map((req) => (
-              <div key={req.id} className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:border-green-200 transition">
+              <div key={req.id} className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:border-primary-200 transition">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="space-y-4 flex-1">
                     <div className="flex items-start gap-3">
                       <div className="mt-1">
                         <div className="flex flex-col items-center gap-1">
-                          <div className="w-3 h-3 rounded-full bg-green-500" />
+                          <div className="w-3 h-3 rounded-full bg-primary-500" />
                           <div className="w-0.5 h-8 bg-gray-200" />
                           <div className="w-3 h-3 rounded-full bg-red-500" />
                         </div>
@@ -132,7 +135,7 @@ export default function DriverRequestsPage() {
                     <button
                       onClick={() => handleAccept(req)}
                       disabled={!!acceptingId}
-                      className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition disabled:opacity-50 flex items-center justify-center gap-2"
+                      className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-4 rounded-lg transition disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                       {acceptingId === req.id ? (
                         <>

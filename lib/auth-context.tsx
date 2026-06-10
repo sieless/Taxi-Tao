@@ -53,17 +53,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  // Load cached profiles
-  const loadCachedProfile = () => {
-    try {
-      const rawUser = localStorage.getItem("userProfile");
-      if (rawUser) setUserProfile(JSON.parse(rawUser));
-      const rawDriver = localStorage.getItem("driverProfile");
-      if (rawDriver) setDriverProfile(JSON.parse(rawDriver));
-    } catch (e) {
-      console.warn("Failed to parse cached profile", e);
-    }
-  };
+
 
   // Refresh profile from Firestore
   const refreshUserProfile = async (currentUser?: FirebaseUser | null) => {
@@ -81,6 +71,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const profileData: AppUser = {
           id: userDoc.id,
           ...(data as any),
+          email: data?.email || targetUser.email || "",
           name:
             data?.name ||
             targetUser.displayName ||
@@ -92,15 +83,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           await signOut(auth);
           setUserProfile(null);
           setDriverProfile(null);
-          localStorage.removeItem("userProfile");
-          localStorage.removeItem("driverProfile");
           setError("Your account has been suspended. Please contact support.");
           router.replace("/login");
           return;
         }
 
         setUserProfile(profileData);
-        localStorage.setItem("userProfile", JSON.stringify(profileData));
 
         if (profileData.role === "driver" && profileData.driverId) {
           try {
@@ -113,35 +101,66 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 ...(driverDoc.data() as any),
               };
               setDriverProfile(driverData);
-              localStorage.setItem("driverProfile", JSON.stringify(driverData));
             } else {
               setDriverProfile(null);
             }
           } catch (drvErr: any) {
-            if (drvErr.code !== "permission-denied")
+            if (drvErr.code !== "permission-denied" && process.env.NODE_ENV === "development") {
               console.error("Driver profile fetch error:", drvErr);
+            }
             setDriverProfile(null);
+          }
+        } else if (profileData.role === "car_hire") {
+          // Resolve companyId if missing or fetch company details
+          let effectiveCompanyId = profileData.companyId;
+
+          if (!effectiveCompanyId) {
+            try {
+              const { collection, query, where, getDocs } = await import("firebase/firestore");
+              const q = query(collection(db, "companies"), where("representativeId", "==", targetUser.uid));
+              const snap = await getDocs(q);
+              if (!snap.empty) {
+                effectiveCompanyId = snap.docs[0].id;
+                // Self-heal user document in database to satisfy Security Rules
+                await setDoc(doc(db, "users", targetUser.uid), { companyId: effectiveCompanyId }, { merge: true });
+                // Update local profile data
+                profileData.companyId = effectiveCompanyId;
+                setUserProfile({ ...profileData });
+              }
+            } catch (err) {
+              if (process.env.NODE_ENV === "development") {
+                console.error("Error resolving company by representative:", err);
+              }
+            }
+          }
+
+          if (effectiveCompanyId) {
+            try {
+              const companyDoc = await getDoc(doc(db, "companies", effectiveCompanyId));
+              if (companyDoc.exists()) {
+                const companyData = { id: companyDoc.id, ...companyDoc.data() };
+              }
+            } catch (compErr: any) {
+              if (compErr.code !== "permission-denied" && process.env.NODE_ENV === "development") {
+                console.error("Company profile fetch error:", compErr);
+              }
+            }
           }
         } else {
           setDriverProfile(null);
         }
       } else {
-        // Auto-create profile if missing
-        const newProfile: any = {
-          name:
-            targetUser.displayName || targetUser.email?.split("@")[0] || "User",
-          createdAt: serverTimestamp(),
-        };
-        await setDoc(userDocRef, newProfile);
-        setUserProfile({ id: userDocRef.id, ...newProfile } as AppUser);
-        localStorage.setItem(
-          "userProfile",
-          JSON.stringify({ id: userDocRef.id, ...newProfile })
-        );
+        // No profile document found
+        if (process.env.NODE_ENV === "development") {
+          console.warn("No profile document found for user");
+        }
+        setUserProfile(null);
         setDriverProfile(null);
       }
     } catch (err: any) {
-      console.error("Error fetching user profile:", err);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error fetching user profile:", err);
+      }
       setError(err.message || "Unknown error while fetching profile");
       setUserProfile(null);
       setDriverProfile(null);
@@ -149,7 +168,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    loadCachedProfile();
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setLoading(true);
       setUser(firebaseUser);
@@ -165,14 +183,43 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } else {
         setUserProfile(null);
         setDriverProfile(null);
-        localStorage.removeItem("userProfile");
-        localStorage.removeItem("driverProfile");
       }
       setLoading(false);
     });
 
     return () => unsubscribe();
   }, [router]);
+
+  /**
+   * Set session cookie server-side via API route (httpOnly, secure).
+   */
+  const setSessionCookie = async (firebaseUser: FirebaseUser) => {
+    try {
+      const idToken = await firebaseUser.getIdToken();
+      await fetch("/api/auth/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken }),
+      });
+    } catch (error) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Failed to set session cookie:", error);
+      }
+    }
+  };
+
+  /**
+   * Clear session cookies on logout via API route
+   */
+  const clearSessionCookies = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch (error) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Failed to clear session cookies:", error);
+      }
+    }
+  };
 
   const signIn = async (email: string, password: string) => {
     setError(null);
@@ -186,6 +233,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       setUser(userCredential.user);
 
+      // Set session cookie for middleware protection
+      await setSessionCookie(userCredential.user);
+
       // Fetch Firestore profile directly here to get role immediately
       const userDocRef = doc(db, "users", userCredential.user.uid);
       const userDoc = await getDoc(userDocRef);
@@ -194,6 +244,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const data = userDoc.data();
         if (data?.suspended) {
           await signOut(auth);
+          await clearSessionCookies();
           throw new Error("Your account has been suspended. Please contact support.");
         }
         const role = (data as any).role || "customer";
@@ -215,7 +266,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return "customer";
       }
     } catch (err: any) {
-      console.error("Sign in failed:", err);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Sign in failed:", err);
+      }
       const sanitizedError = sanitizeAuthError(err, "Sign in failed. Please try again.");
       setError(sanitizedError);
       throw new Error(sanitizedError);
@@ -230,6 +283,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const result = await signInWithPopup(auth, provider);
       const firebaseUser = result.user;
       
+      // Set session cookie for middleware protection
+      await setSessionCookie(firebaseUser);
+      
       // Check if user already has a profile
       const userDocRef = doc(db, "users", firebaseUser.uid);
       const userDoc = await getDoc(userDocRef);
@@ -238,6 +294,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const data = userDoc.data();
         if (data?.suspended) {
           await signOut(auth);
+          await clearSessionCookies();
           throw new Error("Your account has been suspended. Please contact support.");
         }
         await refreshUserProfile(firebaseUser);
@@ -256,7 +313,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return "customer";
       }
     } catch (err: any) {
-      console.error("Google sign in failed:", err);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Google sign in failed:", err);
+      }
       let message = "Google sign in failed. Please try again.";
       if (err.code === "auth/popup-blocked") {
         message = "Login popup was blocked by your browser. Please allow popups for this site and try again.";
@@ -275,13 +334,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       await signOut(auth);
     } catch (err) {
-      console.error("Sign out error:", err);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Sign out error:", err);
+      }
     } finally {
       setUser(null);
       setUserProfile(null);
       setDriverProfile(null);
-      localStorage.removeItem("userProfile");
-      localStorage.removeItem("driverProfile");
+      await clearSessionCookies();
       try {
         router.replace("/");
       } catch {
@@ -296,7 +356,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { sendAuthPasswordResetEmail } = await import("@/lib/auth-email-utils");
       await sendAuthPasswordResetEmail(email.trim().toLowerCase());
     } catch (err: any) {
-      console.error("Reset password failed:", err);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Reset password failed:", err);
+      }
       // Still return success or don't throw to prevent user enumeration if desired, 
       // but here we just log it. The implementation plan says trigger it.
     }

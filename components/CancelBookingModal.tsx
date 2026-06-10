@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { X, AlertTriangle } from 'lucide-react';
 import { cancelBooking } from '@/lib/cancellation-service';
 
-interface CancelBookingModalProps {
+
+import { logError } from "@/lib/logger";interface CancelBookingModalProps {
   isOpen: boolean;
   onClose: () => void;
   bookingId: string;
@@ -49,7 +50,7 @@ export default function CancelBookingModal({
       onSuccess();
       onClose();
     } catch (error) {
-      console.error("Error cancelling booking:", error);
+      logError("CancelBookingModal", error);
       alert("Failed to cancel booking. Please try again.");
     } finally {
       setLoading(false);

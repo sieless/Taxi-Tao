@@ -85,7 +85,8 @@ export async function cropImageToSquare(file: File): Promise<File> {
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "./firebase";
 
-/**
+
+import { logError } from "@/lib/logger";/**
  * Uploads an image to Firebase Storage
  * @param file - The image file to upload
  * @param folder - Optional folder name in Storage
@@ -117,7 +118,7 @@ export async function uploadImage(
       height: 0,
     };
   } catch (error: any) {
-    console.error("Error uploading image:", error);
+    logError("image-upload", error);
     throw new Error(`Failed to upload image: ${error.message}`);
   }
 }

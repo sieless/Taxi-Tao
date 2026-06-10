@@ -2,7 +2,8 @@ import { collection, doc, getDoc, getDocs, query, where } from "firebase/firesto
 import { db } from "./firebase";
 import { Driver, Vehicle } from "./types";
 
-export async function getDriver(driverId: string): Promise<Driver | null> {
+
+import { logError } from "@/lib/logger";export async function getDriver(driverId: string): Promise<Driver | null> {
   try {
     const docRef = doc(db, "drivers", driverId);
     const docSnap = await getDoc(docRef);
@@ -13,7 +14,7 @@ export async function getDriver(driverId: string): Promise<Driver | null> {
       return null;
     }
   } catch (error) {
-    console.error("Error fetching driver:", error);
+    logError("firestore", error);
     return null;
   }
 }
@@ -43,7 +44,7 @@ export async function getDriverVehicles(driverId: string): Promise<Vehicle[]> {
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Vehicle));
   } catch (error) {
-    console.error("Error fetching vehicles:", error);
+    logError("firestore", error);
     return [];
   }
 }
@@ -59,7 +60,7 @@ export async function getAllActiveDrivers(): Promise<Driver[]> {
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Driver));
   } catch (error) {
-    console.error("Error fetching active drivers:", error);
+    logError("firestore", error);
     return [];
   }
 }

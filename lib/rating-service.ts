@@ -2,6 +2,8 @@
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebase';
 
+
+import { logError } from "@/lib/logger";
 /**
  * Submit rating and review for a completed trip
  */
@@ -22,10 +24,8 @@ export async function submitRating(
       review: review || '',
       ratedAt: serverTimestamp(),
     });
-
-    console.log('Rating submitted successfully');
   } catch (error) {
-    console.error('Error submitting rating:', error);
+    logError("rating", error);
     throw error;
   }
 }
@@ -37,8 +37,8 @@ export async function calculateDriverAverageRating(
   driverId: string
 ): Promise<number> {
   // TODO: Implement aggregation query to calculate average
-  // For now, this would require querying all bookings for the driver
-  // and calculating the average client-side or using Cloud Functions
-  console.warn('Driver average rating calculation not yet implemented');
+  if (process.env.NODE_ENV === "development") {
+    console.warn('Driver average rating calculation not yet implemented');
+  }
   return 0;
 }

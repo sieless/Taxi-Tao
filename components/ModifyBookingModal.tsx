@@ -4,6 +4,8 @@ import { db } from '@/lib/firebase';
 import { BookingRequest } from '@/lib/types';
 import { X, MapPin, Navigation, Save, Loader2 } from 'lucide-react';
 
+
+import { logError } from "@/lib/logger";
 interface ModifyBookingModalProps {
   booking: BookingRequest;
   onClose: () => void;
@@ -39,7 +41,7 @@ export default function ModifyBookingModal({ booking, onClose }: ModifyBookingMo
 
       onClose();
     } catch (err) {
-      console.error('Error modifying booking:', err);
+      logError("ModifyBookingModal", err);
       setError('Failed to update booking. Please try again.');
     } finally {
       setLoading(false);
@@ -65,7 +67,7 @@ export default function ModifyBookingModal({ booking, onClose }: ModifyBookingMo
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-              <MapPin size={16} className="text-green-600" />
+              <MapPin size={16} className="text-primary-600" />
               Pickup Location
             </label>
             <input

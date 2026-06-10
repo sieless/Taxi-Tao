@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { getDriverPricing, updatePricing, createRouteKey } from '../lib/pricing-service';
 import { useAuth } from '../lib/auth-context';
-import { MapPin, DollarSign, Trash2, ArrowRight, Plus, Loader2, Edit3, List } from 'lucide-react';
+import { MapPin, Wallet, Trash2, ArrowRight, Plus, Loader2, Edit3, List } from 'lucide-react';
 import { KENYA_LOCATIONS, normalizeLocation, isValidLocation } from '../lib/locations';
 
+
+import { logError } from "@/lib/logger";
 interface RouteEntry {
   routeKey: string;
   from: string;
@@ -76,7 +78,7 @@ export default function DriverPricingManager() {
         
         setRoutes(entries);
       } catch (error) {
-        console.error('Error loading pricing:', error);
+        logError("DriverPricingManager", error);
       } finally {
         setLoading(false);
       }
@@ -171,7 +173,7 @@ export default function DriverPricingManager() {
       
       alert('Route added successfully!');
     } catch (error) {
-      console.error('Error adding route:', error);
+      logError("DriverPricingManager", error);
       alert('Failed to add route. Please try again.');
     } finally {
       setSaving(false);
@@ -197,7 +199,7 @@ export default function DriverPricingManager() {
       setRoutes(routes.filter((r) => r.routeKey !== routeKey));
       alert('Route deleted successfully!');
     } catch (error) {
-      console.error('Error deleting route:', error);
+      logError("DriverPricingManager", error);
       alert('Failed to delete route. Please try again.');
     } finally {
       setSaving(false);
@@ -208,7 +210,7 @@ export default function DriverPricingManager() {
     return (
       <div className="p-6 bg-white rounded-xl shadow-md">
         <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+          <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
         </div>
       </div>
     );
@@ -217,7 +219,7 @@ export default function DriverPricingManager() {
   return (
     <div className="p-6 bg-white rounded-xl shadow-md">
       <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-        <MapPin className="w-6 h-6 text-green-600" />
+        <MapPin className="w-6 h-6 text-primary-600" />
         Route Pricing Management
       </h2>
 
@@ -234,12 +236,12 @@ export default function DriverPricingManager() {
             {routes.map((route) => (
               <div
                 key={route.routeKey}
-                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-green-300 transition-colors"
+                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-primary-300 transition-colors"
               >
                 <div className="flex items-center gap-4 flex-1">
                   <div className="flex items-center gap-2 flex-1">
-                    <div className="p-2 bg-green-100 rounded-lg">
-                      <MapPin className="w-4 h-4 text-green-600" />
+                    <div className="p-2 bg-primary-100 rounded-lg">
+                      <MapPin className="w-4 h-4 text-primary-600" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
@@ -255,8 +257,8 @@ export default function DriverPricingManager() {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg font-bold">
-                    <DollarSign className="w-4 h-4" />
+                  <div className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg font-bold">
+                    <Wallet className="w-4 h-4" />
                     <span>KES {route.price.toLocaleString()}</span>
                   </div>
                 </div>
@@ -277,7 +279,7 @@ export default function DriverPricingManager() {
       {/* Add New Route Form */}
       <div className="border-t pt-6">
         <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
-          <Plus className="w-5 h-5 text-green-600" />
+          <Plus className="w-5 h-5 text-primary-600" />
           Add New Route
         </h3>
         
@@ -290,7 +292,7 @@ export default function DriverPricingManager() {
                 onClick={() => setInputMode('dropdown')}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded text-sm font-medium transition-colors ${
                   inputMode === 'dropdown'
-                    ? 'bg-green-600 text-white'
+                    ? 'bg-primary-600 text-white'
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
@@ -301,7 +303,7 @@ export default function DriverPricingManager() {
                 onClick={() => setInputMode('manual')}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded text-sm font-medium transition-colors ${
                   inputMode === 'manual'
-                    ? 'bg-green-600 text-white'
+                    ? 'bg-primary-600 text-white'
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
@@ -325,7 +327,7 @@ export default function DriverPricingManager() {
               <select
                 value={fromLocation}
                 onChange={(e) => setFromLocation(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 disabled={saving}
               >
                 <option value="">Select origin...</option>
@@ -339,7 +341,7 @@ export default function DriverPricingManager() {
                 value={fromLocation}
                 onChange={(e) => setFromLocation(e.target.value)}
                 placeholder="e.g., Eastleigh"
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 disabled={saving}
               />
             )}
@@ -354,7 +356,7 @@ export default function DriverPricingManager() {
               <select
                 value={toLocation}
                 onChange={(e) => setToLocation(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 disabled={saving}
               >
                 <option value="">Select destination...</option>
@@ -368,7 +370,7 @@ export default function DriverPricingManager() {
                 value={toLocation}
                 onChange={(e) => setToLocation(e.target.value)}
                 placeholder="e.g., Westlands"
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 disabled={saving}
               />
             )}
@@ -384,7 +386,7 @@ export default function DriverPricingManager() {
               placeholder="e.g., 3000"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               disabled={saving}
               min="0"
             />
@@ -400,7 +402,7 @@ export default function DriverPricingManager() {
               placeholder="e.g., 65"
               value={distance}
               onChange={(e) => setDistance(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               disabled={saving}
               min="0"
             />
@@ -416,7 +418,7 @@ export default function DriverPricingManager() {
               placeholder="e.g., 45 mins"
               value={duration}
               onChange={(e) => setDuration(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               disabled={saving}
             />
           </div>
@@ -427,7 +429,7 @@ export default function DriverPricingManager() {
           <button
             onClick={addRoute}
             disabled={saving || !fromLocation || !toLocation || !price}
-            className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {saving ? (
               <>

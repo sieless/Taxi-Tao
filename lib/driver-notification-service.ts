@@ -2,6 +2,8 @@
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebase';
 
+
+import { logError } from "@/lib/logger";
 interface CreateDriverNotificationParams {
   driverId: string;
   type: 'new_booking' | 'booking_cancelled' | 'fare_accepted' | 'system';
@@ -32,10 +34,8 @@ export async function createDriverNotification(params: CreateDriverNotificationP
       read: false,
       createdAt: serverTimestamp(),
     });
-    
-    console.log('Driver notification created successfully');
   } catch (error) {
-    console.error('Error creating driver notification:', error);
+    logError("driver-notification", error);
     throw error;
   }
 }
@@ -67,9 +67,8 @@ export async function notifyDriversOfNewBooking(
     );
     
     await Promise.all(promises);
-    console.log(`Notified ${driverIds.length} drivers of new booking`);
   } catch (error) {
-    console.error('Error notifying drivers:', error);
+    logError("driver-notification", error);
     throw error;
   }
 }

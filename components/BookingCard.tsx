@@ -52,7 +52,7 @@ export default function BookingCard({ booking, onStatusUpdate, updatingStatus, o
           <button
             onClick={() => onStatusUpdate(booking.id, 'arrived')}
             disabled={isUpdating}
-            className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg flex items-center justify-center gap-1 disabled:opacity-50"
+            className="bg-primary-600 hover:bg-primary-700 text-white px-3 py-2 rounded-lg flex items-center justify-center gap-1 disabled:opacity-50"
           >
             {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPinned className="w-4 h-4" />}
             I've Arrived
@@ -62,7 +62,7 @@ export default function BookingCard({ booking, onStatusUpdate, updatingStatus, o
           <button
             onClick={() => onStatusUpdate(booking.id, 'in_progress')}
             disabled={isUpdating}
-            className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg flex items-center justify-center gap-1 disabled:opacity-50"
+            className="bg-primary-600 hover:bg-primary-700 text-white px-3 py-2 rounded-lg flex items-center justify-center gap-1 disabled:opacity-50"
           >
             {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
             Start Trip
@@ -82,7 +82,7 @@ export default function BookingCard({ booking, onStatusUpdate, updatingStatus, o
         {/* Call button */}
         <button
           onClick={() => onCall(booking.customerPhone)}
-          className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg flex items-center justify-center gap-1"
+          className="bg-primary-600 hover:bg-primary-700 text-white px-3 py-2 rounded-lg flex items-center justify-center gap-1"
         >
           <Phone className="w-4 h-4" />
           Call

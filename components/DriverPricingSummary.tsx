@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { DollarSign, TrendingUp, MapPin } from 'lucide-react';
+import { Wallet, TrendingUp, MapPin } from 'lucide-react';
 import { getDriverPricing, subscribeToDriverPricing } from '../lib/pricing-service';
 import { useAuth } from '../lib/auth-context';
 
@@ -72,7 +72,7 @@ export default function DriverPricingSummary() {
     return (
       <div className="bg-white rounded-xl shadow-md p-6">
         <div className="flex items-center gap-2 mb-4">
-          <DollarSign className="w-5 h-5 text-green-600" />
+          <Wallet className="w-5 h-5 text-primary-600" />
           <h3 className="text-lg font-bold text-gray-800">My Route Pricing</h3>
         </div>
         <p className="text-gray-500 text-sm">No routes added yet. Click "Pricing" in Quick Actions to add your first route.</p>
@@ -89,7 +89,7 @@ export default function DriverPricingSummary() {
     <div className="bg-white rounded-xl shadow-md p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <DollarSign className="w-5 h-5 text-green-600" />
+          <Wallet className="w-5 h-5 text-primary-600" />
           <h3 className="text-lg font-bold text-gray-800">My Route Pricing</h3>
         </div>
         <span className="text-sm text-gray-500">{routes.length} routes</span>
@@ -103,7 +103,7 @@ export default function DriverPricingSummary() {
         </div>
         <div className="text-center">
           <p className="text-xs text-gray-500 mb-1">Lowest</p>
-          <p className="text-lg font-bold text-green-600">KES {minPrice.toLocaleString()}</p>
+          <p className="text-lg font-bold text-primary-600">KES {minPrice.toLocaleString()}</p>
         </div>
         <div className="text-center">
           <p className="text-xs text-gray-500 mb-1">Highest</p>

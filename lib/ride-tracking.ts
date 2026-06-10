@@ -8,13 +8,13 @@ import {
 } from 'firebase/firestore';
 
 import { db } from './firebase';
+
+import { logError } from "@/lib/logger";
 import { 
-  getCurrentLocation, 
-  watchLocation, 
-  stopWatchingLocation, 
-  calculateETA, 
-  calculateDistance 
-} from './maps';
+  getCurrentPosition, 
+  watchPosition,
+  calculateDistance
+} from './services/location-service';
 
 // Global tracking references
 let locationWatchId: number | null = null;
@@ -65,7 +65,7 @@ export async function updateRideStatus(
     await updateDoc(bookingRef, updateData);
 
   } catch (error) {
-    console.error('Error updating ride status:', error);
+    logError("ride-tracking", error);
     throw error;
   }
 }
@@ -86,13 +86,13 @@ export async function startLocationTracking(
 
     if (typeof window !== 'undefined' && !navigator.geolocation) {
       const noGeoErr = new Error('Geolocation is not supported by this browser or environment.');
-      console.error('[RideTracking] Geolocation missing:', noGeoErr);
+      logError("ride-tracking", noGeoErr);
       if (onError) onError(noGeoErr);
       return;
     }
 
     // Initial location update
-    const initialLocation = await getCurrentLocation();
+    const initialLocation = await getCurrentPosition();
     await updateDriverLocation(bookingId, initialLocation);
 
     if (destinationCoords) {
@@ -104,7 +104,7 @@ export async function startLocationTracking(
     // Start 30-second interval tracking
     locationUpdateInterval = setInterval(async () => {
       try {
-        const currentLocation = await getCurrentLocation();
+        const currentLocation = await getCurrentPosition();
         await updateDriverLocation(bookingId, currentLocation);
 
         if (destinationCoords) {
@@ -118,7 +118,7 @@ export async function startLocationTracking(
         // Only notify if it's a NEW error to avoid spamming the UI
         if (errCode !== lastErrCode) {
           const errMsg = err?.message || err?.toString?.() || 'Unknown location error';
-          console.error('[RideTracking] Interval update failed:', {
+          logError("ride-tracking", new Error("[RideTracking] Interval update failed"), {
             message: errMsg,
             code: err?.code,
             originalError: e
@@ -144,7 +144,7 @@ export async function startLocationTracking(
       else errMsg = 'Unknown location error';
     }
     
-    console.error('[RideTracking] Failed to start tracking:', {
+    logError("ride-tracking", new Error("[RideTracking] Failed to start tracking"), {
       message: errMsg,
       code: errCode,
       name: err?.name,
@@ -175,7 +175,7 @@ export function stopLocationTracking(): void {
   }
 
   if (locationWatchId !== null) {
-    stopWatchingLocation(locationWatchId);
+    navigator.geolocation.clearWatch(locationWatchId);
     locationWatchId = null;
   }
 }
@@ -201,43 +201,8 @@ async function updateDriverLocation(
     });
 
   } catch (error) {
-    console.error('Error updating driver location:', error);
+    logError("ride-tracking", error);
     throw error;
-  }
-}
-
-
-
-/**
- * Calculates ETA – should be called max 3 times per trip (cost control)
- */
-export async function calculateAndUpdateETA(
-  bookingId: string,
-  driverLocation: { lat: number; lng: number },
-  destinationAddress: string
-): Promise<void> {
-  try {
-    // TODO: geocode destination → { lat, lng }
-    // Placeholder — waiting for your geocoding implementation
-    const destinationCoords = driverLocation;
-
-    const eta = await calculateETA(driverLocation, destinationCoords);
-
-    if (!eta) return;
-
-    const bookingRef = doc(db, 'bookingRequests', bookingId);
-
-    await updateDoc(bookingRef, {
-      eta: {
-        minutes: eta.minutes,
-        distance: eta.distance,
-        lastCalculated: Timestamp.now(),
-      },
-    });
-
-  } catch (error) {
-    console.error('Error calculating ETA:', error);
-    // Don't throw — ETA not mission-critical
   }
 }
 
@@ -274,6 +239,6 @@ async function checkAndAutoComplete(
     }
 
   } catch (error) {
-    console.error('Auto-complete check error:', error);
+    logError("ride-tracking", error);
   }
 }

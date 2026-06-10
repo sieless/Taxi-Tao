@@ -6,7 +6,8 @@ import { db } from "@/lib/firebase";
 import { Driver } from "@/lib/types";
 import { Car, ChevronLeft, ChevronRight, Phone } from "lucide-react";
 
-interface LiveDriverCarouselProps {
+
+import { logError } from "@/lib/logger";interface LiveDriverCarouselProps {
   vehicleType?: string;
 }
 
@@ -41,7 +42,7 @@ export default function LiveDriverCarousel({ vehicleType }: LiveDriverCarouselPr
       setDrivers(availableDrivers);
       setLoading(false);
     }, (error) => {
-      console.error("LiveDriverCarousel listener error:", error);
+      logError("LiveDriverCarousel", error);
       setLoading(false);
     });
 
@@ -69,9 +70,9 @@ export default function LiveDriverCarousel({ vehicleType }: LiveDriverCarouselPr
 
   if (loading) {
     return (
-      <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl p-8 h-96 flex items-center justify-center">
+      <div className="bg-gradient-to-br from-primary-50 to-blue-50 rounded-2xl p-8 h-96 flex items-center justify-center">
         <div className="text-center">
-          <Car className="w-16 h-16 text-green-600 animate-pulse mx-auto mb-4" />
+          <Car className="w-16 h-16 text-primary-600 animate-pulse mx-auto mb-4" />
           <p className="text-gray-600 font-semibold">Loading live drivers...</p>
         </div>
       </div>
@@ -102,7 +103,7 @@ export default function LiveDriverCarousel({ vehicleType }: LiveDriverCarouselPr
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+            <div className="w-3 h-3 bg-primary-500 rounded-full animate-pulse"></div>
             {drivers.length} {(vehicleType || '').charAt(0).toUpperCase() + (vehicleType || '').slice(1)} Drivers Online Now
           </h3>
           <p className="text-sm text-gray-600">Auto-rotating every 5 seconds</p>
@@ -126,7 +127,7 @@ export default function LiveDriverCarousel({ vehicleType }: LiveDriverCarouselPr
       </div>
 
       {/* Carousel Container */}
-      <div className="relative bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl overflow-hidden shadow-xl" style={{ height: '400px' }}>
+      <div className="relative bg-gradient-to-br from-primary-50 to-blue-50 rounded-2xl overflow-hidden shadow-xl" style={{ height: '400px' }}>
         {/* Car Photo with Fade Animation */}
         {drivers.map((driver, index) => (
           <div
@@ -160,7 +161,7 @@ export default function LiveDriverCarousel({ vehicleType }: LiveDriverCarouselPr
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
+                    <div className="w-full h-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center">
                       <span className="text-2xl font-bold text-white">
                         {(driver.name || 'Driver').charAt(0)}
                       </span>
@@ -175,7 +176,7 @@ export default function LiveDriverCarousel({ vehicleType }: LiveDriverCarouselPr
                     {driver.vehicles?.[0]?.make} {driver.vehicles?.[0]?.model} • {driver.vehicles?.[0]?.plate}
                   </p>
                   <div className="flex items-center gap-4 text-sm">
-                    <span className="bg-green-500 px-3 py-1 rounded-full font-bold">
+                    <span className="bg-primary-500 px-3 py-1 rounded-full font-bold">
                       ONLINE
                     </span>
                     {driver.averageRating && (
@@ -189,7 +190,7 @@ export default function LiveDriverCarousel({ vehicleType }: LiveDriverCarouselPr
                   {/* Quick Call Button */}
                   <a
                     href={`tel:${driver.phone}`}
-                    className="mt-3 inline-flex items-center gap-2 bg-white text-green-700 px-4 py-2 rounded-lg font-bold text-sm hover:bg-green-50 transition shadow-md"
+                    className="mt-3 inline-flex items-center gap-2 bg-white text-primary-700 px-4 py-2 rounded-lg font-bold text-sm hover:bg-primary-50 transition shadow-md"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Phone className="w-4 h-4" />

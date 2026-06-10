@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { DollarSign, Star, TrendingUp, Award, User } from 'lucide-react';
+import { Wallet, Star, TrendingUp, Award, User } from 'lucide-react';
 
 interface DriverMatch {
   driverId: string;
@@ -28,7 +28,7 @@ export default function PriceRecommendations({
 }: PriceRecommendationsProps) {
   const recommendations = [
     { driver: bestValue, icon: TrendingUp, color: 'indigo', label: 'BEST VALUE', badge: '🏆' },
-    { driver: lowestPrice, icon: DollarSign, color: 'green', label: 'LOWEST PRICE', badge: '💰' },
+    { driver: lowestPrice, icon: Wallet, color: 'green', label: 'LOWEST PRICE', badge: '💰' },
     { driver: bestRated, icon: Award, color: 'yellow', label: 'BEST RATED', badge: '⭐' },
   ];
 
@@ -60,11 +60,11 @@ export default function PriceRecommendations({
               badge: 'bg-indigo-100 text-indigo-700',
             },
             green: {
-              bg: 'bg-green-50',
-              border: 'border-green-200',
-              text: 'text-green-600',
-              button: 'bg-green-600 hover:bg-green-700',
-              badge: 'bg-green-100 text-green-700',
+              bg: 'bg-primary-50',
+              border: 'border-primary-200',
+              text: 'text-primary-600',
+              button: 'bg-primary-600 hover:bg-primary-700',
+              badge: 'bg-primary-100 text-primary-700',
             },
             yellow: {
               bg: 'bg-yellow-50',

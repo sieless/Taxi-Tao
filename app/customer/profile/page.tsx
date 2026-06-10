@@ -8,7 +8,8 @@ import { db } from "@/lib/firebase";
 import { User, Phone, Save, Loader2, Heart, Trash2, History } from "lucide-react";
 import Link from "next/link";
 
-export default function ClientProfilePage() {
+
+import { logError } from "@/lib/logger";export default function ClientProfilePage() {
   const { user, userProfile, loading: authLoading, refreshUserProfile } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -51,7 +52,7 @@ export default function ClientProfilePage() {
       );
       setSavedDrivers(drivers.filter(d => d !== null));
     } catch (error) {
-      console.error("Error fetching saved drivers:", error);
+      logError("page", error);
     }
   };
 
@@ -77,7 +78,7 @@ export default function ClientProfilePage() {
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (error) {
-      console.error("Error updating profile:", error);
+      logError("page", error);
       alert("Failed to update profile.");
     } finally {
       setLoading(false);
@@ -94,14 +95,14 @@ export default function ClientProfilePage() {
       });
       setSavedDrivers(prev => prev.filter(d => d.id !== driverId));
     } catch (error) {
-      console.error("Error removing saved driver:", error);
+      logError("page", error);
     }
   };
 
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
       </div>
     );
   }
@@ -115,7 +116,7 @@ export default function ClientProfilePage() {
           {/* Sidebar / Navigation */}
           <div className="md:col-span-1 space-y-4">
             <div className="bg-white rounded-xl shadow-sm p-6 text-center">
-              <div className="w-20 h-20 rounded-full bg-green-100 mx-auto flex items-center justify-center text-green-600 text-2xl font-bold mb-3">
+              <div className="w-20 h-20 rounded-full bg-primary-100 mx-auto flex items-center justify-center text-primary-600 text-2xl font-bold mb-3">
                 {userProfile?.name?.charAt(0) || user?.email?.charAt(0) || "U"}
               </div>
               <p className="font-bold text-gray-800">{userProfile?.name || "User"}</p>
@@ -136,7 +137,7 @@ export default function ClientProfilePage() {
             {/* Edit Profile Form */}
             <div className="bg-white rounded-xl shadow-sm p-6">
               <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <User className="w-5 h-5 text-green-600" />
+                <User className="w-5 h-5 text-primary-600" />
                 Edit Details
               </h2>
               
@@ -150,7 +151,7 @@ export default function ClientProfilePage() {
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       placeholder="Your Name"
                     />
                   </div>
@@ -165,7 +166,7 @@ export default function ClientProfilePage() {
                       name="phone"
                       value={formData.phone}
                       onChange={handleChange}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       placeholder="Your Phone"
                     />
                   </div>
@@ -174,14 +175,14 @@ export default function ClientProfilePage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 rounded-lg transition flex items-center justify-center gap-2"
+                  className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-2.5 rounded-lg transition flex items-center justify-center gap-2"
                 >
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                   Save Changes
                 </button>
 
                 {success && (
-                  <p className="text-green-600 text-sm text-center font-medium bg-green-50 py-2 rounded">
+                  <p className="text-primary-600 text-sm text-center font-medium bg-primary-50 py-2 rounded">
                     Profile updated successfully!
                   </p>
                 )}
@@ -219,7 +220,7 @@ export default function ClientProfilePage() {
                       <div className="flex items-center gap-2">
                         <Link 
                           href={`/booking?driverId=${driver.id}`}
-                          className="text-xs bg-green-100 text-green-700 px-3 py-1.5 rounded-full font-bold hover:bg-green-200"
+                          className="text-xs bg-primary-100 text-primary-700 px-3 py-1.5 rounded-full font-bold hover:bg-primary-200"
                         >
                           Book
                         </Link>

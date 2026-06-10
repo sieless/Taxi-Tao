@@ -1,8 +1,12 @@
 import { useState } from 'react';
-import { addDoc, collection, Timestamp } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { useAuth } from '@/lib/auth-context';
+import { COLLECTIONS } from '@/lib/firestore-constants';
 import { X, AlertTriangle, Loader2, Send } from 'lucide-react';
 
+
+import { logError } from "@/lib/logger";
 interface ReportIssueModalProps {
   bookingId: string;
   driverId?: string;
@@ -11,6 +15,7 @@ interface ReportIssueModalProps {
 }
 
 export default function ReportIssueModal({ bookingId, driverId, isOpen, onClose }: ReportIssueModalProps) {
+  const { user } = useAuth();
   const [issueType, setIssueType] = useState('safety');
   const [description, setDescription] = useState('');
   const [urgency, setUrgency] = useState('medium');
@@ -18,18 +23,22 @@ export default function ReportIssueModal({ bookingId, driverId, isOpen, onClose 
   const [success, setSuccess] = useState(false);
 
   const handleSubmit = async () => {
-    if (!description.trim()) return;
+    if (!description.trim() || !user) return;
 
     setLoading(true);
     try {
-      await addDoc(collection(db, 'reports'), {
+      await addDoc(collection(db, COLLECTIONS.ISSUES), {
+        userId: user.uid,
+        userEmail: user.email,
+        userType: 'customer',
         bookingId,
         driverId: driverId || null,
+        subject: issueType,
         type: issueType,
         description,
         urgency,
-        status: 'open',
-        createdAt: Timestamp.now(),
+        status: 'pending',
+        createdAt: serverTimestamp(),
       });
       setSuccess(true);
       setTimeout(() => {
@@ -38,7 +47,7 @@ export default function ReportIssueModal({ bookingId, driverId, isOpen, onClose 
         setDescription('');
       }, 2000);
     } catch (error) {
-      console.error('Error submitting report:', error);
+      logError("ReportIssueModal", error);
     } finally {
       setLoading(false);
     }
@@ -62,7 +71,7 @@ export default function ReportIssueModal({ bookingId, driverId, isOpen, onClose 
         <div className="p-6 space-y-4">
           {success ? (
             <div className="text-center py-8 space-y-3">
-              <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-green-600">
+              <div className="bg-primary-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-primary-600">
                 <Send size={32} />
               </div>
               <h4 className="font-bold text-lg">Report Submitted</h4>

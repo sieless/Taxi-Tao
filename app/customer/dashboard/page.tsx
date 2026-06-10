@@ -7,7 +7,8 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { MapPin, Calendar, Clock, PlusCircle } from "lucide-react";
 
-interface Booking {
+
+import { logError } from "@/lib/logger";interface Booking {
   id: string;
   pickupLocation: string;
   destination: string;
@@ -56,7 +57,7 @@ export default function CustomerDashboardPage() {
       
       setStats({ total, active, completed });
     } catch (error) {
-      console.error("Error loading dashboard data:", error);
+      logError("page", error);
     } finally {
       setLoading(false);
     }
@@ -65,11 +66,11 @@ export default function CustomerDashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Compact Header Section */}
-      <div className="bg-gradient-to-br from-green-600 to-green-700 text-white">
+      <div className="bg-gradient-to-br from-primary-600 to-primary-700 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="max-w-3xl">
             <h1 className="text-3xl md:text-4xl font-bold mb-2">Welcome Back!</h1>
-            <p className="text-green-50 text-lg">Ready for your next ride?</p>
+            <p className="text-primary-50 text-lg">Ready for your next ride?</p>
           </div>
         </div>
       </div>
@@ -86,7 +87,11 @@ export default function CustomerDashboardPage() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 font-medium">Total Bookings</p>
-                  <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
+                  {loading ? (
+                    <div className="h-8 w-12 bg-gray-200 rounded animate-pulse mt-1" />
+                  ) : (
+                    <p className="text-3xl font-bold text-gray-900">{stats.total || <span className="text-gray-300">—</span>}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -95,12 +100,16 @@ export default function CustomerDashboardPage() {
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className="p-3 bg-green-100 rounded-lg">
-                  <MapPin className="w-6 h-6 text-green-700" />
+                <div className="p-3 bg-primary-100 rounded-lg">
+                  <MapPin className="w-6 h-6 text-primary-700" />
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 font-medium">Active Rides</p>
-                  <p className="text-3xl font-bold text-green-600">{stats.active}</p>
+                  {loading ? (
+                    <div className="h-8 w-12 bg-gray-200 rounded animate-pulse mt-1" />
+                  ) : (
+                    <p className="text-3xl font-bold text-primary-600">{stats.active || <span className="text-gray-300">—</span>}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -114,7 +123,11 @@ export default function CustomerDashboardPage() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 font-medium">Completed</p>
-                  <p className="text-3xl font-bold text-blue-600">{stats.completed}</p>
+                  {loading ? (
+                    <div className="h-8 w-12 bg-gray-200 rounded animate-pulse mt-1" />
+                  ) : (
+                    <p className="text-3xl font-bold text-blue-600">{stats.completed || <span className="text-gray-300">—</span>}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -125,7 +138,7 @@ export default function CustomerDashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
           <button
             onClick={() => router.push("/customer/book")}
-            className="bg-gradient-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-2xl p-8 text-left transition-all shadow-md hover:shadow-xl group"
+            className="bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white rounded-2xl p-8 text-left transition-all shadow-md hover:shadow-xl group"
           >
             <div className="flex items-start justify-between mb-4">
               <div className="p-4 bg-white/10 rounded-xl">
@@ -133,16 +146,16 @@ export default function CustomerDashboardPage() {
               </div>
             </div>
             <h3 className="text-2xl font-bold mb-2">Book a Ride</h3>
-            <p className="text-green-50 text-sm">Schedule your next journey with trusted drivers</p>
+            <p className="text-primary-50 text-sm">Schedule your next journey with trusted drivers</p>
           </button>
           
           <button
             onClick={() => router.push("/customer/bookings")}
-            className="bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-green-300 rounded-2xl p-8 text-left transition-all shadow-md hover:shadow-xl group"
+            className="bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-primary-300 rounded-2xl p-8 text-left transition-all shadow-md hover:shadow-xl group"
           >
             <div className="flex items-start justify-between mb-4">
-              <div className="p-4 bg-green-50 rounded-xl">
-                <Calendar className="w-10 h-10 text-green-600 group-hover:scale-110 transition" />
+              <div className="p-4 bg-primary-50 rounded-xl">
+                <Calendar className="w-10 h-10 text-primary-600 group-hover:scale-110 transition" />
               </div>
             </div>
             <h3 className="text-2xl font-bold text-gray-900 mb-2">My Bookings</h3>
@@ -156,7 +169,7 @@ export default function CustomerDashboardPage() {
           
           {loading ? (
             <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
             </div>
           ) : recentBookings.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
@@ -174,7 +187,7 @@ export default function CustomerDashboardPage() {
                   <div className="flex items-start gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <MapPin className="w-4 h-4 text-green-600" />
+                        <MapPin className="w-4 h-4 text-primary-600" />
                         <p className="font-medium text-gray-900">{booking.pickupLocation}</p>
                       </div>
                       <div className="flex items-center gap-2 mb-2">
@@ -194,7 +207,7 @@ export default function CustomerDashboardPage() {
                     </div>
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                       booking.rideStatus === 'completed' ? 'bg-blue-100 text-blue-800' :
-                      booking.rideStatus === 'in_progress' ? 'bg-green-100 text-green-800' :
+                      booking.rideStatus === 'in_progress' ? 'bg-primary-100 text-primary-800' :
                       'bg-yellow-100 text-yellow-800'
                     }`}>
                       {booking.rideStatus?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Pending'}

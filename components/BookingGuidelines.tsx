@@ -4,7 +4,7 @@ export default function BookingGuidelines() {
   return (
     <div className="bg-white rounded-2xl shadow-lg p-8 mt-8">
       <div className="text-center mb-8">
-        <Shield className="w-12 h-12 text-green-600 mx-auto mb-4" />
+        <Shield className="w-12 h-12 text-primary-600 mx-auto mb-4" />
         <h2 className="text-3xl font-bold text-gray-800 mb-2">
           Booking Safety Guidelines
         </h2>
@@ -15,9 +15,9 @@ export default function BookingGuidelines() {
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Guideline 1 */}
-        <div className="flex gap-4 p-4 bg-green-50 rounded-xl border border-green-200">
+        <div className="flex gap-4 p-4 bg-primary-50 rounded-xl border border-primary-200">
           <div className="flex-shrink-0">
-            <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center">
+            <div className="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center">
               <Eye className="w-5 h-5 text-white" />
             </div>
           </div>
@@ -60,9 +60,9 @@ export default function BookingGuidelines() {
         </div>
 
         {/* Guideline 4 */}
-        <div className="flex gap-4 p-4 bg-purple-50 rounded-xl border border-purple-200">
+        <div className="flex gap-4 p-4 bg-primary-50 rounded-xl border border-primary-200">
           <div className="flex-shrink-0">
-            <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center">
+            <div className="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center">
               <AlertCircle className="w-5 h-5 text-white" />
             </div>
           </div>
@@ -78,28 +78,28 @@ export default function BookingGuidelines() {
       {/* Additional Tips */}
       <div className="mt-8 p-6 bg-gray-50 rounded-xl">
         <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <CheckCircle className="w-5 h-5 text-green-600" />
+          <CheckCircle className="w-5 h-5 text-primary-600" />
           Quick Safety Checklist
         </h3>
         <ul className="space-y-2 text-sm text-gray-700">
           <li className="flex items-start gap-2">
-            <span className="text-green-600 font-bold">✓</span>
+            <span className="text-primary-600 font-bold">✓</span>
             <span>Verify the car's make, model, color, and registration plate</span>
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-green-600 font-bold">✓</span>
+            <span className="text-primary-600 font-bold">✓</span>
             <span>Confirm driver's identity matches their profile photo</span>
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-green-600 font-bold">✓</span>
+            <span className="text-primary-600 font-bold">✓</span>
             <span>Ensure the driver has an active "ONLINE" status badge</span>
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-green-600 font-bold">✓</span>
+            <span className="text-primary-600 font-bold">✓</span>
             <span>Keep your phone charged and accessible during the trip</span>
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-green-600 font-bold">✓</span>
+            <span className="text-primary-600 font-bold">✓</span>
             <span>If something feels wrong, trust your instincts and contact us immediately</span>
           </li>
         </ul>

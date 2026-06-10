@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, X, Phone, DollarSign, Star, Car } from "lucide-react";
+import { Menu, X, Phone, Wallet, Star, Car } from "lucide-react";
 
 export default function PhoneMockup() {
   return (
@@ -25,9 +25,9 @@ export default function PhoneMockup() {
           {/* App Content - Based on provided screenshot */}
           <div className="h-full pt-8 pb-4 overflow-y-auto bg-white">
             {/* Header with blurred cityscape background */}
-            <div className="relative h-32 bg-gradient-to-br from-green-400 via-green-500 to-green-600 overflow-hidden">
+            <div className="relative h-32 bg-gradient-to-br from-primary-400 via-primary-500 to-primary-600 overflow-hidden">
               {/* Blurred cityscape effect */}
-              <div className="absolute inset-0 bg-gradient-to-b from-green-300/50 to-green-600/50 backdrop-blur-sm">
+              <div className="absolute inset-0 bg-gradient-to-b from-primary-300/50 to-primary-600/50 backdrop-blur-sm">
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="w-full h-full bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzEwYjk4MSIvPjwvc3ZnPg==')] opacity-20"></div>
                 </div>
@@ -48,7 +48,7 @@ export default function PhoneMockup() {
 
               {/* Logo and Tagline */}
               <div className="absolute inset-0 flex flex-col items-center justify-center z-10 mt-6">
-                <h1 className="text-xl font-bold text-green-600 mb-0.5">TaxiTao</h1>
+                <h1 className="text-xl font-bold text-primary-600 mb-0.5">TaxiTao</h1>
                 <p className="text-[10px] text-white font-medium">find a taxi anywhere you are</p>
               </div>
             </div>
@@ -58,7 +58,7 @@ export default function PhoneMockup() {
               {/* Review Price Bar */}
               <div className="bg-blue-50 rounded-lg p-2 mb-3 flex items-center gap-2 border border-blue-100">
                 <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                  <DollarSign className="w-3 h-3 text-white" />
+                  <Wallet className="w-3 h-3 text-white" />
                 </div>
                 <span className="text-[10px] font-semibold text-blue-700">Review Price</span>
               </div>
@@ -70,7 +70,7 @@ export default function PhoneMockup() {
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gray-300 to-gray-400 overflow-hidden border-2 border-white shadow-md">
                       <div className="w-full h-full bg-gray-300"></div>
                     </div>
-                    <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                    <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-primary-500 rounded-full border-2 border-white"></div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-0.5">
@@ -92,7 +92,7 @@ export default function PhoneMockup() {
                 {/* Phone Button */}
                 <a
                   href="tel:0712345678"
-                  className="flex items-center justify-center gap-1.5 bg-green-600 text-white px-3 py-1.5 rounded-lg font-semibold text-[10px] mb-3"
+                  className="flex items-center justify-center gap-1.5 bg-primary-600 text-white px-3 py-1.5 rounded-lg font-semibold text-[10px] mb-3"
                 >
                   <Phone className="w-3 h-3" />
                   0712345678
@@ -102,7 +102,7 @@ export default function PhoneMockup() {
               {/* Review Price Bar 2 */}
               <div className="bg-blue-50 rounded-lg p-2 mb-3 flex items-center gap-2 border border-blue-100">
                 <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                  <DollarSign className="w-3 h-3 text-white" />
+                  <Wallet className="w-3 h-3 text-white" />
                 </div>
                 <span className="text-[10px] font-semibold text-blue-700">Review Price</span>
               </div>
@@ -110,7 +110,7 @@ export default function PhoneMockup() {
               {/* Pickup and Dropoff */}
               <div className="space-y-2 mb-3">
                 <div className="flex items-start gap-2">
-                  <div className="w-2.5 h-2.5 bg-green-500 rounded-full mt-0.5 flex-shrink-0"></div>
+                  <div className="w-2.5 h-2.5 bg-primary-500 rounded-full mt-0.5 flex-shrink-0"></div>
                   <div className="min-w-0 flex-1">
                     <p className="text-[9px] font-semibold text-gray-500 mb-0.5">Pickup</p>
                     <p className="text-[9px] text-gray-700 leading-tight">F8HP+576, Kaani, Machakos County</p>
@@ -128,10 +128,10 @@ export default function PhoneMockup() {
               {/* Ride Fare */}
               <div className="flex items-center justify-between mb-3 pb-3 border-b border-gray-200">
                 <div className="flex items-center gap-1.5">
-                  <DollarSign className="w-3 h-3 text-green-600" />
+                  <Wallet className="w-3 h-3 text-primary-600" />
                   <span className="text-[10px] font-semibold text-gray-700">Ride Fare</span>
                 </div>
-                <span className="text-sm font-bold text-green-600">KSH 5000</span>
+                <span className="text-sm font-bold text-primary-600">KSH 5000</span>
               </div>
 
               {/* Driver's Proposed Fare Box */}
@@ -139,7 +139,7 @@ export default function PhoneMockup() {
                 <div className="flex items-center justify-between mb-1.5">
                   <h4 className="text-[10px] font-semibold text-gray-800">Driver's Proposed Fare</h4>
                   <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                    <DollarSign className="w-3 h-3 text-white" />
+                    <Wallet className="w-3 h-3 text-white" />
                   </div>
                 </div>
                 <p className="text-lg font-bold text-gray-900 mb-0.5">KSH 5000</p>
@@ -151,7 +151,7 @@ export default function PhoneMockup() {
                     <button className="flex-1 bg-white border-2 border-blue-500 text-blue-600 font-semibold py-1.5 rounded-lg text-[10px]">
                       Negotiate
                     </button>
-                    <button className="flex-1 bg-green-600 text-white font-semibold py-1.5 rounded-lg text-[10px]">
+                    <button className="flex-1 bg-primary-600 text-white font-semibold py-1.5 rounded-lg text-[10px]">
                       Accept & OK
                     </button>
                   </div>

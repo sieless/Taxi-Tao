@@ -4,10 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   createUserWithEmailAndPassword,
+  updateProfile,
   sendEmailVerification,
 } from "firebase/auth";
 import { doc, setDoc, Timestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
+import { sendAuthVerificationEmail } from "@/lib/auth-email-utils";
 import Link from "next/link";
 import Logo from "@/components/Logo";
 import {
@@ -22,7 +24,8 @@ import {
 } from "lucide-react";
 import { sanitizeAuthError } from "@/lib/error-utils";
 
-type VehicleType = "sedan" | "suv" | "van" | "bike" | "tuk-tuk";
+
+import { logError } from "@/lib/logger";type VehicleType = "sedan" | "suv" | "van" | "bike" | "tuk-tuk";
 
 export default function DriverRegisterPage() {
   const [step, setStep] = useState(1);
@@ -149,8 +152,13 @@ export default function DriverRegisterPage() {
       );
       const user = userCredential.user;
 
-      // Send verification email
-      await sendEmailVerification(user);
+      // Send custom verification email with fallback
+      try {
+        await sendAuthVerificationEmail(email, name);
+      } catch (err) {
+        console.warn("Custom email failed, sending standard verification:", err);
+        await sendEmailVerification(user);
+      }
 
       // Create user document
       await setDoc(doc(db, "users", user.uid), {
@@ -217,7 +225,7 @@ export default function DriverRegisterPage() {
         router.push("/verify-email");
       }, 2500);
     } catch (err: any) {
-      console.error("Registration error:", err);
+      logError("page", err);
       // Use sanitized error message to prevent revealing security details
       setError(
         sanitizeAuthError(err, "Failed to create account. Please check your information and try again.")
@@ -228,24 +236,24 @@ export default function DriverRegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-gray-100 flex items-center justify-center py-12 px-4 md:px-6">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-gray-100 flex items-center justify-center py-12 px-4 md:px-6">
       <div className="max-w-2xl w-full">
         <Link
           href="/"
-          className="text-green-600 hover:underline font-semibold mb-6 inline-block"
+          className="text-primary-600 hover:underline font-semibold mb-6 inline-block"
         >
           ← Back to Home
         </Link>
 
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
           {/* Header */}
-          <div className="bg-green-600 text-white p-6 text-center">
+          <div className="bg-primary-600 text-white p-6 text-center">
             <div className="mb-3 flex justify-center">
               <Logo variant="icon-only" size="md" clickable={false} />
             </div>
             <h1 className="text-2xl font-bold">Become a TaxiTao Driver</h1>
-            <p className="text-green-100 mt-1">
-              Register for free • Pay 500 KSH/month to receive ride requests
+            <p className="text-primary-100 mt-1">
+              Register for free and start driving today
             </p>
           </div>
 
@@ -255,7 +263,7 @@ export default function DriverRegisterPage() {
               onClick={() => setStep(1)}
               className={`flex-1 py-4 px-4 flex items-center justify-center gap-2 font-medium transition ${
                 step === 1
-                  ? "bg-green-50 text-green-700 border-b-2 border-green-600"
+                  ? "bg-primary-50 text-primary-700 border-b-2 border-primary-600"
                   : "text-gray-500 hover:bg-gray-50"
               }`}
             >
@@ -267,7 +275,7 @@ export default function DriverRegisterPage() {
               disabled={step < 2}
               className={`flex-1 py-4 px-4 flex items-center justify-center gap-2 font-medium transition ${
                 step === 2
-                  ? "bg-green-50 text-green-700 border-b-2 border-green-600"
+                  ? "bg-primary-50 text-primary-700 border-b-2 border-primary-600"
                   : "text-gray-500 hover:bg-gray-50"
               } ${step < 2 ? "cursor-not-allowed opacity-50" : ""}`}
             >
@@ -285,9 +293,9 @@ export default function DriverRegisterPage() {
             )}
 
             {success && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 flex items-start gap-3">
-                <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-green-800">{success}</p>
+              <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-6 flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-primary-600 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-primary-800">{success}</p>
               </div>
             )}
 
@@ -303,7 +311,7 @@ export default function DriverRegisterPage() {
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
                       placeholder="John Doe"
                     />
                   </div>
@@ -315,7 +323,7 @@ export default function DriverRegisterPage() {
                       type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
                       placeholder="+254712345678"
                     />
                   </div>
@@ -329,7 +337,7 @@ export default function DriverRegisterPage() {
                     type="tel"
                     value={whatsapp}
                     onChange={(e) => setWhatsapp(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
                     placeholder="254712345678 (if different)"
                   />
                 </div>
@@ -342,7 +350,7 @@ export default function DriverRegisterPage() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
                     placeholder="your.email@example.com"
                   />
                 </div>
@@ -357,7 +365,7 @@ export default function DriverRegisterPage() {
                         type={showPassword ? "text" : "password"}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
+                        className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
                         placeholder="Min 6 characters"
                       />
                       <button
@@ -382,7 +390,7 @@ export default function DriverRegisterPage() {
                         type={showConfirmPassword ? "text" : "password"}
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
+                        className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
                         placeholder="Re-enter password"
                       />
                       <button
@@ -412,11 +420,11 @@ export default function DriverRegisterPage() {
                       onClick={() => {
                         const randomBio =
                           bioSuggestions[
-                            Math.floor(Math.random() * bioSuggestions.length)
+                            crypto.getRandomValues(new Uint32Array(1))[0] % bioSuggestions.length
                           ];
                         setBio(randomBio);
                       }}
-                      className="text-sm text-green-600 hover:text-green-700 font-medium"
+                      className="text-sm text-primary-600 hover:text-primary-700 font-medium"
                     >
                       ✨ Get suggestion
                     </button>
@@ -425,7 +433,7 @@ export default function DriverRegisterPage() {
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
                     rows={3}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
                     placeholder="Tell customers about yourself..."
                   />
                 </div>
@@ -433,7 +441,7 @@ export default function DriverRegisterPage() {
                 <button
                   type="button"
                   onClick={handleNextStep}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition flex items-center justify-center gap-2"
+                  className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-4 rounded-lg transition flex items-center justify-center gap-2"
                 >
                   Continue to Vehicle Details
                   <ChevronRight className="w-5 h-5" />
@@ -453,7 +461,7 @@ export default function DriverRegisterPage() {
                       type="text"
                       value={vehicleMake}
                       onChange={(e) => setVehicleMake(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
                       placeholder="e.g. Toyota"
                     />
                   </div>
@@ -465,7 +473,7 @@ export default function DriverRegisterPage() {
                       type="text"
                       value={vehicleModel}
                       onChange={(e) => setVehicleModel(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
                       placeholder="e.g. Corolla"
                     />
                   </div>
@@ -480,7 +488,7 @@ export default function DriverRegisterPage() {
                       type="number"
                       value={vehicleYear}
                       onChange={(e) => setVehicleYear(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
                       placeholder="e.g. 2020"
                       min="1990"
                       max={new Date().getFullYear() + 1}
@@ -494,7 +502,7 @@ export default function DriverRegisterPage() {
                       type="text"
                       value={vehiclePlate}
                       onChange={(e) => setVehiclePlate(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 uppercase"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 uppercase"
                       placeholder="e.g. KAA 123B"
                     />
                   </div>
@@ -506,7 +514,7 @@ export default function DriverRegisterPage() {
                       type="text"
                       value={vehicleColor}
                       onChange={(e) => setVehicleColor(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
                       placeholder="e.g. White"
                     />
                   </div>
@@ -522,7 +530,7 @@ export default function DriverRegisterPage() {
                       onChange={(e) =>
                         setVehicleType(e.target.value as VehicleType)
                       }
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
                     >
                       {vehicleTypes.map((type) => (
                         <option key={type.value} value={type.value}>
@@ -538,7 +546,7 @@ export default function DriverRegisterPage() {
                     <select
                       value={vehicleSeats}
                       onChange={(e) => setVehicleSeats(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
                     >
                       {[1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 14].map((n) => (
                         <option key={n} value={n}>
@@ -556,14 +564,14 @@ export default function DriverRegisterPage() {
                     type="checkbox"
                     checked={agreedToTerms}
                     onChange={(e) => setAgreedToTerms(e.target.checked)}
-                    className="mt-1 h-5 w-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                    className="mt-1 h-5 w-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                   />
                   <label htmlFor="terms" className="text-sm text-gray-700">
                     I have read and agree to the{" "}
                     <Link
                       href="/terms"
                       target="_blank"
-                      className="text-green-600 hover:underline font-semibold"
+                      className="text-primary-600 hover:underline font-semibold"
                     >
                       Terms of Use
                     </Link>{" "}
@@ -571,23 +579,14 @@ export default function DriverRegisterPage() {
                     <Link
                       href="/privacy"
                       target="_blank"
-                      className="text-green-600 hover:underline font-semibold"
+                      className="text-primary-600 hover:underline font-semibold"
                     >
                       Privacy Policy
                     </Link>
-                    , including the driver subscription terms.
+                    , including the platform terms.
                   </label>
                 </div>
 
-                {/* Info Box */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p className="text-sm text-blue-800">
-                    <strong>Free Registration:</strong> Your account is created
-                    free. To receive ride requests and access customer details,
-                    pay the 500 KSH monthly subscription via M-Pesa Till{" "}
-                    <strong>7323090</strong>.
-                  </p>
-                </div>
 
                 <div className="flex gap-4">
                   <button
@@ -601,7 +600,7 @@ export default function DriverRegisterPage() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-4 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? "Creating Account..." : "Complete Registration"}
                   </button>
@@ -614,7 +613,7 @@ export default function DriverRegisterPage() {
                 Already registered?{" "}
                 <Link
                   href="/login"
-                  className="text-green-600 hover:underline font-semibold"
+                  className="text-primary-600 hover:underline font-semibold"
                 >
                   Sign in
                 </Link>

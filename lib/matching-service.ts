@@ -12,7 +12,8 @@ import { db } from "./firebase";
 import { getDriverPricing, createRouteKey } from "./pricing-service";
 import { getNearbyHub } from "./location-mapping";
 
-// Type for driver user documents that combine User and Driver fields
+
+import { logError } from "@/lib/logger";// Type for driver user documents that combine User and Driver fields
 interface DriverUser {
   id: string;
   driverId?: string;
@@ -77,18 +78,15 @@ export async function findDriversForRoute(
       // Skip inactive drivers
       if (driverData.active === false) continue;
 
-      // Get driver's pricing using their driverId (which is the document ID)
       const driverId = driverData.id;
       const pricing = await getDriverPricing(driverId);
-      if (!pricing || !pricing.routePricing) continue;
-
-      // 2. Check for EXACT match first
-      let routePrice = pricing.routePricing[exactRouteKey];
+      
+      let routePrice = pricing?.routePricing?.[exactRouteKey];
       let matchType: "exact" | "nearby" = "exact";
       let viaLocation: string | undefined = undefined;
 
-      // 3. If no exact match, check for HUB match (Fallback)
-      if ((!routePrice || !routePrice.price) && hubRouteKey) {
+      // 3. Check for HUB match (Fallback 1)
+      if ((!routePrice || !routePrice.price) && hubRouteKey && pricing?.routePricing) {
         const hubPrice = pricing.routePricing[hubRouteKey];
         if (hubPrice && hubPrice.price) {
           routePrice = hubPrice;
@@ -97,50 +95,55 @@ export async function findDriversForRoute(
         }
       }
 
-      if (routePrice && routePrice.price) {
-        // Fetch full driver details from /drivers collection
-        let driverDetails = null;
-        try {
-          const driverDocRef = doc(db, "drivers", driverId);
-          const driverDoc = await getDoc(driverDocRef);
-          if (driverDoc.exists()) {
-            driverDetails = driverDoc.data();
-          }
-        } catch (error) {
-          console.error(
-            `Error fetching driver details for ${driverId}:`,
-            error
-          );
+      // 4. Check for TEXT MATCH (Fallback 2 - match based on user's location text)
+      if (!routePrice || !routePrice.price) {
+        const normalizedFrom = fromLocation.toLowerCase().trim();
+        const baseLocation = (driverData.baseLocation || "").toLowerCase();
+        const currentLocationStr = (driverData.currentLocation?.text || driverData.location?.address || "").toLowerCase();
+        const serviceAreas = Array.isArray(driverData.serviceAreas) 
+            ? driverData.serviceAreas.map((a: string) => a.toLowerCase()) 
+            : [];
+            
+        // Text Match: If the pickup location text is mentioned in any of the driver's recorded locations
+        if (
+            (baseLocation && (baseLocation.includes(normalizedFrom) || normalizedFrom.includes(baseLocation))) ||
+            (currentLocationStr && (currentLocationStr.includes(normalizedFrom) || normalizedFrom.includes(currentLocationStr))) ||
+            serviceAreas.some((area: string) => area && (area.includes(normalizedFrom) || normalizedFrom.includes(area))) ||
+            // General Fallback: If they are active and have *no* specific regions, we can assume they are available generally
+            (serviceAreas.length === 0 && !baseLocation && !currentLocationStr)
+        ) {
+            const fallbackPrice = driverData.baseFare || 
+                                  driverData.vehicle?.baseFare || 
+                                  (driverData.vehicles && driverData.vehicles.length > 0 ? driverData.vehicles[0].baseFare : 0);
+            routePrice = { price: fallbackPrice };
+            matchType = "nearby";
+            viaLocation = undefined;
         }
+      }
 
+      if (routePrice && routePrice.price !== undefined) {
+        const primaryVehicle = driverData.vehicle || (Array.isArray(driverData.vehicles) && driverData.vehicles.length > 0 ? driverData.vehicles[0] : null);
+        
         matches.push({
           driverId: driverId,
-          driverName:
-            driverData.name || driverDetails?.name || "Unknown Driver",
-          rating:
-            driverData.averageRating ||
-            driverData.rating ||
-            driverDetails?.averageRating ||
-            4.5,
-          totalRides: driverData.totalRides || driverDetails?.totalRides || 0,
+          driverName: driverData.name || "Unknown Driver",
+          rating: driverData.averageRating || driverData.rating || 4.5,
+          totalRides: driverData.totalRides || 0,
           price: routePrice.price,
           matchScore: 0, // Will be calculated later
           matchType,
           viaLocation,
-          // Contact details
-          phone: driverDetails?.phone,
-          whatsapp: driverDetails?.whatsapp,
-          // Profile
-          profilePhotoUrl: driverDetails?.profilePhotoUrl,
-          bio: driverDetails?.bio,
-          // Vehicle details
-          vehicle: driverDetails?.vehicle
+          phone: driverData.phone,
+          whatsapp: driverData.whatsapp,
+          profilePhotoUrl: driverData.profilePhotoUrl,
+          bio: driverData.bio,
+          vehicle: primaryVehicle
             ? {
-                make: driverDetails.vehicle.make,
-                model: driverDetails.vehicle.model,
-                type: driverDetails.vehicle.type,
-                color: driverDetails.vehicle.color,
-                carPhotoUrl: driverDetails.vehicle.carPhotoUrl,
+                make: primaryVehicle.make,
+                model: primaryVehicle.model,
+                type: primaryVehicle.type,
+                color: primaryVehicle.color,
+                carPhotoUrl: primaryVehicle.carPhotoUrl || (Array.isArray(primaryVehicle.images) && primaryVehicle.images.length > 0 ? primaryVehicle.images[0] : undefined),
               }
             : undefined,
         });
@@ -149,7 +152,7 @@ export async function findDriversForRoute(
 
     return matches;
   } catch (error) {
-    console.error("Error finding drivers for route:", error);
+    logError("matching", error);
     return [];
   }
 }
@@ -206,20 +209,39 @@ export async function getRecommendations(
     driver.matchScore = calculateMatchScore(driver, avgPrice);
   });
 
-  // Best Value: highest match score
-  const bestValue = [...drivers].sort((a, b) => b.matchScore - a.matchScore)[0];
-  if (bestValue) bestValue.category = "best_value";
+  // Sort all drivers by match score to start
+  const sortedDrivers = [...drivers].sort((a, b) => b.matchScore - a.matchScore);
 
-  // Lowest Price: cheapest option
-  const lowestPrice = [...drivers].sort((a, b) => a.price - b.price)[0];
-  if (lowestPrice) lowestPrice.category = "lowest_price";
+  let bestValue: DriverMatch | null = null;
+  let lowestPrice: DriverMatch | null = null;
+  let bestRated: DriverMatch | null = null;
 
-  // Best Rated: highest rating, then lowest price as tiebreaker
-  const bestRated = [...drivers].sort((a, b) => {
-    if (b.rating !== a.rating) return b.rating - a.rating;
-    return a.price - b.price;
-  })[0];
-  if (bestRated) bestRated.category = "best_rated";
+  // 1. Best Value: highest match score
+  if (sortedDrivers.length > 0) {
+    bestValue = sortedDrivers[0];
+    bestValue.category = "best_value";
+  }
+
+  // Filter out the driver already selected for Best Value
+  const remainingAfterValue = sortedDrivers.filter(d => d.driverId !== bestValue?.driverId);
+
+  // 2. Lowest Price: cheapest option among remaining
+  if (remainingAfterValue.length > 0) {
+    lowestPrice = [...remainingAfterValue].sort((a, b) => a.price - b.price)[0];
+    if (lowestPrice) lowestPrice.category = "lowest_price";
+  }
+
+  // Filter out the drivers already selected
+  const remainingAfterPrice = remainingAfterValue.filter(d => d.driverId !== lowestPrice?.driverId);
+
+  // 3. Best Rated: highest rating among remaining
+  if (remainingAfterPrice.length > 0) {
+    bestRated = [...remainingAfterPrice].sort((a, b) => {
+      if (b.rating !== a.rating) return b.rating - a.rating;
+      return a.price - b.price;
+    })[0];
+    if (bestRated) bestRated.category = "best_rated";
+  }
 
   return { bestValue, lowestPrice, bestRated };
 }

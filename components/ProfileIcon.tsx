@@ -15,14 +15,15 @@ import {
   MapPin,
   Wallet,
   Users,
-  Banana
+  Award
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
 const ROLE_MAP = {
-  admin: { label: "Admin", badge: "bg-purple-100 text-purple-800" },
-  driver: { label: "Driver", badge: "bg-green-100 text-green-800" },
+  admin: { label: "Admin", badge: "bg-primary-100 text-primary-800" },
+  driver: { label: "Driver", badge: "bg-primary-100 text-primary-800" },
   customer: { label: "Customer", badge: "bg-blue-100 text-blue-800" },
+  car_hire: { label: "Vendor", badge: "bg-amber-100 text-amber-800" },
   default: { label: "User", badge: "bg-gray-100 text-gray-800" },
 } as const;
 
@@ -84,8 +85,8 @@ export default function ProfileIcon() {
   // Navigation items based on role
   const getNavigationItems = () => {
     const common = [
-      { icon: UserCircle, label: "Profile", path: role === "admin" ? "/admin/profile" : role === "driver" ? "/driver/profile" : "/customer/profile" },
-      { icon: Settings, label: "Settings", path: role === "admin" ? "/admin/settings" : role === "driver" ? "/driver/settings" : "/customer/settings" },
+      { icon: UserCircle, label: "Profile", path: role === "admin" ? "/admin/profile" : role === "driver" ? "/driver/profile" : role === "car_hire" ? "/vendor/profile" : "/customer/profile" },
+      { icon: Settings, label: "Settings", path: role === "admin" ? "/admin/settings" : role === "driver" ? "/driver/settings" : role === "car_hire" ? "/vendor/settings" : "/customer/settings" },
       { icon: HelpCircle, label: "Help", path: "/help" },
     ];
 
@@ -99,10 +100,18 @@ export default function ProfileIcon() {
     } else if (role === "driver") {
       return [
         { icon: LayoutDashboard, label: "Dashboard", path: "/driver/dashboard" },
-        { icon: Banana, label: "Marketing Poster", path: "/driver/marketing-poster" },
+        { icon: Award, label: "Marketing Poster", path: "/driver/marketing-poster" },
         { icon: Calendar, label: "Bookings", path: "/driver/bookings" },
         { icon: MapPin, label: "Route Pricing", path: "/driver/pricing" },
         { icon: Bell, label: "Notifications", path: "/driver/notifications" },
+        ...common,
+      ];
+    } else if (role === "car_hire") {
+      return [
+        { icon: LayoutDashboard, label: "Vendor Portal", path: "/vendor/dashboard" },
+        { icon: Users, label: "Fleet", path: "/vendor/fleet" },
+        { icon: Calendar, label: "Bookings", path: "/vendor/bookings" },
+        { icon: Wallet, label: "Finance", path: "/vendor/finance" },
         ...common,
       ];
     } else {
@@ -126,7 +135,7 @@ export default function ProfileIcon() {
         aria-haspopup="true"
         aria-expanded={isOpen}
       >
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center text-white font-bold shadow-md overflow-hidden">
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-bold shadow-md overflow-hidden">
           {user.photoURL ? (
             <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" />
           ) : (
@@ -142,7 +151,7 @@ export default function ProfileIcon() {
           aria-label="Profile menu"
         >
           {/* Header Section */}
-          <div className="bg-gradient-to-br from-green-500 to-green-700 p-4 text-white">
+          <div className="bg-gradient-to-br from-primary-500 to-primary-700 p-4 text-white">
             <div className="flex items-center gap-3">
               <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white font-bold text-xl overflow-hidden ring-2 ring-white/30">
                 {user.photoURL ? (
@@ -153,7 +162,7 @@ export default function ProfileIcon() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-lg truncate">{loading ? "Loading..." : displayName}</p>
-                <p className="text-sm text-green-50 truncate">{user.email}</p>
+                <p className="text-sm text-primary-50 truncate">{user.email}</p>
                 <span className={`inline-block mt-1.5 px-2.5 py-0.5 text-xs font-semibold rounded-full ${roleMeta.badge}`}>
                   {loading ? "Loading..." : roleMeta.label}
                 </span>
@@ -174,8 +183,8 @@ export default function ProfileIcon() {
                 className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-gray-50 transition text-left group"
                 role="menuitem"
               >
-                <div className="w-9 h-9 rounded-lg bg-gray-100 group-hover:bg-green-50 flex items-center justify-center transition">
-                  <item.icon className="w-4 h-4 text-gray-600 group-hover:text-green-600 transition" />
+                <div className="w-9 h-9 rounded-lg bg-gray-100 group-hover:bg-primary-50 flex items-center justify-center transition">
+                  <item.icon className="w-4 h-4 text-gray-600 group-hover:text-primary-600 transition" />
                 </div>
                 <span className="font-medium text-gray-700 group-hover:text-gray-900 text-sm">
                   {item.label}

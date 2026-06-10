@@ -8,7 +8,8 @@ import {
 } from "firebase/firestore";
 import { BookingRequest } from "./types";
 
-/**
+
+import { logError } from "@/lib/logger";/**
  * Calculate today's earnings for a driver
  */
 export async function getTodayEarnings(driverId: string): Promise<number> {
@@ -35,7 +36,7 @@ export async function getTodayEarnings(driverId: string): Promise<number> {
 
     return total;
   } catch (error) {
-    console.error("Error calculating today earnings:", error);
+    logError("earnings", error);
     return 0;
   }
 }
@@ -67,7 +68,7 @@ export async function getMonthlyEarnings(driverId: string): Promise<number> {
 
     return total;
   } catch (error) {
-    console.error("Error calculating monthly earnings:", error);
+    logError("earnings", error);
     return 0;
   }
 }
@@ -118,7 +119,7 @@ export async function getEarningsHistory(
 
     return result;
   } catch (error) {
-    console.error("Error getting earnings history:", error);
+    logError("earnings", error);
     return [];
   }
 }
@@ -130,14 +131,14 @@ export async function getNewRequestsCount(location: string): Promise<number> {
   try {
     const q = query(
       collection(db, "bookingRequests"),
-      where("status", "==", "pending"),
+      where("status", "in", ["searching", "offered", "price_pending"]),
       where("pickupRegion", "==", location)
     );
 
     const snapshot = await getDocs(q);
     return snapshot.size;
   } catch (error) {
-    console.error("Error counting new requests:", error);
+    logError("earnings", error);
     return 0;
   }
 }
@@ -150,13 +151,13 @@ export async function getActiveTripsCount(driverId: string): Promise<number> {
     const q = query(
       collection(db, "bookingRequests"),
       where("acceptedBy", "==", driverId),
-      where("status", "==", "accepted")
+      where("status", "in", ["accepted", "confirmed", "en_route", "arrived", "in_progress"])
     );
 
     const snapshot = await getDocs(q);
     return snapshot.size;
   } catch (error) {
-    console.error("Error counting active trips:", error);
+    logError("earnings", error);
     return 0;
   }
 }

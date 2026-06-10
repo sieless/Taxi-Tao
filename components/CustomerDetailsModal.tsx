@@ -18,7 +18,8 @@ import { BookingRequest } from "@/lib/types";
 import { acceptBooking } from "@/lib/booking-service";
 import { Loader2 } from "lucide-react";
 
-interface CustomerDetailsModalProps {
+
+import { logError } from "@/lib/logger";interface CustomerDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   bookingId: string;
@@ -59,7 +60,7 @@ export default function CustomerDetailsModal({
         onClose();
       }
     } catch (error) {
-      console.error("Error loading booking:", error);
+      logError("CustomerDetailsModal", error);
       alert("Failed to load booking details");
     } finally {
       setLoading(false);
@@ -83,7 +84,7 @@ export default function CustomerDetailsModal({
         alert(`❌ ${result.message}`);
       }
     } catch (error) {
-      console.error("Error accepting booking:", error);
+      logError("CustomerDetailsModal", error);
       alert("Failed to accept booking. Please try again.");
     } finally {
       setAccepting(false);
@@ -112,7 +113,7 @@ export default function CustomerDetailsModal({
         <div className="p-6">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+              <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
             </div>
           ) : !booking ? (
             <div className="text-center py-12">
@@ -151,7 +152,7 @@ export default function CustomerDetailsModal({
               {/* Booking Details */}
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                 <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-green-600" />
+                  <MapPin className="w-5 h-5 text-primary-600" />
                   Ride Details
                 </h3>
                 <div className="space-y-3">
@@ -215,7 +216,7 @@ export default function CustomerDetailsModal({
                     booking.status === "pending"
                       ? "bg-yellow-100 text-yellow-800"
                       : booking.status === "accepted"
-                      ? "bg-green-100 text-green-800"
+                      ? "bg-primary-100 text-primary-800"
                       : "bg-gray-100 text-gray-800"
                   }`}
                 >
@@ -229,7 +230,7 @@ export default function CustomerDetailsModal({
                   <button
                     onClick={handleAcceptBooking}
                     disabled={accepting}
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="flex-1 bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-6 rounded-lg transition flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     {accepting ? (
                       <>
@@ -268,12 +269,12 @@ export default function CustomerDetailsModal({
               {booking.status === "accepted" &&
                 booking.acceptedBy === driverId && (
                   <div className="pt-4 border-t border-gray-200">
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <p className="text-sm text-green-800 font-semibold flex items-center gap-2">
+                    <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+                      <p className="text-sm text-primary-800 font-semibold flex items-center gap-2">
                         <CheckCircle className="w-5 h-5" />
                         You have accepted this booking
                       </p>
-                      <p className="text-xs text-green-700 mt-2">
+                      <p className="text-xs text-primary-700 mt-2">
                         Contact the customer to confirm pickup details and
                         negotiate final price if needed.
                       </p>

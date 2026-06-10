@@ -3,13 +3,15 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
+import { sendEmailVerification } from "firebase/auth";
 import { useAuth } from "@/lib/auth-context";
 import { sendAuthVerificationEmail } from "@/lib/auth-email-utils";
 import { Mail, RefreshCw, CheckCircle, ArrowRight } from "lucide-react";
 import Logo from "@/components/Logo";
 
-export default function VerifyEmailPage() {
-  const { user, loading } = useAuth();
+
+import { logError } from "@/lib/logger";export default function VerifyEmailPage() {
+  const { user, userProfile, loading, refreshUserProfile } = useAuth();
   const router = useRouter();
   const [resending, setResending] = useState(false);
   const [checking, setChecking] = useState(false);
@@ -20,7 +22,13 @@ export default function VerifyEmailPage() {
     if (!loading && !user) {
       router.push("/login");
     } else if (!loading && user?.emailVerified) {
-      router.push("/driver/dashboard");
+      if (userProfile?.role === "car_hire") {
+        router.push("/vendor/onboarding");
+      } else if (userProfile?.role === "driver") {
+        router.push("/driver/dashboard");
+      } else {
+        router.push("/");
+      }
     }
   }, [user, loading, router]);
 
@@ -31,11 +39,17 @@ export default function VerifyEmailPage() {
     setError("");
 
     try {
-      await sendAuthVerificationEmail(user.email!, user.displayName || undefined);
+      await sendAuthVerificationEmail(user.email!, user.displayName || "User");
       setMessage("Verification email sent via Resend! Please check your inbox.");
     } catch (err: any) {
-      console.error("Error sending verification email:", err);
-      setError("Failed to send verification email. Please try again later.");
+      logError("page", err);
+      try {
+        await sendEmailVerification(user);
+        setMessage("A standard verification email has been sent. Please check your inbox.");
+      } catch (fallbackErr: any) {
+        logError("page", fallbackErr);
+        setError("Failed to send verification email. Please try again later.");
+      }
     } finally {
       setResending(false);
     }
@@ -51,14 +65,26 @@ export default function VerifyEmailPage() {
       await user.reload();
       if (user.emailVerified) {
         setMessage("Email verified successfully! Redirecting...");
+        
+        // Fetch fresh profile to get role
+        await refreshUserProfile(user);
+        
         setTimeout(() => {
-          router.push("/driver/dashboard");
+          if (userProfile?.role === "car_hire") {
+            router.push("/vendor/onboarding");
+          } else if (userProfile?.role === "driver") {
+            router.push("/driver/dashboard");
+          } else if (userProfile?.role === "admin") {
+            router.push("/admin/panel");
+          } else {
+            router.push("/");
+          }
         }, 1500);
       } else {
         setError("Email not yet verified. Please check your inbox and click the link.");
       }
     } catch (err: any) {
-      console.error("Error checking verification:", err);
+      logError("page", err);
       setError("Failed to check verification status.");
     } finally {
       setChecking(false);
@@ -68,7 +94,7 @@ export default function VerifyEmailPage() {
   if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
       </div>
     );
   }
@@ -91,7 +117,7 @@ export default function VerifyEmailPage() {
         </p>
 
         {message && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-6 flex items-center justify-center gap-2 text-green-700 text-sm">
+          <div className="bg-primary-50 border border-primary-200 rounded-lg p-3 mb-6 flex items-center justify-center gap-2 text-primary-700 text-sm">
             <CheckCircle className="w-4 h-4" />
             {message}
           </div>
@@ -107,7 +133,7 @@ export default function VerifyEmailPage() {
           <button
             onClick={handleCheckVerification}
             disabled={checking}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition flex items-center justify-center gap-2"
+            className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-4 rounded-lg transition flex items-center justify-center gap-2"
           >
             {checking ? (
               <RefreshCw className="w-5 h-5 animate-spin" />
@@ -133,7 +159,7 @@ export default function VerifyEmailPage() {
             Wrong email?{" "}
             <button
               onClick={() => auth.signOut()}
-              className="text-green-600 hover:underline font-semibold"
+              className="text-primary-600 hover:underline font-semibold"
             >
               Sign Out
             </button>

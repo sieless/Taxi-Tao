@@ -16,31 +16,31 @@ export default function MpesaPayment() {
   };
 
   return (
-    <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-lg overflow-hidden border border-green-200">
-      <div className="bg-green-600 text-white p-4 flex items-center gap-3">
+    <div className="bg-gradient-to-br from-primary-50 to-primary-100 rounded-xl shadow-lg overflow-hidden border border-primary-200">
+      <div className="bg-primary-600 text-white p-4 flex items-center gap-3">
         <CreditCard className="w-6 h-6" />
         <h3 className="text-xl font-bold">M-Pesa Payment</h3>
       </div>
 
       <div className="p-6 space-y-6">
-        <div className="bg-white rounded-lg p-4 border border-green-200">
+        <div className="bg-white rounded-lg p-4 border border-primary-200">
           <p className="text-gray-700 mb-4 text-sm">
             To complete your payment, please send money via M-Pesa to the following details:
           </p>
 
           <div className="space-y-4">
             {/* Till Number */}
-            <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+            <div className="bg-primary-50 rounded-lg p-4 border border-primary-200">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Till Number
               </label>
               <div className="flex items-center justify-between gap-2">
-                <span className="text-2xl font-bold text-green-700 tracking-wider">
+                <span className="text-2xl font-bold text-primary-700 tracking-wider">
                   {tillNumber}
                 </span>
                 <button
                   onClick={() => copyToClipboard(tillNumber, "till")}
-                  className="flex items-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition text-sm font-medium"
+                  className="flex items-center gap-2 px-3 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition text-sm font-medium"
                 >
                   {copied === "till" ? (
                     <>
@@ -58,7 +58,7 @@ export default function MpesaPayment() {
             </div>
 
             {/* Account Name */}
-            <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+            <div className="bg-primary-50 rounded-lg p-4 border border-primary-200">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Account Name
               </label>
@@ -68,7 +68,7 @@ export default function MpesaPayment() {
                 </span>
                 <button
                   onClick={() => copyToClipboard(accountName, "account")}
-                  className="flex items-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition text-sm font-medium"
+                  className="flex items-center gap-2 px-3 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition text-sm font-medium"
                 >
                   {copied === "account" ? (
                     <>

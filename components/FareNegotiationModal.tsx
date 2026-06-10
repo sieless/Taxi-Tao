@@ -5,6 +5,8 @@ import { Negotiation } from '@/lib/types';
 import { acceptOffer, declineOffer, counterOffer } from '@/lib/negotiation-service';
 import { X, Check, XCircle, RefreshCw, Loader2 } from 'lucide-react';
 
+
+import { logError } from "@/lib/logger";
 interface FareNegotiationModalProps {
   negotiationId: string;
   userType: 'customer' | 'driver';
@@ -35,7 +37,7 @@ export default function FareNegotiationModal({ negotiationId, userType, onClose 
       await acceptOffer(negotiationId, userType);
       onClose();
     } catch (error) {
-      console.error('Error accepting offer:', error);
+      logError("FareNegotiationModal", error);
     } finally {
       setActionLoading(false);
     }
@@ -47,7 +49,7 @@ export default function FareNegotiationModal({ negotiationId, userType, onClose 
       await declineOffer(negotiationId, userType);
       onClose();
     } catch (error) {
-      console.error('Error declining offer:', error);
+      logError("FareNegotiationModal", error);
     } finally {
       setActionLoading(false);
     }
@@ -61,7 +63,7 @@ export default function FareNegotiationModal({ negotiationId, userType, onClose 
       setShowCounterInput(false);
       setCounterPrice('');
     } catch (error) {
-      console.error('Error sending counter offer:', error);
+      logError("FareNegotiationModal", error);
     } finally {
       setActionLoading(false);
     }
@@ -110,7 +112,7 @@ export default function FareNegotiationModal({ negotiationId, userType, onClose 
           </div>
 
           {negotiation.status === 'accepted' ? (
-            <div className="bg-green-50 text-green-700 p-4 rounded-xl text-center font-medium flex items-center justify-center gap-2">
+            <div className="bg-primary-50 text-primary-700 p-4 rounded-xl text-center font-medium flex items-center justify-center gap-2">
               <Check size={20} />
               Offer Accepted!
             </div>

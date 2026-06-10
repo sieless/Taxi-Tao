@@ -1,6 +1,7 @@
 rules_version = '2';
 
 // Firebase Storage Security Rules
+// SECURITY: All writes require authentication and file size limits.
 service firebase.storage {
   match /b/{bucket}/o {
     
@@ -14,22 +15,72 @@ service firebase.storage {
       return request.auth.uid == userId;
     }
     
+    // Helper function to check file size (max 10MB)
+    function isUnderSizeLimit() {
+      return request.resource.size < 10 * 1024 * 1024;
+    }
+    
+    // Helper function to check if file is an image
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+    
+    // Helper function to check if file is a document (PDF or image)
+    function isDocument() {
+      return request.resource.contentType.matches('image/.*') || 
+             request.resource.contentType == 'application/pdf';
+    }
+
     // Driver profile pictures (Flat structure as used in image-upload.ts)
     match /taxi-drivers/{imageId} {
-      // Allow anyone to upload (needed for signup flow before auth)
-      allow write: if true;
-      // Allow anyone to read
+      // Allow authenticated users to upload (with size and type limits)
+      allow write: if isSignedIn() && isUnderSizeLimit() && isImage();
+      // Allow anyone to read (public profiles)
       allow read: if true;
     }
     
     // Vehicle photos (Flat structure)
     match /taxi-cars/{imageId} {
-      // Allow anyone to upload (needed for signup flow)
-      allow write: if true;
-      // Allow anyone to read
+      // Allow authenticated users to upload (with size and type limits)
+      allow write: if isSignedIn() && isUnderSizeLimit() && isImage();
+      // Allow anyone to read (public marketplace)
+      allow read: if true;
+    }
+
+    // Vendor documents (Incorporation certificates, etc.)
+    match /vendor-docs/{imageId} {
+      // Allow authenticated users to upload (with size and type limits)
+      allow write: if isSignedIn() && isUnderSizeLimit() && isDocument();
+      // Allow read for verification/display
+      allow read: if true;
+    }
+
+    // Vendor logos
+    match /vendor-logos/{imageId} {
+      // Allow authenticated users to upload (with size and type limits)
+      allow write: if isSignedIn() && isUnderSizeLimit() && isImage();
+      // Allow public read
       allow read: if true;
     }
     
+    // Mobile Sync: Driver data (Profile, Vehicles, Ownership)
+    match /drivers/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isSignedIn() && isOwner(userId) && isUnderSizeLimit();
+    }
+
+    // Mobile Sync: Company data (Documents)
+    match /companies/{companyId}/{allPaths=**} {
+      allow read: if true;
+      // Only company owners, staff, or admins can write
+      allow write: if isSignedIn() && isUnderSizeLimit() && (
+        isOwner(companyId) ||
+        // Check if user is company staff (would need Firestore lookup)
+        // For now, require owner match
+        false
+      );
+    }
+
     // Default: deny all other access
     match /{allPaths=**} {
       allow read, write: if false;

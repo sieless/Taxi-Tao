@@ -64,8 +64,8 @@ export default function Navbar() {
     { href: "/#contact", label: "Contact", icon: Mail },
   ];
 
-  // Hide navbar on driver dashboard pages
-  if (pathname?.startsWith("/driver") || pathname?.startsWith("/d/")) {
+  // Hide navbar on dashboard pages
+  if (pathname?.startsWith("/admin") || pathname?.startsWith("/driver") || pathname?.startsWith("/d/") || pathname?.startsWith("/vendor") || pathname === "/onboarding") {
     return null;
   }
 
@@ -186,11 +186,21 @@ export default function Navbar() {
                 </div>
               </div>
               <Link
-                href={userProfile.role === "admin" ? "/admin/panel" : userProfile.role === "driver" ? "/driver/dashboard" : "/customer/profile"}
+                href={
+                  userProfile.role === "admin" ? "/admin/panel" : 
+                  userProfile.role === "driver" ? "/driver/dashboard" : 
+                  userProfile.role === "car_hire" ? "/vendor/dashboard" : 
+                  "/customer/profile"
+                }
                 onClick={() => setIsMenuOpen(false)}
                 className="mt-3 block text-center bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg font-medium transition-colors"
               >
-                {userProfile.role === "admin" ? "Admin Panel" : userProfile.role === "driver" ? "Dashboard" : "My Profile"}
+                {
+                  userProfile.role === "admin" ? "Admin Panel" : 
+                  userProfile.role === "driver" ? "Dashboard" : 
+                  userProfile.role === "car_hire" ? "Vendor Portal" : 
+                  "My Profile"
+                }
               </Link>
             </div>
           )}

@@ -1,16 +1,14 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import AccountDeletionRequestPanel from "@/components/AccountDeletionRequestPanel";
 import {
   Bell,
   Shield,
   CreditCard,
-  Phone,
   User,
-  Trash2,
   Save,
 } from "lucide-react";
 
@@ -57,7 +55,7 @@ export default function CustomerSettingsPage() {
         <header className="space-y-2">
           <p className="text-sm text-gray-500">Customer Settings</p>
           <div className="flex items-center gap-3">
-            <Shield className="w-5 h-5 text-green-600" />
+            <Shield className="w-5 h-5 text-primary-600" />
             <h1 className="text-3xl font-bold text-gray-900">
               Account & Preferences
             </h1>
@@ -81,7 +79,7 @@ export default function CustomerSettingsPage() {
                 onClick={() => setActiveTab(tab.id as Tab)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition border ${
                   activeTab === tab.id
-                    ? "bg-green-600 text-white border-green-700"
+                    ? "bg-primary-600 text-white border-primary-700"
                     : "bg-white text-gray-700 border-gray-200 hover:border-gray-300"
                 }`}
               >
@@ -100,7 +98,7 @@ export default function CustomerSettingsPage() {
         {activeTab === "payments" && <PaymentsTab />}
 
         {/* DANGER ZONE */}
-        <DangerZone />
+        <AccountDeletionRequestPanel user={user} userProfile={userProfile} />
       </div>
     </div>
   );
@@ -127,7 +125,7 @@ function ProfileTab({
           <input
             value={formData.name}
             onChange={(e) => onChange("name", e.target.value)}
-            className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-600"
+            className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-600"
             placeholder="Your name"
           />
         </div>
@@ -139,14 +137,14 @@ function ProfileTab({
           <input
             value={formData.phone}
             onChange={(e) => onChange("phone", e.target.value)}
-            className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-600"
+            className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-600"
             placeholder="+254..."
           />
         </div>
       </div>
 
       <div className="flex gap-3">
-        <button className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-semibold shadow-sm">
+        <button className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-semibold shadow-sm">
           <Save className="w-4 h-4" />
           Save changes
         </button>
@@ -174,7 +172,7 @@ function NotificationsTab() {
         <label className="flex items-center gap-3">
           <input
             type="checkbox"
-            className="h-4 w-4 text-green-600"
+            className="h-4 w-4 text-primary-600"
             defaultChecked
           />
           Ride status updates
@@ -183,14 +181,14 @@ function NotificationsTab() {
         <label className="flex items-center gap-3">
           <input
             type="checkbox"
-            className="h-4 w-4 text-green-600"
+            className="h-4 w-4 text-primary-600"
             defaultChecked
           />
           Payment receipts
         </label>
 
         <label className="flex items-center gap-3">
-          <input type="checkbox" className="h-4 w-4 text-green-600" />
+          <input type="checkbox" className="h-4 w-4 text-primary-600" />
           Promotions & offers
         </label>
       </div>
@@ -218,29 +216,6 @@ function PaymentsTab() {
           Card on file (coming soon)
         </label>
       </div>
-    </div>
-  );
-}
-
-// ----------------------------------------------------
-// DANGER ZONE
-// ----------------------------------------------------
-
-function DangerZone() {
-  return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm space-y-3">
-      <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-        <Trash2 className="w-4 h-4 text-red-500" />
-        Account actions
-      </h3>
-
-      <p className="text-sm text-gray-600">
-        Need to leave? You can request account deletion.
-      </p>
-
-      <button className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-red-200 text-red-700 text-sm font-semibold hover:bg-red-50">
-        Request account deletion
-      </button>
     </div>
   );
 }

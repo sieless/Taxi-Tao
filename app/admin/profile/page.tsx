@@ -27,7 +27,7 @@ export default function AdminProfilePage() {
             <p className="text-sm text-gray-500">Admin Profile</p>
             <h1 className="text-3xl font-bold text-gray-900">{name}</h1>
           </div>
-          <div className="px-3 py-1 rounded-full bg-purple-100 text-purple-700 flex items-center gap-2">
+          <div className="px-3 py-1 rounded-full bg-primary-100 text-primary-700 flex items-center gap-2">
             <Shield className="w-4 h-4" />
             <span className="text-sm font-semibold">Admin</span>
           </div>
@@ -73,7 +73,7 @@ export default function AdminProfilePage() {
           </h2>
           <ul className="space-y-3 text-sm text-gray-700">
             <li className="flex items-center gap-3">
-              <span className="w-2 h-2 rounded-full bg-green-500"></span>
+              <span className="w-2 h-2 rounded-full bg-primary-500"></span>
               Reviewed driver approvals and subscription status
             </li>
             <li className="flex items-center gap-3">

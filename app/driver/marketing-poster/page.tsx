@@ -4,8 +4,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import QRCode from "qrcode";
+import DOMPurify from "dompurify";
 import { getDriverPricing } from "@/lib/pricing-service";
+
+import { logError } from "@/lib/logger";
 import {
   ArrowLeft,
   Download,
@@ -100,7 +102,7 @@ async function urlToBase64(url: string): Promise<string> {
       reader.readAsDataURL(blob);
     });
   } catch (error) {
-    console.error("Error converting image to base64:", error);
+    logError("page", error);
     return "";
   }
 }
@@ -108,6 +110,7 @@ async function urlToBase64(url: string): Promise<string> {
 // Generate QR Code as base64 using qrcode library
 async function generateQRCodeBase64(text: string): Promise<string> {
   try {
+    const QRCode = await import("qrcode");
     const qrDataUrl = await QRCode.toDataURL(text, {
       width: 400,
       margin: 2,
@@ -119,7 +122,7 @@ async function generateQRCodeBase64(text: string): Promise<string> {
     });
     return qrDataUrl;
   } catch (error) {
-    console.error("Error generating QR code:", error);
+    logError("page", error);
     return "";
   }
 }
@@ -131,7 +134,7 @@ export default function DriverMarketingPosterPage() {
   const [template, setTemplate] = useState<PosterTemplate>("transformation");
   const [qrDestination, setQrDestination] = useState<"profile" | "app">("profile");
   // TODO: Replace with actual App Store link provided by user
-  const APP_DOWNLOAD_LINK = "https://play.google.com/store/apps/details?id=com.taxitao.app";
+  const APP_DOWNLOAD_LINK = "https://play.google.com/apps/internaltest/4701167634066348442";
 
   const [exportingPng, setExportingPng] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
@@ -172,7 +175,7 @@ export default function DriverMarketingPosterPage() {
           setRoutePrices(routes);
         }
       } catch (error) {
-        console.error('Error fetching pricing:', error);
+        logError("page", error);
       }
     }
     fetchPricing();
@@ -256,10 +259,8 @@ export default function DriverMarketingPosterPage() {
           vehiclePhoto: vehicleBase64,
           qrCode: qrBase64,
         });
-
-        console.log("✅ All images embedded successfully!");
       } catch (error) {
-        console.error("❌ Error loading images:", error);
+        logError("page", error);
         setExportError("Some images failed to load. Using fallbacks.");
         
         // Set fallbacks
@@ -642,10 +643,8 @@ export default function DriverMarketingPosterPage() {
       
       if (!pngBlob) throw new Error("PNG export failed");
       downloadBlob(pngBlob, `taxitao-poster-${template}-${size}.png`);
-      
-      console.log("✅ PNG downloaded successfully with all embedded images!");
     } catch (e: any) {
-      console.error("❌ PNG export error:", e);
+      logError("page", e);
       setExportError(`Export failed: ${e.message}. Try SVG instead.`);
     } finally {
       setExportingPng(false);
@@ -655,7 +654,7 @@ export default function DriverMarketingPosterPage() {
   if (loading || !driverProfile) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
       </div>
     );
   }
@@ -695,7 +694,7 @@ export default function DriverMarketingPosterPage() {
             <button
               onClick={handleDownloadPng}
               disabled={exportingPng || loadingImages}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white text-sm font-semibold transition-all shadow-md hover:shadow-lg"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white text-sm font-semibold transition-all shadow-md hover:shadow-lg"
             >
               {exportingPng || loadingImages ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -739,16 +738,16 @@ export default function DriverMarketingPosterPage() {
 
           {/* Success Indicator */}
           {!loadingImages && embeddedImages.qrCode && (
-            <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 flex items-center gap-3">
-              <Check className="w-5 h-5 text-green-600" />
-              <p className="font-semibold text-green-900 text-sm">✅ All images embedded! Ready to download.</p>
+            <div className="bg-primary-50 border-2 border-primary-200 rounded-xl p-4 flex items-center gap-3">
+              <Check className="w-5 h-5 text-primary-600" />
+              <p className="font-semibold text-primary-900 text-sm">All images embedded! Ready to download.</p>
             </div>
           )}
 
           {/* Template Selection */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
             <h2 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-green-600" />
+              <Sparkles className="w-5 h-5 text-primary-600" />
               Choose Template
             </h2>
             <div className="grid grid-cols-1 gap-2">
@@ -758,7 +757,7 @@ export default function DriverMarketingPosterPage() {
                   onClick={() => setTemplate(t)}
                   className={`px-4 py-3 rounded-lg text-sm font-medium border transition-all text-left ${
                     template === t
-                      ? "bg-green-50 border-green-600 text-green-700 shadow-sm"
+                      ? "bg-primary-50 border-primary-600 text-primary-700 shadow-sm"
                       : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
                   }`}
                 >
@@ -779,7 +778,7 @@ export default function DriverMarketingPosterPage() {
                   onClick={() => setSize(s)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
                     size === s
-                      ? "bg-green-50 border-green-600 text-green-700 shadow-sm"
+                      ? "bg-primary-50 border-primary-600 text-primary-700 shadow-sm"
                       : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
                   }`}
                 >
@@ -797,7 +796,7 @@ export default function DriverMarketingPosterPage() {
                 onClick={() => setQrDestination("profile")}
                 className={`px-3 py-2 rounded-lg text-sm font-medium border transition-all ${
                   qrDestination === "profile"
-                    ? "bg-green-50 border-green-600 text-green-700 shadow-sm"
+                    ? "bg-primary-50 border-primary-600 text-primary-700 shadow-sm"
                     : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
                 }`}
               >
@@ -807,7 +806,7 @@ export default function DriverMarketingPosterPage() {
                 onClick={() => setQrDestination("app")}
                 className={`px-3 py-2 rounded-lg text-sm font-medium border transition-all ${
                   qrDestination === "app"
-                    ? "bg-green-50 border-green-600 text-green-700 shadow-sm"
+                    ? "bg-primary-50 border-primary-600 text-primary-700 shadow-sm"
                     : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
                 }`}
               >
@@ -853,7 +852,7 @@ export default function DriverMarketingPosterPage() {
             <div className="aspect-[4/5] w-full bg-gray-100 flex items-center justify-center p-4 md:p-8">
               {loadingImages ? (
                 <div className="text-center">
-                  <Loader2 className="w-12 h-12 text-green-600 animate-spin mx-auto mb-4" />
+                  <Loader2 className="w-12 h-12 text-primary-600 animate-spin mx-auto mb-4" />
                   <p className="text-gray-600 font-semibold">Loading your poster...</p>
                   <p className="text-sm text-gray-500 mt-2">Embedding images for offline use</p>
                 </div>
@@ -861,7 +860,7 @@ export default function DriverMarketingPosterPage() {
                 <div className="w-full h-full shadow-2xl bg-white relative overflow-hidden rounded-lg">
                   <div
                     className="absolute inset-0 flex items-center justify-center"
-                    dangerouslySetInnerHTML={{ __html: posterSvgString }}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(posterSvgString, { USE_PROFILES: { svg: true } }) }}
                   />
                 </div>
               ) : (

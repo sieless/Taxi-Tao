@@ -15,7 +15,8 @@ import {
 } from "lucide-react";
 import Logo from "@/components/Logo";
 
-const issueTypes = [
+
+import { logError } from "@/lib/logger";const issueTypes = [
   "Booking Issue",
   "Payment Problem",
   "Driver Complaint",
@@ -87,7 +88,7 @@ export default function ReportIssuePage() {
         router.push("/help");
       }, 3000);
     } catch (err: any) {
-      console.error("Error submitting issue:", err);
+      logError("page", err);
       setError(
         "Failed to submit your report. Please try again or contact support directly."
       );
@@ -100,7 +101,7 @@ export default function ReportIssuePage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-gray-600">Loading...</p>
         </div>
       </div>
@@ -109,10 +110,10 @@ export default function ReportIssuePage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-gray-100 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-gray-100 flex items-center justify-center px-4">
         <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
-          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="w-12 h-12 text-green-600" />
+          <div className="w-20 h-20 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle className="w-12 h-12 text-primary-600" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-3">
             Report Submitted Successfully
@@ -123,7 +124,7 @@ export default function ReportIssuePage() {
           </p>
           <Link
             href="/help"
-            className="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition"
+            className="inline-block bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-6 rounded-lg transition"
           >
             Return to Help Center
           </Link>
@@ -133,13 +134,13 @@ export default function ReportIssuePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-green-50 py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-primary-50 py-12 px-4">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <Link
             href="/help"
-            className="inline-flex items-center gap-2 text-green-600 hover:text-green-700 font-semibold mb-4"
+            className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 font-semibold mb-4"
           >
             <ArrowLeft className="w-5 h-5" />
             Back to Help Center
@@ -157,7 +158,7 @@ export default function ReportIssuePage() {
 
         {/* Form */}
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-          <div className="bg-green-600 text-white p-6">
+          <div className="bg-primary-600 text-white p-6">
             <div className="flex items-center gap-3">
               <MessageSquare className="w-6 h-6" />
               <h2 className="text-xl font-bold">Issue Details</h2>
@@ -180,7 +181,7 @@ export default function ReportIssuePage() {
               <select
                 value={issueType}
                 onChange={(e) => setIssueType(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
                 required
               >
                 <option value="">Select an issue type</option>
@@ -201,7 +202,7 @@ export default function ReportIssuePage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={6}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
                 placeholder="Please describe the issue in detail. Include any relevant information such as booking IDs, driver names, dates, etc."
                 required
               />
@@ -225,7 +226,7 @@ export default function ReportIssuePage() {
                     type="text"
                     value={contactName}
                     onChange={(e) => setContactName(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
                     placeholder="John Doe"
                     required
                   />
@@ -239,7 +240,7 @@ export default function ReportIssuePage() {
                     type="email"
                     value={contactEmail}
                     onChange={(e) => setContactEmail(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
                     placeholder="your.email@example.com"
                   />
                 </div>
@@ -252,7 +253,7 @@ export default function ReportIssuePage() {
                     type="tel"
                     value={contactPhone}
                     onChange={(e) => setContactPhone(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
                     placeholder="+254 712 345 678"
                   />
                 </div>
@@ -267,7 +268,7 @@ export default function ReportIssuePage() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-4 px-6 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {submitting ? (
                 <>
@@ -290,7 +291,7 @@ export default function ReportIssuePage() {
             Need urgent help? Contact us directly at{" "}
             <a
               href="mailto:titwzmaihya@gmail.com"
-              className="text-green-600 hover:underline font-semibold"
+              className="text-primary-600 hover:underline font-semibold"
             >
               titwzmaihya@gmail.com
             </a>
@@ -299,7 +300,7 @@ export default function ReportIssuePage() {
             Or call{" "}
             <a
               href="tel:+254708674665"
-              className="text-green-600 hover:underline font-semibold"
+              className="text-primary-600 hover:underline font-semibold"
             >
               +254 708 674 665
             </a>

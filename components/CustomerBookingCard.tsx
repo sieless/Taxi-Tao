@@ -18,22 +18,22 @@ export default function CustomerBookingCard({
     }
   };
 
-  const getStatusLabel = () => {
-    switch (booking.rideStatus) {
-      case "confirmed":
-        return "Confirmed";
-      case "en_route":
-        return "Driver En Route";
-      case "arrived":
-        return "Driver Arrived";
-      case "in_progress":
-        return "Trip Started";
-      case "completed":
-        return "Completed";
-      default:
-        return "Pending";
-    }
-  };
+   const getStatusLabel = () => {
+     switch (booking.status) {
+       case "confirmed":
+         return "Confirmed";
+       case "en_route":
+         return "Driver En Route";
+       case "arrived":
+         return "Driver Arrived";
+       case "in_progress":
+         return "Trip Started";
+       case "completed":
+         return "Completed";
+       default:
+         return "Pending";
+     }
+   };
 
   return (
     <div className="border rounded-lg p-4 bg-white shadow-sm space-y-3">
@@ -43,7 +43,7 @@ export default function CustomerBookingCard({
           <Calendar className="w-5 h-5" />
           <span className="font-semibold">{booking.pickupDate}</span>
         </div>
-        <span className="text-xs font-bold px-2 py-1 rounded bg-green-100 text-green-700">
+        <span className="text-xs font-bold px-2 py-1 rounded bg-primary-100 text-primary-700">
           {getStatusLabel()}
         </span>
       </div>

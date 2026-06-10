@@ -30,6 +30,18 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# scratch (debug scripts with hardcoded secrets)
+scratch/
+
+# credentials
+credentials/
+*credentials*.json
+
+# Firebase service account keys (NEVER commit)
+*service-account*.json
+firebase-service-account*.json
+google-services.json
+
 # env files (can opt-in for committing if needed)
 .env*
 

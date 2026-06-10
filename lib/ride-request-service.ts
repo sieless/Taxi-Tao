@@ -4,6 +4,8 @@ import { collection, addDoc, query, where, getDocs, orderBy, Timestamp, doc, upd
 import { db } from './firebase';
 import { RideRequest } from './types';
 
+
+import { logError } from "@/lib/logger";
 /**
  * Create a new ride request when no drivers are found
  */
@@ -16,7 +18,7 @@ export async function createRideRequest(request: Omit<RideRequest, 'id' | 'creat
     });
     return docRef.id;
   } catch (error) {
-    console.error('Error creating ride request:', error);
+    logError("ride-request", error);
     throw error;
   }
 }
@@ -52,7 +54,7 @@ export async function getOpenRequests(locationFilter?: string): Promise<RideRequ
 
     return requests;
   } catch (error) {
-    console.error('Error fetching ride requests:', error);
+    logError("ride-request", error);
     return [];
   }
 }
@@ -71,7 +73,7 @@ export async function acceptRideRequest(requestId: string, driverId: string, dri
       acceptedAt: Timestamp.now()
     });
   } catch (error) {
-    console.error('Error accepting ride request:', error);
+    logError("ride-request", error);
     throw error;
   }
 }

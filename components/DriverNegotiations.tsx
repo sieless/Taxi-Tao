@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import {
-  DollarSign,
+  Wallet,
   Clock,
   CheckCircle,
   XCircle,
@@ -17,7 +17,8 @@ import {
 import { useAuth } from "../lib/auth-context";
 import { Negotiation } from "../lib/types";
 
-export default function DriverNegotiations() {
+
+import { logError } from "@/lib/logger";export default function DriverNegotiations() {
   const { userProfile } = useAuth();
   const driverId = userProfile?.driverId || "";
   const [negotiations, setNegotiations] = useState<Negotiation[]>([]);
@@ -43,7 +44,7 @@ export default function DriverNegotiations() {
       setNegotiations(data);
       setLoading(false);
     } catch (error) {
-      console.error("Error loading negotiations:", error);
+      logError("DriverNegotiations", error);
       setLoading(false);
     }
   };
@@ -53,7 +54,7 @@ export default function DriverNegotiations() {
       await acceptOffer(negotiationId, "driver");
       loadNegotiations();
     } catch (error) {
-      console.error("Error accepting offer:", error);
+      logError("DriverNegotiations", error);
       alert("Failed to accept offer");
     }
   };
@@ -63,7 +64,7 @@ export default function DriverNegotiations() {
       await declineOffer(negotiationId, "driver", "Price not acceptable");
       loadNegotiations();
     } catch (error) {
-      console.error("Error declining offer:", error);
+      logError("DriverNegotiations", error);
       alert("Failed to decline offer");
     }
   };
@@ -80,7 +81,7 @@ export default function DriverNegotiations() {
       setCounterPrice({ ...counterPrice, [negotiationId]: "" });
       loadNegotiations();
     } catch (error) {
-      console.error("Error sending counter-offer:", error);
+      logError("DriverNegotiations", error);
       alert("Failed to send counter-offer");
     }
   };
@@ -174,7 +175,7 @@ export default function DriverNegotiations() {
               <div className="flex gap-2">
                 <button
                   onClick={() => handleAccept(negotiation.id)}
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition flex items-center justify-center gap-2"
+                  className="flex-1 bg-primary-600 hover:bg-primary-700 text-white font-semibold py-2 px-4 rounded-lg transition flex items-center justify-center gap-2"
                 >
                   <CheckCircle className="w-4 h-4" />
                   Accept
@@ -206,7 +207,7 @@ export default function DriverNegotiations() {
                   onClick={() => handleCounter(negotiation.id)}
                   className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition flex items-center gap-2"
                 >
-                  <DollarSign className="w-4 h-4" />
+                  <Wallet className="w-4 h-4" />
                   Counter
                 </button>
               </div>

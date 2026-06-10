@@ -19,8 +19,8 @@ import {
   doc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { BookingRequest, Driver } from "@/lib/types";
-import {
+import { BookingRequest, BookingStatus, Driver } from "@/lib/types";
+import { 
   Calendar,
   MapPin,
   Clock,
@@ -34,13 +34,16 @@ import {
   CheckCheck,
   Loader2,
 } from "lucide-react";
-import {
-  updateRideStatus,
-  startLocationTracking,
-  stopLocationTracking,
-} from "@/lib/ride-tracking";
-import { createNotification, getNotificationMessage } from "@/lib/notification-service";
+import { RideLifecycle } from "@/lib/services/ride-lifecycle";
+import { 
+  watchPosition, 
+  getCurrentPosition, 
+  updateDriverLocationInBooking 
+} from "@/lib/services/location-service";
+import { updateRideStatus } from "@/lib/ride-tracking";
 
+
+import { logError } from "@/lib/logger";
 // -------------------------
 // Simple Toast system (local, no external deps)
 // -------------------------
@@ -49,7 +52,7 @@ type Toast = { id: string; message: string; type?: "info" | "error" | "success" 
 function useToasts() {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const push = useCallback((t: Omit<Toast, "id">) => {
-    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const id = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
     setToasts((s) => [...s, { id, ...t }]);
     // auto remove after 5s
     setTimeout(() => setToasts((s) => s.filter((x) => x.id !== id)), 5000);
@@ -65,7 +68,7 @@ function Toasts({ toasts, remove }: { toasts: Toast[]; remove: (id: string) => v
         <div
           key={t.id}
           className={`max-w-xs px-4 py-2 rounded shadow text-sm border-l-4 flex items-center gap-2 transition-opacity duration-200
-            ${t.type === "error" ? "bg-red-50 border-red-500 text-red-800" : t.type === "success" ? "bg-green-50 border-green-500 text-green-800" : "bg-white border-slate-200 text-slate-800"}`}
+            ${t.type === "error" ? "bg-red-50 border-red-500 text-red-800" : t.type === "success" ? "bg-primary-50 border-primary-500 text-primary-800" : "bg-white border-slate-200 text-slate-800"}`}
           role="status"
         >
           <span className="flex-1">{t.message}</span>
@@ -151,7 +154,7 @@ function BookingCard({ booking }: { booking: BookingRequest }) {
 
         <div className="pt-2 border-t border-gray-200 mt-2 flex justify-between items-center">
           <span className="text-gray-600 font-medium">Fare:</span>
-          <span className="text-green-600 font-bold text-lg">
+          <span className="text-primary-600 font-bold text-lg">
             {booking.fare ? `KSH ${booking.fare.toLocaleString()}` : 
              booking.fareEstimate ? `~KSH ${booking.fareEstimate.toLocaleString()}` :
              "Agreed Price"}
@@ -179,15 +182,22 @@ export default function UpcomingBookings({ driverId, driverProfile, maxItems = 5
 
   const { toasts, push, remove } = useToasts();
 
-  // keep track of active tracking so we can cleanup when switching bookings/unmount
-  const activeTracking = useRef<string | null>(null);
+  // keep track of active tracking so we can cleanup
+  const watchIdRef = useRef<number | null>(null);
   const mounted = useRef(true);
+
+  const stopTracking = useCallback(() => {
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
     mounted.current = true;
     return () => {
       mounted.current = false;
-      stopLocationTracking();
+      stopTracking();
     };
   }, []);
 
@@ -196,14 +206,14 @@ export default function UpcomingBookings({ driverId, driverProfile, maxItems = 5
     const today = new Date().toISOString().split("T")[0];
 
     // NOTE: adjust 'status' vs 'rideStatus' depending on your schema.
+    const activeJourneyStatuses: BookingStatus[] = ["accepted", "confirmed", "en_route", "arrived", "in_progress"];
     return query(
       collection(db, "bookingRequests"),
       where("acceptedBy", "==", driverId),
-      where("status", "==", "accepted"),
+      where("status", "in", activeJourneyStatuses),
       where("pickupDate", ">=", today),
       orderBy("pickupDate", "asc"),
       orderBy("pickupTime", "asc")
-      // limit(maxItems) - Removed limit as per user request
     );
   }, [driverId]);
 
@@ -220,7 +230,7 @@ export default function UpcomingBookings({ driverId, driverProfile, maxItems = 5
         setLoading(false);
       },
       (err) => {
-        console.error("upcoming bookings snapshot error", err);
+        logError("UpcomingBookings", err);
         push({ message: "Failed to load bookings.", type: "error" });
         setLoading(false);
       }
@@ -249,101 +259,54 @@ export default function UpcomingBookings({ driverId, driverProfile, maxItems = 5
   }, [push]);
 
   // centralised status update logic with toasts & tracking control
-  const handleStatusUpdate = useCallback(async (bookingId: string, newStatus: BookingRequest["rideStatus"] | (string & {})) => {
+  const handleStatusUpdate = useCallback(async (bookingId: string, newStatus: BookingStatus) => {
     setUpdating(bookingId);
     try {
-      // optimistic: find booking in list
-      const booking = bookings.find((b) => b.id === bookingId) || currentBooking;
-
-      await updateRideStatus(bookingId, newStatus as any);
-
-      // start tracking on en_route / in_progress
-      if (newStatus === "en_route" || newStatus === "in_progress") {
-        // stop any previous tracker
-        if (activeTracking.current && activeTracking.current !== bookingId) {
-          stopLocationTracking();
-        }
-        activeTracking.current = bookingId;
-        // booking should contain destination coords if available
-        // cast to any to avoid TS mismatch from your schema
-        startLocationTracking(
-          bookingId,
-          (booking as any).destinationCoords,
-          (error) => {
-            const err = error as any;
-            const errCode = err?.code;
-            let errMsg = err?.message || '';
-            
-            if (!errMsg || errMsg.includes('GeolocationPositionError')) {
-              if (errCode === 1) errMsg = 'Permission denied';
-              else if (errCode === 2) errMsg = 'Position unavailable';
-              else if (errCode === 3) errMsg = 'Timeout';
-              else errMsg = 'Unknown location error';
+      switch (newStatus) {
+        case "confirmed":
+          await RideLifecycle.confirm(bookingId);
+          break;
+        case "en_route":
+          await RideLifecycle.startEnRoute(bookingId);
+          // Start tracking
+          stopTracking();
+          watchIdRef.current = watchPosition((coords) => {
+            updateDriverLocationInBooking(bookingId, coords);
+            // Auto-complete check
+            const dest = (currentBooking as any).destinationCoords;
+            if (dest) {
+              RideLifecycle.checkAndAutoComplete(bookingId, coords, dest).catch((e) => logError("UpcomingBookings", e));
             }
-            
-            console.error(`[UpcomingBookings] Location tracking failed. Code: ${errCode}, Message: ${errMsg}`);
-            
-            // User-friendly message based on error code
-            let userMessage = "Location tracking failed (non-critical).";
-            if (errCode === 1) {
-              userMessage = "Location permission denied. Please enable GPS and allow browser access.";
-            } else if (errCode === 2) {
-              userMessage = "GPS signal lost or unavailable. Check your device location settings.";
-            } else if (errCode === 3) {
-              userMessage = "Location request timed out. Retrying...";
-            } else if (errMsg && typeof errMsg === 'string' && errMsg.toLowerCase().includes('permission')) {
-              userMessage = "Location permission denied.";
-            }
-            
-            push({ message: userMessage, type: "info" });
+          }, (err) => {
+            push({ message: "Location tracking failed.", type: "info" });
+          });
+          break;
+        case "arrived":
+          await RideLifecycle.markArrived(bookingId);
+          break;
+        case "in_progress":
+          await RideLifecycle.startTrip(bookingId);
+          break;
+        case "completed":
+          // For now, prompt for fare or use estimated
+          const fare = currentBooking.fare || currentBooking.fareEstimate || 0;
+          await RideLifecycle.complete(bookingId, fare);
+          stopTracking();
+          break;
+        default:
+          if (process.env.NODE_ENV === "development") {
+            console.warn("Unhandled status transition in UI:", newStatus);
           }
-        ).catch((e) => {
-          console.error("startLocationTracking error", e);
-          push({ message: "Failed to start live tracking.", type: "error" });
-        });
-      }
-
-      if (newStatus === "completed") {
-        if (activeTracking.current === bookingId) {
-          stopLocationTracking();
-          activeTracking.current = null;
-        }
-      }
-
-      // notify customer
-      if (booking?.customerId) {
-        const message = getNotificationMessage(
-          newStatus as any,
-          driverProfile?.name || "Your driver",
-          vehicleString,
-          booking.pickupLocation
-        );
-        const metadata: any = {};
-        if (newStatus === "en_route") metadata.action = "view_map";
-        if (newStatus === "completed") metadata.action = "pay";
-
-        try {
-          await createNotification(booking.customerId, bookingId, (
-            newStatus === "confirmed" ? "ride_confirmed" :
-            newStatus === "en_route" ? "driver_enroute" :
-            newStatus === "arrived" ? "driver_arrived" :
-            newStatus === "in_progress" ? "trip_started" : "trip_completed"
-          ), message, metadata);
-        } catch (err) {
-          console.error("createNotification failure", err);
-          push({ message: "Failed to send customer notification.", type: "error" });
-        }
       }
 
       push({ message: `Status updated to ${newStatus}.`, type: "success" });
-
     } catch (err: any) {
-      console.error("status update error", err);
+      logError("UpcomingBookings", err);
       push({ message: err?.message || "Failed to update status.", type: "error" });
     } finally {
       if (mounted.current) setUpdating(null);
     }
-  }, [bookings, currentBooking, driverProfile, vehicleString, push]);
+  }, [currentBooking, stopTracking, push]);
 
   // Delete/Dismiss logic
   const handleDelete = useCallback(async (bookingId: string) => {
@@ -365,7 +328,7 @@ export default function UpcomingBookings({ driverId, driverProfile, maxItems = 5
       await updateRideStatus(bookingId, 'cancelled');
       push({ message: "Booking cancelled and removed from list.", type: "success" });
     } catch (err: any) {
-      console.error("delete error", err);
+      logError("UpcomingBookings", err);
       push({ message: "Failed to delete booking.", type: "error" });
     } finally {
       if (mounted.current) setUpdating(null);
@@ -409,7 +372,7 @@ export default function UpcomingBookings({ driverId, driverProfile, maxItems = 5
   const getPriorityClass = (idx: number) => {
     if (idx === 0) return "border-red-300 bg-red-50";
     if (idx === 1) return "border-orange-300 bg-orange-50";
-    return "border-green-300 bg-green-50";
+    return "border-primary-300 bg-primary-50";
   };
 
   return (
@@ -443,7 +406,7 @@ export default function UpcomingBookings({ driverId, driverProfile, maxItems = 5
         <div className="pt-3 border-t border-gray-200 mt-4">
           <div className="grid grid-cols-2 gap-2">
             {/* Confirm */}
-            {!booking.rideStatus && (
+            {booking.status === "accepted" && (
               <StatusButton
                 label="Confirm Ride"
                 onClick={() => handleStatusUpdate(booking.id, "confirmed")}
@@ -454,7 +417,7 @@ export default function UpcomingBookings({ driverId, driverProfile, maxItems = 5
             )}
 
             {/* En route */}
-            {booking.rideStatus === "confirmed" && (
+            {booking.status === "confirmed" && (
               <StatusButton
                 label="I'm On My Way"
                 onClick={() => handleStatusUpdate(booking.id, "en_route")}
@@ -465,30 +428,30 @@ export default function UpcomingBookings({ driverId, driverProfile, maxItems = 5
             )}
 
             {/* Arrived */}
-            {booking.rideStatus === "en_route" && (
+            {booking.status === "en_route" && (
               <StatusButton
                 label="I've Arrived"
                 onClick={() => handleStatusUpdate(booking.id, "arrived")}
                 loading={updating === booking.id}
-                colorClass="bg-purple-600 hover:bg-purple-700"
+                colorClass="bg-primary-600 hover:bg-primary-700"
                 icon={<MapPinned className="w-4 h-4" />}
                 fullWidth
               />
             )}
 
             {/* Start Trip */}
-            {booking.rideStatus === "arrived" && (
+            {booking.status === "arrived" && (
               <StatusButton
                 label="Start Trip"
                 onClick={() => handleStatusUpdate(booking.id, "in_progress")}
                 loading={updating === booking.id}
-                colorClass="bg-green-600 hover:bg-green-700"
+                colorClass="bg-primary-600 hover:bg-primary-700"
                 icon={<Play className="w-4 h-4" />}
               />
             )}
 
             {/* Complete */}
-            {booking.rideStatus === "in_progress" && (
+            {booking.status === "in_progress" && (
               <StatusButton
                 label="Complete"
                 onClick={() => handleStatusUpdate(booking.id, "completed")}
@@ -501,7 +464,7 @@ export default function UpcomingBookings({ driverId, driverProfile, maxItems = 5
             {/* Call */}
             <button
               onClick={() => handleCall(booking.customerPhone)}
-              className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg flex items-center justify-center gap-2"
+              className="bg-primary-600 hover:bg-primary-700 text-white px-3 py-2 rounded-lg flex items-center justify-center gap-2"
             >
               <Phone className="w-4 h-4" />
               Call
@@ -523,7 +486,7 @@ export default function UpcomingBookings({ driverId, driverProfile, maxItems = 5
       {bookings.length > 1 && (
         <div className="flex justify-center gap-1 mt-3">
           {bookings.map((_, idx) => (
-            <button key={idx} onClick={() => setCurrentIndex(idx)} className={`w-2 h-2 rounded-full transition ${idx === currentIndex ? "bg-green-600 w-4" : "bg-gray-300"}`} />
+            <button key={idx} onClick={() => setCurrentIndex(idx)} className={`w-2 h-2 rounded-full transition ${idx === currentIndex ? "bg-primary-600 w-4" : "bg-gray-300"}`} />
           ))}
         </div>
       )}

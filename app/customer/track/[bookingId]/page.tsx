@@ -5,8 +5,10 @@ import { useParams, useRouter } from 'next/navigation';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { BookingRequest } from '@/lib/types';
-import { ArrowLeft, MapPin, Calendar, Clock, User, Phone, Loader2 } from 'lucide-react';
-import LiveDriverMap from '@/components/LiveDriverMap';
+import { ArrowLeft, MapPin, Calendar, Clock, User, Phone, Loader2, Navigation } from 'lucide-react';
+
+
+import { logError } from "@/lib/logger";
 
 export default function TrackRidePage() {
   const params = useParams();
@@ -41,7 +43,7 @@ export default function TrackRidePage() {
         setLoading(false);
       },
       (err) => {
-        console.error('Error fetching booking:', err);
+        logError("page", err);
         setError('Failed to load booking details');
         setLoading(false);
       }
@@ -159,21 +161,21 @@ export default function TrackRidePage() {
               <p className="text-xs text-gray-500 font-medium mb-2">RIDE STATUS</p>
               <div className="flex items-center gap-2">
                 <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold capitalize ${
-                  booking.rideStatus === 'completed' ? 'bg-green-100 text-green-800' :
-                  booking.rideStatus === 'in_progress' ? 'bg-blue-100 text-blue-800' :
-                  booking.rideStatus === 'arrived' ? 'bg-purple-100 text-purple-800' :
-                  booking.rideStatus === 'en_route' ? 'bg-yellow-100 text-yellow-800' :
+                  booking.status === 'completed' ? 'bg-green-100 text-green-800' :
+                  booking.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
+                  booking.status === 'arrived' ? 'bg-purple-100 text-purple-800' :
+                  booking.status === 'en_route' ? 'bg-yellow-100 text-yellow-800' :
                   booking.status === 'accepted' ? 'bg-cyan-100 text-cyan-800' :
                   'bg-gray-100 text-gray-800'
                 }`}>
-                  {booking.rideStatus?.replace(/_/g, ' ') || booking.status}
+                  {booking.status?.replace(/_/g, ' ') || booking.status}
                 </span>
-                {booking.rideStatus && (
+                {booking.status && (
                   <span className="text-xs text-gray-500">
-                    {booking.rideStatus === 'en_route' && '🚗 Driver is on the way'}
-                    {booking.rideStatus === 'arrived' && '📍 Driver has arrived'}
-                    {booking.rideStatus === 'in_progress' && '🛣️ Trip in progress'}
-                    {booking.rideStatus === 'completed' && '✅ Trip completed'}
+                    {booking.status === 'en_route' && '🚗 Driver is on the way'}
+                    {booking.status === 'arrived' && '📍 Driver has arrived'}
+                    {booking.status === 'in_progress' && '🛣️ Trip in progress'}
+                    {booking.status === 'completed' && '✅ Trip completed'}
                   </span>
                 )}
               </div>
@@ -181,17 +183,21 @@ export default function TrackRidePage() {
           </div>
         </div>
 
-        {/* Live Map - Real-time driver tracking */}
-        <div className="bg-white rounded-xl shadow-md overflow-hidden" style={{ height: '500px' }}>
-          <LiveDriverMap
-            driverPosition={booking.driverLocation ? {
-              lat: booking.driverLocation.lat,
-              lng: booking.driverLocation.lng
-            } : null}
-            pickupPosition={{ lat: -1.286389, lng: 36.817223 }}
-            eta={booking.driverLocation ? 15 : undefined}
-          />
-        </div>
+        {/* Driver Location Info */}
+        {booking.driverLocation && (
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-4">Driver Location</h2>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                <Navigation className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Latitude: {booking.driverLocation.lat.toFixed(4)}</p>
+                <p className="text-sm text-gray-500">Longitude: {booking.driverLocation.lng.toFixed(4)}</p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -6,7 +6,8 @@ import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 
-interface ClientIssueModalProps {
+
+import { logError } from "@/lib/logger";interface ClientIssueModalProps {
   isOpen: boolean;
   onClose: () => void;
   bookingId?: string;
@@ -44,7 +45,7 @@ export default function ClientIssueModal({ isOpen, onClose, bookingId, driverId 
       setSubject("");
       setDescription("");
     } catch (error) {
-      console.error("Error reporting issue:", error);
+      logError("ClientIssueModal", error);
       alert("Failed to report issue. Please try again.");
     } finally {
       setLoading(false);

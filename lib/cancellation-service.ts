@@ -63,8 +63,6 @@ export async function cancelBooking(
       bookingId,
     });
   }
-
-  console.log("Booking cancelled successfully.");
 }
 
 /* -----------------------------------------------------
@@ -81,13 +79,11 @@ export async function cancelBookingByDriver(
     throw new Error("You are not the assigned driver for this booking.");
   }
 
-  // Reset to pending state
+  // Reset to searching state
   await updateBookingStatus(bookingId, {
-    status: "pending",
+    status: "searching",
     acceptedBy: null,
     acceptedAt: null,
-    rideStatus: null,
-    // You can add a rejectedDrivers list here if needed later
   });
 
   // Notify customer
@@ -100,6 +96,4 @@ export async function cancelBookingByDriver(
       { action: "view_booking" }
     );
   }
-
-  console.log("Booking re-queued successfully after driver cancellation.");
 }

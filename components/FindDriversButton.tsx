@@ -21,7 +21,7 @@ export default function FindDriversButton() {
   return (
     <button
       onClick={handleFindDrivers}
-      className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-full transition flex items-center gap-2 shadow-lg"
+      className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-8 rounded-full transition flex items-center gap-2 shadow-lg"
     >
       <MapPin className="w-5 h-5" />
       Find Drivers Near Me (5km)

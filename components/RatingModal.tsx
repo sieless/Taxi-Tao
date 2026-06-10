@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Star, X, Loader2 } from "lucide-react";
 import { rateRide } from "@/lib/booking-service";
 
-interface RatingModalProps {
+
+import { logError } from "@/lib/logger";interface RatingModalProps {
   bookingId: string;
   driverName: string;
   onClose: () => void;
@@ -37,7 +38,7 @@ export default function RatingModal({ bookingId, driverName, onClose, onSuccess 
         alert(`❌ ${result.message}`);
       }
     } catch (error) {
-      console.error("Error submitting rating:", error);
+      logError("RatingModal", error);
       alert("Failed to submit rating. Please try again.");
     } finally {
       setSubmitting(false);
@@ -101,7 +102,7 @@ export default function RatingModal({ bookingId, driverName, onClose, onSuccess 
               onChange={(e) => setReview(e.target.value)}
               placeholder="Share your experience..."
               rows={4}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
               maxLength={500}
             />
             <p className="text-xs text-gray-500 mt-1">{review.length}/500 characters</p>
@@ -119,7 +120,7 @@ export default function RatingModal({ bookingId, driverName, onClose, onSuccess 
             <button
               type="submit"
               disabled={submitting || rating === 0}
-              className="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
               {submitting ? "Submitting..." : "Submit Rating"}

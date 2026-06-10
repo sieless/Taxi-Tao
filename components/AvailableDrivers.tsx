@@ -28,7 +28,8 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 
-export default function AvailableDrivers() {
+
+import { logError } from "@/lib/logger";export default function AvailableDrivers() {
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [loading, setLoading] = useState(true);
   const { user, userProfile } = useAuth();
@@ -83,7 +84,7 @@ export default function AvailableDrivers() {
       setDrivers(resolvedDrivers);
       setLoading(false);
     }, (error) => {
-      console.error("AvailableDrivers listener error:", error);
+      logError("AvailableDrivers", error);
       setLoading(false);
     });
 
@@ -120,24 +121,24 @@ export default function AvailableDrivers() {
         setSavedDriverIds((prev) => [...prev, driverId]);
       }
     } catch (error) {
-      console.error("Error toggling saved driver:", error);
+      logError("AvailableDrivers", error);
     }
   };
 
   if (loading) {
     return (
-      <div className="py-20 bg-gradient-to-br from-gray-50 to-green-50">
+      <div className="py-20 bg-gradient-to-br from-gray-50 to-primary-50">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 bg-green-100 px-4 py-2 rounded-full mb-4">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-green-700 font-semibold">
+            <div className="inline-flex items-center gap-2 bg-primary-100 px-4 py-2 rounded-full mb-4">
+              <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse"></div>
+              <span className="text-primary-700 font-semibold">
                 Loading Available Drivers...
               </span>
             </div>
           </div>
           <div className="flex items-center justify-center">
-            <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+            <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
           </div>
         </div>
       </div>
@@ -149,13 +150,13 @@ export default function AvailableDrivers() {
   }
 
   return (
-    <div id="taxis" className="pt-4 pb-20 bg-gradient-to-br from-gray-50 to-green-50 scroll-mt-24 md:scroll-mt-28">
+    <div id="taxis" className="pt-4 pb-20 bg-gradient-to-br from-gray-50 to-primary-50 scroll-mt-24 md:scroll-mt-28">
       <div className="max-w-7xl mx-auto px-4">
         {/* Section Header */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 bg-green-100 px-4 py-2 rounded-full mb-4">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span className="text-green-700 font-semibold">Live Updates</span>
+          <div className="inline-flex items-center gap-2 bg-primary-100 px-4 py-2 rounded-full mb-4">
+            <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse"></div>
+            <span className="text-primary-700 font-semibold">Live Updates</span>
           </div>
           <h2 className="text-4xl font-bold text-gray-800 mb-4">
             Available Drivers
@@ -184,7 +185,7 @@ export default function AvailableDrivers() {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
+                    <div className="w-full h-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center">
                       <span className="text-2xl font-bold text-white">
                         {driver.name.charAt(0)}
                       </span>
@@ -192,7 +193,7 @@ export default function AvailableDrivers() {
                   )}
                 </div>
                 {/* Online status indicator on profile */}
-                <div className="absolute bottom-1 right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white shadow-lg"></div>
+                <div className="absolute bottom-1 right-1 w-5 h-5 bg-primary-500 rounded-full border-2 border-white shadow-lg"></div>
               </div>
 
               {/* Car Photo Header - Full Vehicle Visible */}
@@ -204,13 +205,13 @@ export default function AvailableDrivers() {
                     className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-500 p-2"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-green-400 to-green-600">
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-400 to-primary-600">
                     <Car className="w-16 h-16 text-white/50" />
                   </div>
                 )}
 
                 {/* Online Badge - Top Right */}
-                <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
+                <div className="absolute top-2 right-2 bg-primary-500 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
                   <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
                   ONLINE
                 </div>
@@ -270,11 +271,11 @@ export default function AvailableDrivers() {
                 {/* Vehicle Info - Compact */}
                 {driver.vehicles?.[0] && (
                   <div className="flex items-center gap-2 text-xs text-gray-700 mb-2 bg-gray-50 px-2 py-1.5 rounded">
-                    <Car className="w-3.5 h-3.5 text-green-600" />
+                    <Car className="w-3.5 h-3.5 text-primary-600" />
                     <span className="font-semibold">
                       {driver.vehicles[0].make} {driver.vehicles[0].model}
                     </span>
-                    <span className="ml-auto text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full capitalize font-medium">
+                    <span className="ml-auto text-xs bg-primary-100 text-primary-700 px-1.5 py-0.5 rounded-full capitalize font-medium">
                       {driver.vehicles[0].type}
                     </span>
                   </div>
@@ -305,7 +306,7 @@ export default function AvailableDrivers() {
                   </a>
                   <Link
                     href={`/d/${driver.id}`}
-                    className="block w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-bold py-2.5 rounded-lg text-center transition-all shadow-md hover:shadow-lg text-sm"
+                    className="block w-full bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 text-white font-bold py-2.5 rounded-lg text-center transition-all shadow-md hover:shadow-lg text-sm"
                   >
                     View Profile & Book
                   </Link>
@@ -319,7 +320,7 @@ export default function AvailableDrivers() {
         <div className="text-center mt-12">
           <Link
             href="/drivers"
-            className="inline-flex items-center gap-2 text-green-600 hover:text-green-700 font-semibold"
+            className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 font-semibold"
           >
             View All Drivers
             <svg

@@ -18,19 +18,19 @@ export default function Header() {
 
         {/* Navigation */}
         <nav className="hidden md:flex items-center gap-6">
-          <Link href="/#home" className="text-gray-600 hover:text-green-600 transition">
+          <Link href="/#home" className="text-gray-600 hover:text-primary-600 transition">
             Home
           </Link>
-          <Link href="/#book" className="text-gray-600 hover:text-green-600 transition">
+          <Link href="/#book" className="text-gray-600 hover:text-primary-600 transition">
             Book Now
           </Link>
-          <Link href="/#drivers" className="text-gray-600 hover:text-green-600 transition">
+          <Link href="/#drivers" className="text-gray-600 hover:text-primary-600 transition">
             Drivers
           </Link>
-          <Link href="/download" className="text-gray-600 hover:text-green-600 transition">
+          <Link href="/download" className="text-gray-600 hover:text-primary-600 transition">
             Download App
           </Link>
-          <Link href="/#contact" className="text-gray-600 hover:text-green-600 transition">
+          <Link href="/#contact" className="text-gray-600 hover:text-primary-600 transition">
             Contact
           </Link>
         </nav>
@@ -43,13 +43,13 @@ export default function Header() {
             <div className="flex items-center gap-3">
               <Link
                 href="/signup"
-                className="text-gray-600 hover:text-green-600 transition font-medium"
+                className="text-gray-600 hover:text-primary-600 transition font-medium"
               >
                 Sign Up
               </Link>
               <Link
                 href="/login"
-                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition font-medium"
+                className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg transition font-medium"
               >
                 Login
               </Link>

@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { Loader2, X, Upload, Car } from 'lucide-react';
 
-interface DriverDashboardProps {
+
+import { logError } from "@/lib/logger";interface DriverDashboardProps {
   driver: any; // Replace with proper driver type if available
 }
 
@@ -54,7 +55,7 @@ export default function DriverDashboard({ driver }: DriverDashboardProps) {
       // TODO: implement saving profile info
       console.log('Profile updated', editForm, selectedImage);
     } catch (err) {
-      console.error(err);
+      logError("DriverDashboard", err);
     } finally {
       setSaving(false);
     }
@@ -67,7 +68,7 @@ export default function DriverDashboard({ driver }: DriverDashboardProps) {
       // TODO: implement saving vehicle info
       console.log('Vehicle updated', vehicleForm, selectedCarImage);
     } catch (err) {
-      console.error(err);
+      logError("DriverDashboard", err);
     } finally {
       setSaving(false);
     }
@@ -77,7 +78,7 @@ export default function DriverDashboard({ driver }: DriverDashboardProps) {
     <div className="p-6">
       <button
         onClick={() => setIsEditing(true)}
-        className="bg-green-600 text-white px-4 py-2 rounded-lg"
+        className="bg-primary-600 text-white px-4 py-2 rounded-lg"
       >
         Edit Profile
       </button>
@@ -134,7 +135,7 @@ export default function DriverDashboard({ driver }: DriverDashboardProps) {
                     type="tel"
                     value={editForm.phone}
                     onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     required
                   />
                 </div>
@@ -145,7 +146,7 @@ export default function DriverDashboard({ driver }: DriverDashboardProps) {
                     type="text"
                     value={editForm.businessLocation}
                     onChange={(e) => setEditForm({ ...editForm, businessLocation: e.target.value })}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     placeholder="e.g., Nairobi CBD"
                   />
                 </div>
@@ -165,7 +166,7 @@ export default function DriverDashboard({ driver }: DriverDashboardProps) {
                   <button
                     type="submit"
                     disabled={saving || uploading}
-                    className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+                    className="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
                   >
                     {saving || uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                     Save Changes
@@ -224,7 +225,7 @@ export default function DriverDashboard({ driver }: DriverDashboardProps) {
                       type="text"
                       value={vehicleForm.make}
                       onChange={(e) => setVehicleForm({ ...vehicleForm, make: e.target.value })}
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       placeholder="e.g., Toyota"
                       required
                     />
@@ -236,7 +237,7 @@ export default function DriverDashboard({ driver }: DriverDashboardProps) {
                       type="text"
                       value={vehicleForm.model}
                       onChange={(e) => setVehicleForm({ ...vehicleForm, model: e.target.value })}
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       placeholder="e.g., Corolla"
                       required
                     />
@@ -248,7 +249,7 @@ export default function DriverDashboard({ driver }: DriverDashboardProps) {
                       type="text"
                       value={vehicleForm.year}
                       onChange={(e) => setVehicleForm({ ...vehicleForm, year: e.target.value })}
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       placeholder="e.g., 2020"
                       required
                     />
@@ -260,7 +261,7 @@ export default function DriverDashboard({ driver }: DriverDashboardProps) {
                       type="text"
                       value={vehicleForm.plate}
                       onChange={(e) => setVehicleForm({ ...vehicleForm, plate: e.target.value })}
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       placeholder="e.g., KAA 123B"
                       required
                     />
@@ -272,7 +273,7 @@ export default function DriverDashboard({ driver }: DriverDashboardProps) {
                       type="text"
                       value={vehicleForm.color}
                       onChange={(e) => setVehicleForm({ ...vehicleForm, color: e.target.value })}
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       placeholder="e.g., White"
                       required
                     />
@@ -283,7 +284,7 @@ export default function DriverDashboard({ driver }: DriverDashboardProps) {
                     <select
                       value={vehicleForm.type}
                       onChange={(e) => setVehicleForm({ ...vehicleForm, type: e.target.value })}
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       required
                     >
                       <option value="sedan">Sedan</option>
@@ -310,7 +311,7 @@ export default function DriverDashboard({ driver }: DriverDashboardProps) {
                   <button
                     type="submit"
                     disabled={saving || uploading}
-                    className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+                    className="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
                   >
                     {saving || uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                     Save Changes

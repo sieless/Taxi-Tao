@@ -1,12 +1,41 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { collection, getDocs, doc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { createRouteKey } from "@/lib/pricing-service";
+import { useAuth } from "@/lib/auth-context";
+import { useRouter } from "next/navigation";
 
+
+import { logError } from "@/lib/logger";/**
+ * Seed Page - ADMIN ONLY
+ *
+ * This page creates test data for development/testing.
+ * It should ONLY be accessible to admin users.
+ *
+ * SECURITY: This page is protected by:
+ * 1. Client-side auth guard (this component)
+ * 2. Firestore rules (admin-only writes)
+ * 3. Middleware (protected route)
+ */
 export default function SeedPage() {
+  const { userProfile, loading } = useAuth();
+  const router = useRouter();
   const [status, setStatus] = useState("Idle");
+  const [authorized, setAuthorized] = useState(false);
+
+  useEffect(() => {
+    if (loading) return;
+
+    // Check if user is admin
+    if (!userProfile || userProfile.role !== "admin") {
+      router.replace("/");
+      return;
+    }
+
+    setAuthorized(true);
+  }, [userProfile, loading, router]);
 
   const seedEverything = async () => {
     setStatus("Seeding drivers and pricing...");
@@ -90,16 +119,37 @@ export default function SeedPage() {
         lastUpdated: new Date()
       }, { merge: true });
 
-      setStatus(`✅ Successfully seeded 3 drivers with pricing for Machakos → Nairobi:\n${drivers[0].id}: KES 1,200\n${drivers[1].id}: KES 1,000\n${drivers[2].id}: KES 1,500`);
+      setStatus(`Successfully seeded 3 drivers with pricing for Machakos → Nairobi:\n${drivers[0].id}: KES 1,200\n${drivers[1].id}: KES 1,000\n${drivers[2].id}: KES 1,500`);
     } catch (error: any) {
-      console.error(error);
-      setStatus("❌ Error: " + error.message);
+      logError("page", error);
+      setStatus("Error: " + error.message);
     }
   };
 
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="p-10 flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // Show unauthorized state
+  if (!authorized) {
+    return (
+      <div className="p-10 flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
+          <p className="text-gray-600">You do not have permission to access this page.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-10">
-      <h1 className="text-2xl font-bold mb-4">Seeding Page</h1>
+      <h1 className="text-2xl font-bold mb-4">Seeding Page (Admin Only)</h1>
       <p className="mb-4 text-gray-600">This page creates test drivers and pricing data for testing Smart Matching.</p>
       <button 
         onClick={seedEverything}

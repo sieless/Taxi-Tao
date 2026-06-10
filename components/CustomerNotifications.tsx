@@ -6,7 +6,8 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { Bell, X, CheckCheck, Navigation, MapPinned, Play } from "lucide-react";
 
-interface Notification {
+
+import { logError } from "@/lib/logger";interface Notification {
   id: string;
   type: "ride_confirmed" | "driver_enroute" | "driver_arrived" | "trip_started" | "trip_completed";
   message: string;
@@ -54,7 +55,7 @@ export default function CustomerNotifications({ isOpen, onClose, onUnreadCountCh
         setLoading(false);
       },
       (err) => {
-        console.error("Error fetching notifications:", err);
+        logError("CustomerNotifications", err);
         setError("Failed to load notifications");
         setLoading(false);
       }
@@ -68,7 +69,7 @@ export default function CustomerNotifications({ isOpen, onClose, onUnreadCountCh
       const ref = doc(db, "notifications", notificationId);
       await updateDoc(ref, { read: true });
     } catch (err) {
-      console.error("Error marking notification as read:", err);
+      logError("CustomerNotifications", err);
     }
   };
 
@@ -85,8 +86,8 @@ export default function CustomerNotifications({ isOpen, onClose, onUnreadCountCh
     switch (type) {
       case "ride_confirmed": return <CheckCheck className="w-5 h-5 text-blue-500" />;
       case "driver_enroute": return <Navigation className="w-5 h-5 text-blue-500" />;
-      case "driver_arrived": return <MapPinned className="w-5 h-5 text-purple-500" />;
-      case "trip_started": return <Play className="w-5 h-5 text-green-500" />;
+      case "driver_arrived": return <MapPinned className="w-5 h-5 text-primary-500" />;
+      case "trip_started": return <Play className="w-5 h-5 text-primary-500" />;
       case "trip_completed": return <CheckCheck className="w-5 h-5 text-gray-500" />;
       default: return <Bell className="w-5 h-5 text-gray-500" />;
     }
@@ -121,7 +122,7 @@ export default function CustomerNotifications({ isOpen, onClose, onUnreadCountCh
       {/* Panel */}
       <div className="absolute right-0 top-full mt-2 w-96 max-w-[calc(100vw-2rem)] bg-white rounded-xl shadow-2xl border z-50 overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-green-600 to-green-500 p-4 text-white flex justify-between items-center">
+        <div className="bg-gradient-to-r from-primary-600 to-primary-500 p-4 text-white flex justify-between items-center">
           <h3 className="font-bold text-lg flex items-center gap-2"><Bell className="w-5 h-5"/> Notifications</h3>
           <button onClick={onClose} aria-label="Close" className="p-1 hover:bg-white/20 rounded-lg"><X className="w-5 h-5" /></button>
         </div>
@@ -136,7 +137,7 @@ export default function CustomerNotifications({ isOpen, onClose, onUnreadCountCh
           {error && <div className="p-4 text-red-500 text-center">{error}</div>}
           {loading ? (
             <div className="p-6 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
               <p className="text-sm text-gray-500 mt-2">Loading...</p>
             </div>
           ) : notifications.length === 0 ? (

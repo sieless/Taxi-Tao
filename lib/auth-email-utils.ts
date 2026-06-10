@@ -1,7 +1,7 @@
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { app } from "./firebase";
 
-const functions = getFunctions(app, "us-central1");
+const functions = getFunctions(app, "europe-west3");
 
 /**
  * Trigger the custom Resend-based verification email Cloud Function
@@ -12,7 +12,9 @@ export const sendAuthVerificationEmail = async (email: string, userName?: string
     const result = await sendFn({ email, userName });
     return { success: true, data: result.data };
   } catch (error) {
-    console.error("Error triggering verification email:", error);
+    if (process.env.NODE_ENV === "development") {
+      console.error("Error triggering verification email:", error);
+    }
     throw error;
   }
 };
@@ -26,7 +28,9 @@ export const sendAuthPasswordResetEmail = async (email: string, userName?: strin
     const result = await sendFn({ email, userName });
     return { success: true, data: result.data };
   } catch (error) {
-    console.error("Error triggering password reset email:", error);
+    if (process.env.NODE_ENV === "development") {
+      console.error("Error triggering password reset email:", error);
+    }
     throw error;
   }
 };

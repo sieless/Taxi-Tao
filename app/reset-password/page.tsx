@@ -52,7 +52,9 @@ function EmailVerification({ oobCode }: { oobCode: string | null }) {
           router.push("/login");
         }, 3000);
       } catch (err: any) {
-        console.error("Error verifying email:", err);
+        if (process.env.NODE_ENV === "development") {
+          console.error("Error verifying email:", err);
+        }
         if (err.code === "auth/expired-action-code") {
           setError("This verification link has expired. Please request a new one.");
         } else if (err.code === "auth/invalid-action-code") {
@@ -69,9 +71,9 @@ function EmailVerification({ oobCode }: { oobCode: string | null }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-white flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 text-green-600 animate-spin mx-auto mb-4" />
+          <Loader2 className="w-12 h-12 text-primary-600 animate-spin mx-auto mb-4" />
           <p className="text-gray-600">Verifying your email...</p>
         </div>
       </div>
@@ -80,10 +82,10 @@ function EmailVerification({ oobCode }: { oobCode: string | null }) {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-white flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="w-8 h-8 text-green-600" />
+          <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle className="w-8 h-8 text-primary-600" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Email Verified!</h1>
           <p className="text-gray-600 mb-6">
@@ -91,7 +93,7 @@ function EmailVerification({ oobCode }: { oobCode: string | null }) {
           </p>
           <Link
             href="/login"
-            className="inline-block bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
+            className="inline-block bg-primary-600 hover:bg-primary-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
           >
             Go to Login
           </Link>
@@ -101,7 +103,7 @@ function EmailVerification({ oobCode }: { oobCode: string | null }) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
         <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
           <AlertTriangle className="w-8 h-8 text-red-600" />
@@ -110,7 +112,7 @@ function EmailVerification({ oobCode }: { oobCode: string | null }) {
         <p className="text-gray-600 mb-6">{error}</p>
         <Link
           href="/login"
-          className="inline-block bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
+          className="inline-block bg-primary-600 hover:bg-primary-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
         >
           Go to Login
         </Link>
@@ -146,7 +148,9 @@ function ResetPasswordForm({ oobCode }: { oobCode: string | null }) {
         setEmail(userEmail);
         setLoading(false);
       } catch (err: any) {
-        console.error("Error verifying reset code:", err);
+        if (process.env.NODE_ENV === "development") {
+          console.error("Error verifying reset code:", err);
+        }
         if (err.code === "auth/expired-action-code") {
           setError("This password reset link has expired. Please request a new one.");
         } else if (err.code === "auth/invalid-action-code") {
@@ -190,7 +194,9 @@ function ResetPasswordForm({ oobCode }: { oobCode: string | null }) {
         router.push("/login");
       }, 3000);
     } catch (err: any) {
-      console.error("Error resetting password:", err);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error resetting password:", err);
+      }
       // Use sanitized error message to prevent revealing security details
       setError(
         sanitizeAuthError(err, "Failed to reset password. Please try again or request a new reset link.")
@@ -202,9 +208,9 @@ function ResetPasswordForm({ oobCode }: { oobCode: string | null }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-white flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 text-green-600 animate-spin mx-auto mb-4" />
+          <Loader2 className="w-12 h-12 text-primary-600 animate-spin mx-auto mb-4" />
           <p className="text-gray-600">Verifying reset link...</p>
         </div>
       </div>
@@ -213,10 +219,10 @@ function ResetPasswordForm({ oobCode }: { oobCode: string | null }) {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-white flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="w-8 h-8 text-green-600" />
+          <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle className="w-8 h-8 text-primary-600" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Password Reset Successful!</h1>
           <p className="text-gray-600 mb-6">
@@ -224,7 +230,7 @@ function ResetPasswordForm({ oobCode }: { oobCode: string | null }) {
           </p>
           <Link
             href="/login"
-            className="inline-block bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
+            className="inline-block bg-primary-600 hover:bg-primary-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
           >
             Go to Login
           </Link>
@@ -235,7 +241,7 @@ function ResetPasswordForm({ oobCode }: { oobCode: string | null }) {
 
   if (error && !email) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-white flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <AlertTriangle className="w-8 h-8 text-red-600" />
@@ -244,7 +250,7 @@ function ResetPasswordForm({ oobCode }: { oobCode: string | null }) {
           <p className="text-gray-600 mb-6">{error}</p>
           <Link
             href="/forgot-password"
-            className="inline-block bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
+            className="inline-block bg-primary-600 hover:bg-primary-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
           >
             Request New Link
           </Link>
@@ -254,7 +260,7 @@ function ResetPasswordForm({ oobCode }: { oobCode: string | null }) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         {/* Logo */}
         <div className="text-center mb-8">
@@ -264,8 +270,8 @@ function ResetPasswordForm({ oobCode }: { oobCode: string | null }) {
         {/* Form Card */}
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <div className="text-center mb-6">
-            <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Lock className="w-7 h-7 text-green-600" />
+            <div className="w-14 h-14 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Lock className="w-7 h-7 text-primary-600" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900">Reset Your Password</h1>
             <p className="text-gray-600 mt-2">
@@ -290,7 +296,7 @@ function ResetPasswordForm({ oobCode }: { oobCode: string | null }) {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
                   placeholder="Enter new password"
                   required
                   minLength={6}
@@ -316,7 +322,7 @@ function ResetPasswordForm({ oobCode }: { oobCode: string | null }) {
                   type={showConfirmPassword ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
                   placeholder="Confirm new password"
                   required
                 />
@@ -334,7 +340,7 @@ function ResetPasswordForm({ oobCode }: { oobCode: string | null }) {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {submitting ? (
                 <>
@@ -348,7 +354,7 @@ function ResetPasswordForm({ oobCode }: { oobCode: string | null }) {
           </form>
 
           <div className="mt-6 text-center">
-            <Link href="/login" className="text-green-600 hover:text-green-700 font-medium text-sm">
+            <Link href="/login" className="text-primary-600 hover:text-primary-700 font-medium text-sm">
               Back to Login
             </Link>
           </div>
@@ -361,8 +367,8 @@ function ResetPasswordForm({ oobCode }: { oobCode: string | null }) {
 export default function ResetPasswordPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-white flex items-center justify-center">
-        <Loader2 className="w-12 h-12 text-green-600 animate-spin" />
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white flex items-center justify-center">
+        <Loader2 className="w-12 h-12 text-primary-600 animate-spin" />
       </div>
     }>
       <AuthActionHandler />

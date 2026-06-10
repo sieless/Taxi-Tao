@@ -36,7 +36,7 @@ export default function DriverCard({ driver, vehicle }: DriverCardProps) {
           <span
             className={`px-2 py-1 rounded-full text-xs font-semibold ${
               driver.active
-                ? "bg-green-100 text-green-800"
+                ? "bg-primary-100 text-primary-800"
                 : "bg-red-100 text-red-800"
             }`}
           >
@@ -80,7 +80,7 @@ export default function DriverCard({ driver, vehicle }: DriverCardProps) {
           </Link>
           <a
             href={`tel:${driver.phone}`}
-            className="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition flex items-center justify-center gap-2 text-sm"
+            className="flex-1 bg-primary-500 hover:bg-primary-600 text-white font-semibold py-2 px-4 rounded-lg transition flex items-center justify-center gap-2 text-sm"
           >
             <Phone className="w-4 h-4" /> Call
           </a>

@@ -7,11 +7,18 @@ import { collection, getDocs, query, where, Timestamp } from "firebase/firestore
 import { db } from "@/lib/firebase";
 import { Driver } from "@/lib/types";
 import { LogOut, AlertTriangle, Send, Copy, MessageCircle, ArrowLeft } from "lucide-react";
-import { sendWhatsAppMessage, generateReminderMessage, createNotification } from "@/lib/notifications";
+import { sendWhatsAppMessage, generateReminderMessage } from "@/lib/notifications";
+import {
+  sendBulkExpiredReminders,
+  sendExpiredSubscriptionReminder,
+} from "@/lib/admin-service";
+import { useModal } from "@/lib/admin-modal-context";
 
-export default function ExpiredSubscriptionsPage() {
+
+import { logError } from "@/lib/logger";export default function ExpiredSubscriptionsPage() {
   const { user, userProfile, logout, loading: authLoading } = useAuth();
   const router = useRouter();
+  const modal = useModal();
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDrivers, setSelectedDrivers] = useState<Set<string>>(new Set());
@@ -48,7 +55,7 @@ export default function ExpiredSubscriptionsPage() {
 
       setDrivers(sorted);
     } catch (error) {
-      console.error("Error fetching expired drivers:", error);
+      logError("page", error);
     } finally {
       setLoading(false);
     }
@@ -66,7 +73,7 @@ export default function ExpiredSubscriptionsPage() {
   function sendIndividualReminder(driver: Driver) {
     const phone = driver.whatsapp || driver.phone;
     if (!phone) {
-      alert(`No phone number found for ${driver.name}`);
+      modal.showAlert(`No phone number found for ${driver.name}`, "error");
       return;
     }
     const daysOverdue = getDaysOverdue(driver.nextPaymentDue);
@@ -77,89 +84,54 @@ export default function ExpiredSubscriptionsPage() {
   async function sendInAppNotification(driver: Driver) {
     try {
       const daysOverdue = getDaysOverdue(driver.nextPaymentDue);
-      const message = `Your subscription expired ${daysOverdue} day${daysOverdue > 1 ? 's' : ''} ago.\n\nPlease pay 2,000 KSH to Till 7323090 to reactivate your account.\n\nContact: +254 708 674 665`;
-      
-      await createNotification(
-        driver.id,
-        driver.email || '',
-        driver.phone || '',
-        driver.name,
-        'subscription_expiring',
-        '⚠️ Subscription Expired',
-        message,
-        user?.uid || 'admin'
-      );
-
-      alert(`✅ Notification sent to ${driver.name}`);
-      fetchExpiredDrivers();
+      await sendExpiredSubscriptionReminder(driver.id, daysOverdue);
+      await modal.showAlert(`Notification sent to ${driver.name}`, "success", "Sent");
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      alert(`❌ Failed to send notification: ${errorMessage}`);
+      await modal.showAlert(`Failed to send notification: ${errorMessage}`, "error");
     }
   }
 
   function copyAllPhoneNumbers() {
     const phoneNumbers = drivers.map(d => d.whatsapp || d.phone).join('\n');
     navigator.clipboard.writeText(phoneNumbers);
-    alert(`✅ Copied ${drivers.length} phone numbers to clipboard!\n\nYou can now paste them into WhatsApp broadcast list.`);
+    modal.showAlert(`Copied ${drivers.length} phone numbers to clipboard!`, "success", "Copied");
   }
 
+  /**
+   * Opens a single WhatsApp chat for a specific driver.
+   * Still useful as a manual escalation tool.
+   */
   function sendMassWhatsAppReminders() {
     if (drivers.length === 0) {
-      alert("No expired drivers to notify.");
+      modal.showAlert("No expired drivers to notify.", "warning");
       return;
     }
-
-    const confirmed = confirm(
-      `Send WhatsApp reminders to ${drivers.length} drivers?\n\nThis will open WhatsApp for each driver one by one.`
-    );
-
-    if (!confirmed) return;
-
-    drivers.forEach((driver, index) => {
-      setTimeout(() => {
-        sendIndividualReminder(driver);
-      }, index * 1000); // 1 second delay between each
-    });
-
-    alert(`Opening WhatsApp for ${drivers.length} drivers...\n\nPlease send each message manually.`);
+    copyAllPhoneNumbers();
+    modal.showAlert(`Phone numbers copied to clipboard.\n\nPaste them into a WhatsApp broadcast list to notify all drivers at once.`, "info", "Bulk Actions");
   }
 
+  /**
+   * Sends bulk in-app notifications via the Cloud Function.
+   * The server-side function iterates all expired drivers, sends notifications,
+   * and logs the action — no client-side loops needed.
+   */
   async function sendMassInAppNotifications() {
     if (drivers.length === 0) {
-      alert("No expired drivers to notify.");
+      modal.showAlert("No expired drivers to notify.", "warning");
       return;
     }
 
-    const confirmed = confirm(
-      `Send in-app notifications to ${drivers.length} drivers?\n\nThey will see these in their dashboard.`
-    );
-
-    if (!confirmed) return;
+    const ok = await modal.showConfirm(`Send in-app notifications to ALL ${drivers.length} expired drivers?`, "Bulk Notification", "Send All");
+    if (!ok) return;
 
     try {
-      const promises = drivers.map(driver => {
-        const daysOverdue = getDaysOverdue(driver.nextPaymentDue);
-        const message = `Your subscription expired ${daysOverdue} day${daysOverdue > 1 ? 's' : ''} ago.\n\nPlease pay 2,000 KSH to Till 7323090 to reactivate your account.\n\nContact: +254 708 674 665`;
-        
-        return createNotification(
-          driver.id,
-          driver.email || '',
-          driver.phone || '',
-          driver.name,
-          'subscription_expiring',
-          '⚠️ Subscription Expired',
-          message,
-          user?.uid || 'admin'
-        );
-      });
-
-      await Promise.all(promises);
-      alert(`✅ Sent ${drivers.length} notifications successfully!`);
+      const result = await sendBulkExpiredReminders();
+      await modal.showAlert(`Sent notifications to ${result.sent} drivers successfully!`, "success", "Success");
       fetchExpiredDrivers();
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      alert(`❌ Failed to send notifications: ${errorMessage}`);
+      await modal.showAlert(`Failed to send notifications: ${errorMessage}`, "error");
     }
   }
 
@@ -172,8 +144,8 @@ export default function ExpiredSubscriptionsPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading expired subscriptions...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 font-medium">Loading expired subscriptions...</p>
         </div>
       </div>
     );
@@ -216,7 +188,7 @@ export default function ExpiredSubscriptionsPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <button
               onClick={sendMassInAppNotifications}
-              className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition"
+              className="flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-4 rounded-lg transition"
               disabled={drivers.length === 0}
             >
               <Send className="w-5 h-5" />
@@ -225,7 +197,7 @@ export default function ExpiredSubscriptionsPage() {
             
             <button
               onClick={sendMassWhatsAppReminders}
-              className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition"
+              className="flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-4 rounded-lg transition"
               disabled={drivers.length === 0}
             >
               <MessageCircle className="w-5 h-5" />
@@ -234,7 +206,7 @@ export default function ExpiredSubscriptionsPage() {
 
             <button
               onClick={copyAllPhoneNumbers}
-              className="flex items-center justify-center gap-2 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-lg transition"
+              className="flex items-center justify-center gap-2 bg-slate-600 hover:bg-slate-700 text-white font-bold py-3 px-4 rounded-lg transition"
               disabled={drivers.length === 0}
             >
               <Copy className="w-5 h-5" />
@@ -295,18 +267,18 @@ export default function ExpiredSubscriptionsPage() {
                         <div className="flex gap-2">
                           <button
                             onClick={() => sendInAppNotification(driver)}
-                            className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition"
+                            className="flex items-center gap-1 bg-primary-600 hover:bg-primary-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition"
                             title="Send in-app notification"
                           >
-                            <Send className="w-4 h-4" />
+                            <Send className="w-3.5 h-3.5" />
                             Notify
                           </button>
                           <button
                             onClick={() => sendIndividualReminder(driver)}
-                            className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded transition"
+                            className="flex items-center gap-1 bg-primary-600 hover:bg-primary-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition"
                             title="Send WhatsApp reminder"
                           >
-                            <MessageCircle className="w-4 h-4" />
+                            <MessageCircle className="w-3.5 h-3.5" />
                             WhatsApp
                           </button>
                         </div>

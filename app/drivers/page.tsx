@@ -8,7 +8,8 @@ import { Star, Car, MapPin, Briefcase, Loader2, Search, Navigation } from "lucid
 import Link from "next/link";
 import { getDriverPricing, createRouteKey } from "@/lib/pricing-service";
 
-export default function AllDriversPage() {
+
+import { logError } from "@/lib/logger";export default function AllDriversPage() {
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [filteredDrivers, setFilteredDrivers] = useState<Driver[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,7 +84,7 @@ export default function AllDriversPage() {
       setFilteredDrivers(resolvedDrivers);
       setLoading(false);
     } catch (error) {
-      console.error("Error fetching drivers:", error);
+      logError("page", error);
       setLoading(false);
     }
   }
@@ -173,9 +174,9 @@ export default function AllDriversPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-green-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-primary-50 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-green-600 mx-auto mb-4" />
+          <Loader2 className="w-12 h-12 animate-spin text-primary-600 mx-auto mb-4" />
           <p className="text-gray-600 font-semibold">Loading drivers...</p>
         </div>
       </div>
@@ -183,13 +184,13 @@ export default function AllDriversPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-green-50 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-primary-50 py-12">
       <div className="max-w-7xl mx-auto px-4">
         {/* Hero Section */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 bg-green-100 px-4 py-2 rounded-full mb-4">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span className="text-green-700 font-semibold">{onlineCount} Online Now</span>
+          <div className="inline-flex items-center gap-2 bg-primary-100 px-4 py-2 rounded-full mb-4">
+            <div className="w-2 h-2 bg-primary-500 rounded-full animate-pulse"></div>
+            <span className="text-primary-700 font-semibold">{onlineCount} Online Now</span>
           </div>
           <h1 className="text-5xl font-bold text-gray-800 mb-4">
             Our Professional Drivers
@@ -209,14 +210,14 @@ export default function AllDriversPage() {
               placeholder="Search drivers by name, location..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
 
           {/* ROUTE-BASED SEARCH */}
-          <div className="mb-4 p-4 bg-green-50 rounded-lg border border-green-200">
+          <div className="mb-4 p-4 bg-primary-50 rounded-lg border border-primary-200">
             <div className="flex items-center gap-2 mb-3">
-              <Navigation className="w-5 h-5 text-green-600" />
+              <Navigation className="w-5 h-5 text-primary-600" />
               <span className="font-semibold text-gray-700">Search by Route</span>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -225,18 +226,18 @@ export default function AllDriversPage() {
                 placeholder="From (e.g., Nairobi)"
                 value={routeFrom}
                 onChange={(e) => setRouteFrom(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
               />
               <input
                 type="text"
                 placeholder="To (e.g., Mombasa)"
                 value={routeTo}
                 onChange={(e) => setRouteTo(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
               />
             </div>
             {routeFrom && routeTo && (
-              <p className="text-xs text-green-700 mt-2">
+              <p className="text-xs text-primary-700 mt-2">
                 Showing drivers with set prices for {routeFrom} → {routeTo}
               </p>
             )}
@@ -248,7 +249,7 @@ export default function AllDriversPage() {
             <select
               value={selectedLocation}
               onChange={(e) => setSelectedLocation(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white"
               disabled={!!(routeFrom && routeTo)}
             >
               <option value="all">All Locations</option>
@@ -263,7 +264,7 @@ export default function AllDriversPage() {
             <select
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white"
               disabled={!!(routeFrom && routeTo)}
             >
               <option value="all">All Vehicles</option>
@@ -277,7 +278,7 @@ export default function AllDriversPage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white ml-auto"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white ml-auto"
               disabled={!!(routeFrom && routeTo)}
             >
               <option value="rating">Highest Rated</option>
@@ -322,7 +323,7 @@ export default function AllDriversPage() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
+                      <div className="w-full h-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center">
                         <span className="text-2xl font-bold text-white">
                           {driver.name.charAt(0)}
                         </span>
@@ -330,7 +331,7 @@ export default function AllDriversPage() {
                     )}
                   </div>
                   {driver.status === "available" && (
-                    <div className="absolute bottom-1 right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white shadow-lg"></div>
+                    <div className="absolute bottom-1 right-1 w-5 h-5 bg-primary-500 rounded-full border-2 border-white shadow-lg"></div>
                   )}
                 </div>
 
@@ -343,12 +344,12 @@ export default function AllDriversPage() {
                       className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-500"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-green-400 to-green-600">
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-400 to-primary-600">
                       <Car className="w-16 h-16 text-white/50" />
                     </div>
                   )}
                   {driver.status === "available" && (
-                    <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
+                    <div className="absolute top-2 right-2 bg-primary-500 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
                       <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
                       ONLINE
                     </div>
@@ -368,10 +369,10 @@ export default function AllDriversPage() {
 
                   {/* ROUTE PRICE DISPLAY */}
                   {routeFrom && routeTo && driverPricing[driver.id] && (
-                    <div className="mb-3 p-2 bg-green-50 rounded-lg border border-green-200">
+                    <div className="mb-3 p-2 bg-primary-50 rounded-lg border border-primary-200">
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-gray-600">Route Price:</span>
-                        <span className="text-lg font-bold text-green-600">
+                        <span className="text-lg font-bold text-primary-600">
                           KES {driverPricing[driver.id].price.toLocaleString()}
                         </span>
                       </div>
@@ -406,11 +407,11 @@ export default function AllDriversPage() {
                   {/* Vehicle Info */}
                   {driver.vehicles?.[0] && (
                     <div className="flex items-center gap-2 text-xs text-gray-700 mb-2 bg-gray-50 px-2 py-1.5 rounded">
-                      <Car className="w-3.5 h-3.5 text-green-600" />
+                      <Car className="w-3.5 h-3.5 text-primary-600" />
                       <span className="font-semibold">
                         {driver.vehicles[0].make} {driver.vehicles[0].model}
                       </span>
-                      <span className="ml-auto text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full capitalize font-medium">
+                      <span className="ml-auto text-xs bg-primary-100 text-primary-700 px-1.5 py-0.5 rounded-full capitalize font-medium">
                         {driver.vehicles[0].type}
                       </span>
                     </div>
@@ -433,7 +434,7 @@ export default function AllDriversPage() {
                   {/* View Profile Button */}
                   <Link
                     href={`/d/${driver.id}`}
-                    className="block w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-bold py-2.5 rounded-lg text-center transition-all shadow-md hover:shadow-lg text-sm"
+                    className="block w-full bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 text-white font-bold py-2.5 rounded-lg text-center transition-all shadow-md hover:shadow-lg text-sm"
                   >
                     View Profile & Book
                   </Link>

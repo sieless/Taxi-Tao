@@ -4,6 +4,9 @@
 
 import { getEmailTemplate } from './email-templates';
 
+
+import { logError } from "@/lib/logger";
+
 export type EmailType = 
   | 'payment_verified'
   | 'payment_rejected'
@@ -39,14 +42,13 @@ export async function sendEmail(
 
     if (!response.ok) {
       const error = await response.json();
-      console.error('Email API error:', error);
+      logError("email", error);
       return false;
     }
 
-    console.log(`Email sent successfully to: ${to}`);
     return true;
   } catch (error) {
-    console.error('Error sending email:', error);
+    logError("email", error);
     return false;
   }
 }
@@ -62,7 +64,7 @@ export async function sendDriverEmail(
   const template = getEmailTemplate(type, metadata);
   
   if (!template) {
-    console.error(`No template found for email type: ${type}`);
+    logError("email-service", new Error(`No template found for email type: ${type}`));
     return false;
   }
 

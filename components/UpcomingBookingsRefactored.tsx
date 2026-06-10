@@ -63,7 +63,7 @@ export default function UpcomingBookings({ driverId }: UpcomingBookingsProps) {
   const getPriorityClass = (index: number) => {
     if (index === 0) return 'border-red-300 bg-red-50';
     if (index === 1) return 'border-orange-300 bg-orange-50';
-    return 'border-green-300 bg-green-50';
+    return 'border-primary-300 bg-primary-50';
   };
 
   return (
@@ -123,7 +123,7 @@ export default function UpcomingBookings({ driverId }: UpcomingBookingsProps) {
               key={idx}
               onClick={() => setCurrentIndex(idx)}
               className={`w-2 h-2 rounded-full transition ${
-                idx === currentIndex ? 'bg-green-600 w-4' : 'bg-gray-300'
+                idx === currentIndex ? 'bg-primary-600 w-4' : 'bg-gray-300'
               }`}
               aria-label={`Go to booking ${idx + 1}`}
             />

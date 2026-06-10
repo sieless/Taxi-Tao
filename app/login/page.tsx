@@ -10,7 +10,8 @@ import Logo from "@/components/Logo";
 import { LogIn, AlertCircle, Eye, EyeOff, CheckCircle } from "lucide-react";
 import { sanitizeAuthError } from "@/lib/error-utils";
 
-export default function DriverLoginPage() {
+
+import { logError } from "@/lib/logger";export default function DriverLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -57,6 +58,8 @@ export default function DriverLoginPage() {
         router.push("/admin/panel");
       } else if (role === "driver") {
         router.push("/driver/dashboard");
+      } else if (role === "car_hire") {
+        router.push("/vendor/dashboard");
       } else {
         router.push("/"); // Customers go to homepage
       }
@@ -79,6 +82,8 @@ export default function DriverLoginPage() {
         router.push("/admin/panel");
       } else if (role === "driver") {
         router.push("/driver/dashboard");
+      } else if (role === "car_hire") {
+        router.push("/vendor/dashboard");
       } else {
         router.push("/");
       }
@@ -103,7 +108,7 @@ export default function DriverLoginPage() {
         setSuccess("");
       }, 3000);
     } catch (err: any) {
-      console.error("Reset initiation failed:", err);
+      logError("page", err);
       setError("Failed to initiate password reset. Please try again.");
     } finally {
       setLoading(false);
@@ -115,7 +120,7 @@ export default function DriverLoginPage() {
       <div className="max-w-md w-full">
         <Link
           href="/"
-          className="text-green-600 hover:underline font-semibold mb-6 inline-block"
+          className="text-primary-600 hover:underline font-semibold mb-6 inline-block"
         >
           ← Back to Home
         </Link>
@@ -148,9 +153,9 @@ export default function DriverLoginPage() {
           )}
 
           {success && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-green-800">{success}</p>
+            <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-6 flex items-start gap-3">
+              <CheckCircle className="w-5 h-5 text-primary-600 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-primary-800">{success}</p>
             </div>
           )}
 
@@ -169,7 +174,7 @@ export default function DriverLoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
                   placeholder="your.email@example.com"
                 />
               </div>
@@ -177,7 +182,7 @@ export default function DriverLoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-4 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? "Sending..." : "Send Reset Link"}
               </button>
@@ -212,7 +217,7 @@ export default function DriverLoginPage() {
                     setEmailError("");
                   }}
                   required
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
                     emailError ? 'border-red-300' : 'border-gray-300'
                   }`}
                   placeholder="your.email@example.com"
@@ -236,7 +241,7 @@ export default function DriverLoginPage() {
                       setResetMode(true);
                       setError("");
                     }}
-                    className="text-sm text-green-600 hover:text-green-700 font-medium"
+                    className="text-sm text-primary-600 hover:text-primary-700 font-medium"
                   >
                     Forgot password?
                   </button>
@@ -251,7 +256,7 @@ export default function DriverLoginPage() {
                       setPasswordError("");
                     }}
                     required
-                    className={`w-full px-4 py-3 pr-12 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 ${
+                    className={`w-full px-4 py-3 pr-12 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 ${
                       passwordError ? 'border-red-300' : 'border-gray-300'
                     }`}
                     placeholder="••••••••"
@@ -279,7 +284,7 @@ export default function DriverLoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-4 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? "Signing in..." : "Sign In"}
               </button>
@@ -327,7 +332,7 @@ export default function DriverLoginPage() {
               Need an account?{" "}
               <Link
                 href="/signup"
-                className="text-green-600 hover:underline font-semibold"
+                className="text-primary-600 hover:underline font-semibold"
               >
                 Sign up here
               </Link>

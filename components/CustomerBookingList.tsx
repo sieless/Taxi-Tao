@@ -6,7 +6,8 @@ import { db } from "@/lib/firebase";
 import { BookingRequest } from "@/lib/types";
 import CustomerBookingCard from "./CustomerBookingCard";
 
-interface CustomerBookingListProps {
+
+import { logError } from "@/lib/logger";interface CustomerBookingListProps {
   userId: string;
 }
 
@@ -36,7 +37,7 @@ export default function CustomerBookingList({ userId }: CustomerBookingListProps
         setLoading(false);
       },
       (err) => {
-        console.error("Error fetching customer bookings:", err);
+        logError("CustomerBookingList", err);
         setLoading(false);
       }
     );

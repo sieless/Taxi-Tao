@@ -151,6 +151,15 @@ export async function acceptOffer(
     messages: [...negotiation.messages, message],
   });
 
+  // Overhaul: Synchronize with BookingRequest
+  const bookingRef = doc(db, "bookingRequests", negotiation.bookingRequestId);
+  await updateDoc(bookingRef, {
+    status: "confirmed",
+    fare: negotiation.currentOffer,
+    acceptedBy: negotiation.driverId,
+    confirmedAt: now(),
+  });
+
   const otherParty =
     acceptedBy === "driver" ? negotiation.customerId : negotiation.driverId;
 
