@@ -14,3 +14,20 @@
   · optimizePackageImports
 
 ○ Compiling / ...
+[browser] ⨯ unhandledRejection: ChunkLoadError: Failed to load chunk /_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_1xch-cm._.js from module [turbopack]/browser/dev/hmr-client/hmr-client.ts [app-client] (ecmascript, async loader)
+    at <unknown> (file://C:/Users/Administrator/Desktop/Taxi-Tao/.next/dev/static/chunks/turbopack-_01_ro95._.js:698:25)
+ GET / 200 in 3.5s (next.js: 2.8s, proxy.ts: 102ms, application-code: 535ms)
+ GET / 200 in 1728ms (next.js: 111ms, proxy.ts: 323ms, application-code: 1295ms)
+○ Compiling /login ...
+ GET /login 200 in 6.3s (next.js: 4.9s, proxy.ts: 117ms, application-code: 1287ms)
+ GET /download 200 in 2.1s (next.js: 1464ms, proxy.ts: 14ms, application-code: 654ms)
+ GET /booking 200 in 1798ms (next.js: 1364ms, proxy.ts: 12ms, application-code: 421ms)
+ GET /login?returnTo=%2Fcustomer%2Fdashboard 200 in 300ms (next.js: 29ms, proxy.ts: 15ms, application-code: 255ms)
+ GET /login?returnTo=%2Fdriver%2Fdashboard 200 in 181ms (next.js: 7ms, proxy.ts: 11ms, application-code: 163ms)
+ GET /login?returnTo=%2Fvendor%2Fdashboard 200 in 153ms (next.js: 7ms, proxy.ts: 8ms, application-code: 139ms)
+ GET /login?returnTo=%2Fadmin%2Fdashboard 200 in 150ms (next.js: 5ms, proxy.ts: 9ms, application-code: 136ms)
+ GET /hire 200 in 2.1s (next.js: 1641ms, proxy.ts: 10ms, application-code: 448ms)
+○ Compiling /drivers ...
+ GET /drivers 200 in 5.8s (next.js: 5.3s, proxy.ts: 10ms, application-code: 482ms)
+ GET /signup 200 in 2.6s (next.js: 2.0s, proxy.ts: 13ms, application-code: 578ms)
+ GET / 404 in 2.3s (next.js: 1748ms, proxy.ts: 12ms, application-code: 539ms)

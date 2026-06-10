@@ -17,7 +17,7 @@ export default function Footer() {
         <div>
           <h3 className="font-bold mb-3 text-white">TaxiTao</h3>
           <p className="text-sm leading-relaxed text-neutral-400">
-            Reliable rides, everywhere you go. Professional drivers and comfortable vehicles at your service.
+            Your complete transport ecosystem — professional services wherever you are.
           </p>
         </div>
 
@@ -36,10 +36,10 @@ export default function Footer() {
         <div>
           <h3 className="font-semibold mb-3 text-white">Services</h3>
           <ul className="space-y-2 text-sm text-neutral-400">
-            <li><Link href="/#services" className="hover:text-white transition">Standard Taxi</Link></li>
-            <li><Link href="/#services" className="hover:text-white transition">Executive Ride</Link></li>
-            <li><Link href="/#services" className="hover:text-white transition">Group Transport</Link></li>
-            <li><Link href="/#services" className="hover:text-white transition">Car Hire & Rentals</Link></li>
+            <li><Link href="/#services" className="hover:text-white transition">Taxi</Link></li>
+            <li><Link href="/#services" className="hover:text-white transition">Car Hire</Link></li>
+            <li><Link href="/#services" className="hover:text-white transition">Transport</Link></li>
+            <li><Link href="/#services" className="hover:text-white transition">Hearse</Link></li>
           </ul>
         </div>
 

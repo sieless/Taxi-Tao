@@ -6,15 +6,29 @@ import { z } from "zod";
 
 const SESSION_TTL_MS = 60 * 60 * 24 * 5 * 1000; // 5 days
 
-const SessionSchema = z.object({
+const RefreshSchema = z.object({
   idToken: z.string().min(1, "ID token required").max(2048),
 });
 
+/**
+ * Session Refresh Endpoint
+ *
+ * This endpoint allows the client to refresh the session cookie
+ * without requiring a full re-authentication. The client should
+ * call this endpoint periodically (e.g., every 4 hours) to keep
+ * the session alive.
+ *
+ * Flow:
+ * 1. Client calls getIdToken(true) to force-refresh the ID token
+ * 2. Client sends the fresh ID token to this endpoint
+ * 3. Server creates a new session cookie (5-day TTL)
+ * 4. Server returns success
+ */
 export async function POST(request: NextRequest) {
-  const rateLimitResult = await rateLimitMiddleware(request, "auth/session", RATE_LIMITS.LOGIN);
+  const rateLimitResult = await rateLimitMiddleware(request, "auth/refresh", RATE_LIMITS.API_DEFAULT);
   if (rateLimitResult) return rateLimitResult;
 
-  const validation = await validateBody(request, SessionSchema);
+  const validation = await validateBody(request, RefreshSchema);
   if (!validation.success) return validation.response;
 
   try {
@@ -23,7 +37,7 @@ export async function POST(request: NextRequest) {
     // Verify the ID token is valid and not expired
     const decodedIdToken = await adminAuth.verifyIdToken(idToken);
 
-    // Check email verification before creating session
+    // Check email verification
     if (!decodedIdToken.email_verified) {
       return NextResponse.json(
         { error: "Email not verified" },
@@ -31,42 +45,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create a session cookie (server-managed, not client-controlled)
-    // This cookie:
-    // - Is validated by verifySessionCookie() (not verifyIdToken)
-    // - Can last up to 14 days
-    // - Is automatically refreshed by Firebase Admin SDK
-    // - Embeds custom claims (role, companyId, etc.)
+    // Create a new session cookie (refreshes the TTL)
     const sessionCookie = await adminAuth.createSessionCookie(idToken, {
       expiresIn: SESSION_TTL_MS,
     });
 
     const response = NextResponse.json({ success: true });
 
-    // Set the session cookie
-    // NOTE: Renamed from "firebase-auth-token" to "session" for clarity
-    // The old cookie name was confusing — it stored an ID token, not a session
+    // Set the refreshed session cookie
     response.cookies.set("session", sessionCookie, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 24 * 5, // 5 days (matches TTL)
-    });
-
-    // Also clear the legacy cookie if it exists
-    response.cookies.set("firebase-auth-token", "", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 0,
+      maxAge: 60 * 60 * 24 * 5, // 5 days
     });
 
     return response;
   } catch (error: any) {
     if (process.env.NODE_ENV === "development") {
-      console.error("Session creation failed:", error);
+      console.error("Session refresh failed:", error);
     }
     return NextResponse.json({ error: "Invalid token" }, { status: 401 });
   }

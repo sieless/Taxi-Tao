@@ -112,7 +112,7 @@ import { logError } from "@/lib/logger";export default function OnboardingWizard
   /**
    * NOTE ON PAYMENTS:
    * 'Customer Payment Details' (Step 3) captures where customers will pay 
-   * the vendor directly. Taxi-Tao does not handle these funds.
+   * the vendor directly. TaxiTao does not handle these funds.
    */
 
   const handleLogoUpload = async (file: File) => {
@@ -564,7 +564,7 @@ import { logError } from "@/lib/logger";export default function OnboardingWizard
                 )}
                 <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 mt-6">
                   <p className="text-xs text-amber-800 leading-relaxed">
-                    <strong>Note:</strong> These details will be displayed to customers when they book your vehicles. Taxi-Tao does not handle your revenue; customers pay you directly.
+                    <strong>Note:</strong> These details will be displayed to customers when they book your vehicles. TaxiTao does not handle your revenue; customers pay you directly.
                   </p>
                 </div>
               </div>

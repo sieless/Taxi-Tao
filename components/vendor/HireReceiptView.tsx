@@ -228,7 +228,7 @@ export default function HireReceiptView({ receipt, onClose }: HireReceiptViewPro
           {/* Footer */}
           <div className="text-center text-xs text-gray-400 font-medium">
             <p>Generated on {formatDate(receipt.generatedAt)}</p>
-            <p className="mt-1">Taxi-Tao Car Hire Platform</p>
+            <p className="mt-1">TaxiTao Car Hire Platform</p>
           </div>
         </div>
 

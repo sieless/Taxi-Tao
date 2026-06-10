@@ -136,12 +136,12 @@ import { logError } from "@/lib/logger";export default function DriverLoginPage(
               />
             </div>
             <h1 className="text-3xl font-bold text-gray-800 mb-2">
-              {resetMode ? "Reset Password" : "Sign In"}
+              {resetMode ? "Reset Password" : "TaxiTao"}
             </h1>
             <p className="text-gray-600">
               {resetMode
                 ? "Enter your email to receive a reset link"
-                : "Access your account"}
+                : "Your premium ride experience"}
             </p>
           </div>
 
@@ -329,12 +329,12 @@ import { logError } from "@/lib/logger";export default function DriverLoginPage(
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              Need an account?{" "}
+              New to TaxiTao?{" "}
               <Link
                 href="/signup"
                 className="text-primary-600 hover:underline font-semibold"
               >
-                Sign up here
+                Create Account
               </Link>
             </p>
           </div>

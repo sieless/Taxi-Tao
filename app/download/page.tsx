@@ -37,7 +37,7 @@ export default function DownloadPage() {
                 Open Beta Testing Phase
               </h3>
               <p className="text-blue-700 mb-2">
-                Taxi-Tao is currently in **Open Beta Testing** on the Google Play Store. 
+                TaxiTao is currently in **Open Beta Testing** on the Google Play Store. 
                 Use the link below to join the testing program and download the app.
               </p>
               <ul className="text-sm text-blue-700 space-y-1 ml-4">
@@ -57,7 +57,7 @@ export default function DownloadPage() {
               Mobile App Preview
             </div>
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              Download Taxi-Tao Mobile App
+              Download the TaxiTao Mobile App
             </h1>
             <p className="text-xl text-gray-600 mb-8">
               Experience seamless taxi booking on the go. Join our testing

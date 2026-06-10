@@ -474,7 +474,7 @@ import { logError } from "@/lib/logger";export default function StaffManagement(
             <div className="flex gap-4">
               <button 
                 onClick={() => {
-                  const credentialsText = `Taxi-Tao Staff Login Credentials:\nEmail: ${approvedCredentials.email}\nTemporary Password: ${approvedCredentials.tempPassword}\n\nPlease download the Taxi-Tao app to sign in.`;
+                  const credentialsText = `TaxiTao Staff Login Credentials:\nEmail: ${approvedCredentials.email}\nTemporary Password: ${approvedCredentials.tempPassword}\n\nPlease download the TaxiTao app to sign in.`;
                   navigator.clipboard.writeText(credentialsText);
                   alert("Credentials copied to clipboard!");
                 }}

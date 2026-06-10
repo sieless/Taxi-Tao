@@ -74,7 +74,7 @@ function JoinWorkspaceContent() {
             const companyQuerySnap = await getDocs(q);
             
             if (!companyQuerySnap.empty) {
-              setCompanyName(companyQuerySnap.docs[0].data().name || "Taxi-Tao Partner Fleet");
+              setCompanyName(companyQuerySnap.docs[0].data().name || "TaxiTao Partner Fleet");
             } else {
               // Also try user document fallback (may fail due to 'read' permission restrictions for guests)
               const userRef = doc(db, "users", data.companyId);
@@ -82,7 +82,7 @@ function JoinWorkspaceContent() {
               if (userSnap.exists() && userSnap.data().name) {
                 setCompanyName(userSnap.data().name);
               } else {
-                setCompanyName("Taxi-Tao Partner Fleet");
+                setCompanyName("TaxiTao Partner Fleet");
               }
             }
           }
@@ -90,7 +90,7 @@ function JoinWorkspaceContent() {
           if (process.env.NODE_ENV === "development") {
             console.warn("Could not fetch exact company details, defaulting to generic name:", companyErr);
           }
-          setCompanyName("Taxi-Tao Partner Fleet");
+          setCompanyName("TaxiTao Partner Fleet");
         }
       } catch (err) {
         if (process.env.NODE_ENV === "development") {
@@ -194,7 +194,7 @@ function JoinWorkspaceContent() {
           </div>
 
           <div className="space-y-4 pt-4 border-t border-gray-100">
-            <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Download the Taxi-Tao App</p>
+            <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Download the TaxiTao App</p>
             <div className="flex gap-4">
               <a 
                 href="https://play.google.com/store/apps/details?id=co.ke.taxitao"

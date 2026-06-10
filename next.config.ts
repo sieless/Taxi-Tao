@@ -1,18 +1,5 @@
 import type { NextConfig } from "next";
 
-const cspValue = [
-  "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'strict-dynamic'",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' blob: data: https://images.unsplash.com https://firebasestorage.googleapis.com",
-  "font-src 'self'",
-  "connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://api.resend.com wss://*.firebaseio.com",
-  "frame-ancestors 'none'",
-  "base-uri 'self'",
-  "form-action 'self'",
-  "upgrade-insecure-requests",
-].join("; ");
-
 const securityHeaders = [
   {
     key: "X-Frame-Options",
@@ -38,10 +25,9 @@ const securityHeaders = [
     key: "Strict-Transport-Security",
     value: "max-age=63072000; includeSubDomains; preload",
   },
-  {
-    key: "Content-Security-Policy",
-    value: cspValue,
-  },
+  // NOTE: Content-Security-Policy is set by middleware.ts
+  // with per-request nonces for stronger XSS protection.
+  // Do NOT set CSP here — it would conflict with the middleware CSP.
 ];
 
 const nextConfig: NextConfig = {

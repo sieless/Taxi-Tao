@@ -4,6 +4,11 @@
  * Mirrors the permission model from the React Native admin portal.
  * Full `admin` role → all permissions implicitly granted.
  * `assistant` role → only permissions explicitly listed in userProfile.permissions.
+ *
+ * Super admin detection uses UIDs (not emails) for reliability:
+ * - Email changes don't break super admin
+ * - No environment variable typos
+ * - Multiple super admins supported via comma-separated list
  */
 
 import type { AppUser } from "@/lib/types";
@@ -24,27 +29,33 @@ export interface AdminPermissions {
   viewAnalytics: boolean;
 }
 
-// ── Environment-based super-admin detection ────────────────────────────────────
-const MAIN_ADMIN_EMAIL = (
-  process.env.MAIN_ADMIN_EMAIL ?? ""
-).toLowerCase();
-
-const MAIN_ADMIN_ACTION_EMAIL = (
-  process.env.MAIN_ADMIN_ACTION_EMAIL ?? ""
-).toLowerCase();
+// ── Environment-based super-admin detection (UID-based) ────────────────────────
+// SAFER than email-based: immune to email changes, typos, and account migrations.
+// Set SUPER_ADMIN_UIDS as comma-separated UIDs in environment variables.
+const SUPER_ADMIN_UIDS = new Set(
+  (process.env.SUPER_ADMIN_UIDS ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+);
 
 /**
- * Returns true if the email belongs to a super-admin account.
+ * Returns true if the UID belongs to a super-admin account.
  * Super-admins can NEVER be suspended, deleted, or have their role changed
  * through the admin portal.
+ *
+ * Priority:
+ * 1. Custom claim `superAdmin: true` (set by Cloud Functions)
+ * 2. UID in SUPER_ADMIN_UIDS environment variable (fallback)
  */
-export function isSuperAdmin(email: string): boolean {
-  if (!email) return false;
-  const normalized = email.toLowerCase();
-  return (
-    (MAIN_ADMIN_EMAIL !== "" && normalized === MAIN_ADMIN_EMAIL) ||
-    (MAIN_ADMIN_ACTION_EMAIL !== "" && normalized === MAIN_ADMIN_ACTION_EMAIL)
-  );
+export function isSuperAdmin(uid: string, claims?: Record<string, unknown>): boolean {
+  if (!uid) return false;
+
+  // Check custom claim first (most reliable)
+  if (claims?.superAdmin === true) return true;
+
+  // Fallback to environment variable
+  return SUPER_ADMIN_UIDS.has(uid);
 }
 
 // ── Core authorization function ────────────────────────────────────────────────

@@ -25,6 +25,7 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<string | null>;
   logout: () => Promise<void>;
   refreshUserProfile: (currentUser?: FirebaseUser | null) => Promise<void>;
+  refreshSession: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
 }
 
@@ -38,6 +39,7 @@ export const AuthContext = createContext<AuthContextType>({
   signInWithGoogle: async () => null,
   logout: async () => {},
   refreshUserProfile: async () => {},
+  refreshSession: async () => {},
   resetPassword: async () => {},
 });
 
@@ -179,6 +181,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setLoading(false);
           return;
         }
+
+        // Refresh session cookie when auth state changes
+        // This ensures the session cookie stays in sync with the ID token
+        await setSessionCookie(firebaseUser);
+
         await refreshUserProfile(firebaseUser);
       } else {
         setUserProfile(null);
@@ -190,12 +197,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => unsubscribe();
   }, [router]);
 
+  // Periodic session refresh (every 4 hours)
+  // This keeps the session cookie alive and ensures custom claims are fresh
+  useEffect(() => {
+    if (!user) return;
+
+    const SESSION_REFRESH_INTERVAL = 4 * 60 * 60 * 1000; // 4 hours
+
+    const intervalId = setInterval(async () => {
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        await setSessionCookie(currentUser);
+      }
+    }, SESSION_REFRESH_INTERVAL);
+
+    return () => clearInterval(intervalId);
+  }, [user]);
+
   /**
    * Set session cookie server-side via API route (httpOnly, secure).
+   *
+   * This function:
+   * 1. Gets a fresh Firebase ID token (auto-refreshed by SDK)
+   * 2. Sends it to /api/auth/session
+   * 3. Server creates a Session Cookie (5-day TTL)
+   *
+   * The session cookie is automatically refreshed by Firebase Admin SDK
+   * when the client calls getIdToken() before each request.
    */
   const setSessionCookie = async (firebaseUser: FirebaseUser) => {
     try {
-      const idToken = await firebaseUser.getIdToken();
+      // forceRefresh: true ensures we get a fresh token with current custom claims
+      const idToken = await firebaseUser.getIdToken(true);
       await fetch("/api/auth/session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -218,6 +251,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (process.env.NODE_ENV === "development") {
         console.error("Failed to clear session cookies:", error);
       }
+    }
+  };
+
+  /**
+   * Refresh session cookie with current ID token.
+   * Call this periodically to keep the session alive.
+   */
+  const refreshSession = async () => {
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      await setSessionCookie(currentUser);
     }
   };
 
@@ -376,6 +420,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         signInWithGoogle,
         logout,
         refreshUserProfile,
+        refreshSession,
         resetPassword,
       }}
     >

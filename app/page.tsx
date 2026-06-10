@@ -287,15 +287,13 @@ export default function Home() {
           {/* Hero Content - Center Aligned */}
           <div className="text-center mb-12 md:mb-16">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-gray-900 leading-tight">
-              Your Neighborhood Taxi{" "}
+              Your Complete{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-primary-400">
-                Just Around The Corner
+                Transport Ecosystem
               </span>
             </h1>
             <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
-              Connect with trusted local drivers in your area. TaxiTao brings
-              reliable, home-based taxi services — making your next ride as
-              close as your neighborhood.
+              Experience seamless movement with our diverse range of professional services.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4 mb-12">
               <Link
@@ -389,7 +387,7 @@ export default function Home() {
           {/* Social Proof Section */}
           <div className="mt-20 text-center">
             <p className="text-sm font-semibold text-gray-500 mb-6 uppercase tracking-wider">
-              Trusted by riders in your neighborhood
+              Trusted by Riders in your Neighborhood
             </p>
             <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12 opacity-60">
               {/* Placeholder logos - replace with actual logos */}
@@ -443,21 +441,20 @@ export default function Home() {
               OUR SERVICES
             </span>
             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900">
-              Custom Transportation Solutions
+              Your Complete Transport Ecosystem
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              We offer a variety of services to meet all your transportation
-              needs
+              Experience seamless movement with our diverse range of professional services.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* Standard Taxi Service */}
+            {/* Taxi Service */}
             <div className="bg-white rounded-2xl shadow-md overflow-hidden transition duration-300 border border-gray-100 hover:border-gray-300 hover:shadow-xl flex flex-col">
               <div className="h-48 bg-gray-50 relative">
                 <Image
                   src="/images/service-standard.png"
-                  alt="Standard Taxi"
+                  alt="Taxi"
                   fill
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   className="object-cover"
@@ -466,18 +463,16 @@ export default function Home() {
               <div className="p-6 flex flex-col flex-grow">
                 <div className="flex justify-between items-start mb-3">
                   <h3 className="text-xl font-bold text-gray-900">
-                    Standard Taxi
+                    Taxi
                   </h3>
-                  <span className="bg-primary-100 text-primary-800 px-2 py-1 rounded-full text-xs font-semibold">
-                    Available
+                  <span className="bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full text-xs font-semibold">
+                    Active
                   </span>
                 </div>
                 <p className="text-gray-600 mb-4 flex-grow">
-                  Affordable and comfortable rides for individuals and small
-                  groups.
+                  Fast, reliable home rides at your fingertips.
                 </p>
-                <div className="flex justify-between items-center mt-auto">
-                  <span className="font-bold text-gray-900">From KES 450</span>
+                <div className="flex justify-end items-center mt-auto">
                   <button
                     onClick={() => handleBookClick("standard")}
                     className="text-gray-900 hover:text-gray-700 font-semibold flex items-center"
@@ -488,112 +483,30 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Executive Ride Service */}
+            {/* Car Hire Service */}
             <div className="bg-white rounded-2xl shadow-md overflow-hidden transition duration-300 border border-gray-100 hover:border-gray-300 hover:shadow-xl flex flex-col">
               <div className="h-48 bg-gray-50 relative">
                 <Image
                   src="/images/service-executive.png"
-                  alt="Executive Ride"
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  className="object-cover"
-                />
-              </div>
-              <div className="p-6 flex flex-col flex-grow">
-                <div className="flex justify-between items-start mb-3">
-                  <h3 className="text-xl font-bold text-gray-900">
-                    Executive Ride
-                  </h3>
-                  <span className="bg-primary-100 text-primary-800 px-2 py-1 rounded-full text-xs font-semibold">
-                    Available
-                  </span>
-                </div>
-                <p className="text-gray-600 mb-4 flex-grow">
-                  Premium vehicles with professional drivers for business
-                  meetings, events or special occasions.
-                </p>
-                <div className="flex justify-between items-center mt-auto">
-                  <span className="font-bold text-gray-900">From KES 800</span>
-                  <button
-                    onClick={() => handleBookClick("executive")}
-                    className="text-gray-900 hover:text-gray-700 font-semibold flex items-center"
-                  >
-                    Book <span className="ml-1 text-xs">→</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Group Transport Service */}
-            <div className="bg-white rounded-2xl shadow-md overflow-hidden transition duration-300 border border-gray-100 hover:border-gray-300 hover:shadow-xl flex flex-col">
-              <div className="h-48 bg-gray-50 relative">
-                <Image
-                  src="/images/service-group.png"
-                  alt="Group Transport"
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  className="object-cover"
-                />
-              </div>
-              <div className="p-6 flex flex-col flex-grow">
-                <div className="flex justify-between items-start mb-3">
-                  <h3 className="text-xl font-bold text-gray-900">
-                    Group Transport
-                  </h3>
-                  <span className="bg-primary-100 text-primary-800 px-2 py-1 rounded-full text-xs font-semibold">
-                    Available
-                  </span>
-                </div>
-                <p className="text-gray-600 mb-4 flex-grow">
-                  Minibuses and vans for larger groups, events, school trips, or
-                  corporate outings.
-                </p>
-                <div className="flex justify-between items-center mt-auto">
-                  <span className="font-bold text-gray-900">
-                    From KES 1,500
-                  </span>
-                  <button
-                    onClick={() => handleBookClick("group")}
-                    className="text-gray-900 hover:text-gray-700 font-semibold flex items-center"
-                  >
-                    Book <span className="ml-1 text-xs">→</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Car Hire & Self-Drive Service */}
-            <div className="bg-white rounded-2xl shadow-md overflow-hidden transition duration-300 border border-gray-100 hover:border-gray-300 hover:shadow-xl flex flex-col">
-              <div className="h-48 bg-gray-900 relative">
-                <Image
-                  src="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?q=80&w=2070&auto=format&fit=crop"
                   alt="Car Hire"
                   fill
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  className="object-cover opacity-80"
+                  className="object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
-                  <span className="bg-amber-400 text-black px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
-                    NEW SERVICE
-                  </span>
-                </div>
               </div>
               <div className="p-6 flex flex-col flex-grow">
                 <div className="flex justify-between items-start mb-3">
                   <h3 className="text-xl font-bold text-gray-900">
-                    Car Hire & Rentals
+                    Car Hire
                   </h3>
-                  <span className="bg-primary-100 text-primary-800 px-2 py-1 rounded-full text-xs font-semibold">
-                    Fleet Ready
+                  <span className="bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full text-xs font-semibold">
+                    Active
                   </span>
                 </div>
                 <p className="text-gray-600 mb-4 flex-grow">
-                  Self-drive or chauffeur-driven long-term rentals. Choose from our vendor fleet of SUVs, Sedans, and Pickups.
+                  Luxury rentals for travel and self-drive adventure.
                 </p>
-                <div className="flex justify-between items-center mt-auto">
-                  <span className="font-bold text-gray-900">
-                    Daily Rates from KES 3,500
-                  </span>
+                <div className="flex justify-end items-center mt-auto">
                   <button
                     onClick={() => router.push("/hire")}
                     className="text-primary-600 hover:text-primary-700 font-bold flex items-center gap-1"
@@ -601,6 +514,68 @@ export default function Home() {
                     View Fleet <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
+              </div>
+            </div>
+
+            {/* Transport Service - Coming Soon */}
+            <div className="bg-white rounded-2xl shadow-md overflow-hidden transition duration-300 border border-gray-100 hover:border-gray-300 hover:shadow-xl flex flex-col opacity-75">
+              <div className="h-48 bg-gray-50 relative">
+                <Image
+                  src="/images/service-group.png"
+                  alt="Transport"
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent flex items-end p-4">
+                  <span className="bg-amber-400 text-black px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+                    Coming Soon
+                  </span>
+                </div>
+              </div>
+              <div className="p-6 flex flex-col flex-grow">
+                <div className="flex justify-between items-start mb-3">
+                  <h3 className="text-xl font-bold text-gray-900">
+                    Transport
+                  </h3>
+                  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-semibold">
+                    Coming Soon
+                  </span>
+                </div>
+                <p className="text-gray-600 mb-4 flex-grow">
+                  Professional moving services and logistics.
+                </p>
+              </div>
+            </div>
+
+            {/* Hearse Service - Coming Soon */}
+            <div className="bg-white rounded-2xl shadow-md overflow-hidden transition duration-300 border border-gray-100 hover:border-gray-300 hover:shadow-xl flex flex-col opacity-75">
+              <div className="h-48 bg-gray-900 relative">
+                <Image
+                  src="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?q=80&w=2070&auto=format&fit=crop"
+                  alt="Hearse"
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  className="object-cover opacity-80"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
+                  <span className="bg-amber-400 text-black px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+                    Coming Soon
+                  </span>
+                </div>
+              </div>
+              <div className="p-6 flex flex-col flex-grow">
+                <div className="flex justify-between items-start mb-3">
+                  <h3 className="text-xl font-bold text-gray-900">
+                    Hearse
+                  </h3>
+                  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-semibold">
+                    Coming Soon
+                  </span>
+                </div>
+                <p className="text-gray-600 mb-4 flex-grow">
+                  Specialized final send off solutions and support.
+                </p>
               </div>
             </div>
           </div>
@@ -704,7 +679,7 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-gray-600 italic">
-                &ldquo;I use taxitao daily for my commute. They&apos;re always
+                &ldquo;I use TaxiTao daily for my commute. They&apos;re always
                 on time and the drivers are very professional. Highly
                 recommend!&rdquo;
               </p>
@@ -740,7 +715,7 @@ export default function Home() {
               <p className="text-gray-600 italic">
                 &ldquo;Booked a van for our family outing and everything was
                 perfect. The driver was patient and very helpful. Will
-                definitely use taxitao again.&rdquo;
+                definitely use TaxiTao again.&rdquo;
               </p>
             </div>
           </div>
@@ -773,10 +748,10 @@ export default function Home() {
                 ABOUT US
               </span>
               <h2 className="text-3xl font-bold mb-6 text-gray-900">
-                Your Trusted Neighborhood Taxi Service
+                Your Complete Transport Ecosystem
               </h2>
               <p className="text-gray-600 mb-4 leading-relaxed">
-                Taxitao has been providing reliable transportation services to
+                TaxiTao has been providing reliable transportation services to
                 residents and visitors in your local area. We take pride in our
                 commitment to safety, comfort, and excellent customer service.
               </p>
@@ -849,7 +824,7 @@ export default function Home() {
                   <div>
                     <h4 className="font-semibold text-gray-900">Address</h4>
                     <p className="text-gray-600">
-                      Taxitao Office, Main Stage, Next to Post Office, Machakos
+                      TaxiTao Office, Main Stage, Next to Post Office, Machakos
                       Town, Kenya
                     </p>
                   </div>

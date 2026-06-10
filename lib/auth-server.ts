@@ -1,7 +1,7 @@
 /**
  * Server-side authentication utilities for Next.js.
  *
- * This module provides functions to verify Firebase Auth tokens
+ * This module provides functions to verify Firebase session cookies
  * and enforce role-based access control in API routes and server components.
  *
  * SECURITY: This file uses the Firebase Admin SDK and should ONLY be
@@ -22,41 +22,88 @@ export interface SessionUser {
   role: string;
   companyId?: string;
   suspended?: boolean;
+  /** True if the user has a super admin custom claim */
+  superAdmin?: boolean;
+  /** Raw decoded claims for advanced use cases */
+  claims?: Record<string, unknown>;
 }
 
 /**
  * Get the current session from cookies.
  * Returns null if no valid session exists.
+ *
+ * This function reads the "session" cookie (Firebase Session Cookie)
+ * and validates it against Firebase Auth. It reads the role from
+ * custom claims (set by Cloud Functions) with a Firestore fallback.
  */
 export async function getSession(): Promise<SessionUser | null> {
   try {
     const cookieStore = await cookies();
-    const authTokenCookie = cookieStore.get("firebase-auth-token")?.value;
 
-    if (!authTokenCookie) {
+    // Try new "session" cookie first, then legacy "firebase-auth-token"
+    const sessionCookie =
+      cookieStore.get("session")?.value ||
+      cookieStore.get("firebase-auth-token")?.value;
+
+    if (!sessionCookie) {
       return null;
     }
 
     try {
-      const decodedToken = await getAuth().verifyIdToken(authTokenCookie);
-      
-      const userDoc = await db.collection("users").doc(decodedToken.uid).get();
-      const userData = userDoc.data();
+      // Verify the session cookie (not ID token!)
+      // verifySessionCookie() checks:
+      // - Token validity
+      // - Expiration
+      // - Revocation status
+      // - Custom claims (role, companyId, etc.)
+      const decodedToken = await getAuth().verifySessionCookie(sessionCookie, true);
 
-      if (!userData) {
+      // Read role from custom claims (set by Cloud Functions)
+      // Fall back to Firestore if claims are missing (migration period)
+      let role = (decodedToken as Record<string, unknown>).role as string || "customer";
+      let companyId = (decodedToken as Record<string, unknown>).companyId as string | undefined;
+      let suspended = (decodedToken as Record<string, unknown>).suspended as boolean || false;
+      let superAdmin = (decodedToken as Record<string, unknown>).superAdmin as boolean || false;
+
+      // Firestore fallback for claims not yet synced
+      if (!companyId || suspended === undefined) {
+        try {
+          const userDoc = await db.collection("users").doc(decodedToken.uid).get();
+          const userData = userDoc.data();
+
+          if (!userData) {
+            return null;
+          }
+
+          // Use Firestore values only if claims are missing
+          if (!companyId) {
+            companyId = userData.companyId;
+          }
+          if (suspended === undefined) {
+            suspended = userData.suspended || false;
+          }
+        } catch {
+          // If Firestore read fails, continue with claims only
+        }
+      }
+
+      // If user is suspended, reject the session
+      if (suspended) {
         return null;
       }
 
       return {
         uid: decodedToken.uid,
-        email: decodedToken.email || userData.email || null,
-        role: userData.role || "customer",
-        companyId: userData.companyId,
-        suspended: userData.suspended || false,
+        email: decodedToken.email || null,
+        role,
+        companyId,
+        suspended,
+        superAdmin,
+        claims: decodedToken as Record<string, unknown>,
       };
     } catch (tokenError) {
       if (process.env.NODE_ENV === "development") {
-        console.warn("Firebase Auth token verification failed:", tokenError);
+        console.warn("Session cookie verification failed:", tokenError);
       }
       return null;
     }

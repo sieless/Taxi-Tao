@@ -365,7 +365,7 @@ function SignUpContent() {
           {/* App download section */}
           <div className="space-y-6 pt-4 border-t border-gray-100">
             <div className="space-y-1">
-              <h3 className="font-black text-gray-900 text-lg uppercase tracking-tight">Download the Taxi-Tao Assistant App</h3>
+              <h3 className="font-black text-gray-900 text-lg uppercase tracking-tight">Download the TaxiTao Assistant App</h3>
               <p className="text-xs text-gray-400 font-medium">Get the mobile application on your device to log in once you receive your credentials.</p>
             </div>
 
@@ -458,9 +458,9 @@ function SignUpContent() {
               />
             </div>
             <h1 className="text-3xl font-bold text-gray-800 mb-2">
-              Create Account
+              Join TaxiTao
             </h1>
-            <p className="text-gray-600">Join TaxiTao today</p>
+            <p className="text-gray-600">Choose your role and get started in seconds</p>
           </div>
 
           {/* Progress indicator */}
@@ -510,7 +510,7 @@ function SignUpContent() {
           {step === 1 && (
             <div className="space-y-4">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">
-                I want to sign up as:
+                Register as a
               </h2>
 
               <button
@@ -521,7 +521,7 @@ function SignUpContent() {
                   Customer
                 </h3>
                 <p className="text-gray-600 text-sm">
-                  Book rides and manage your trips
+                  Book rides and travel locally
                 </p>
               </button>
 
@@ -531,7 +531,7 @@ function SignUpContent() {
               >
                 <h3 className="text-lg font-bold text-gray-800 mb-2">Driver</h3>
                 <p className="text-gray-600 text-sm">
-                  Offer taxi services and earn income
+                  Earn money by joining our fleet
                 </p>
               </button>
 
@@ -541,14 +541,14 @@ function SignUpContent() {
               >
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-lg font-black text-gray-800 group-hover:text-primary-700 transition-colors">
-                    Car Hire Company
+                    Car Hire Partner
                   </h3>
                   <div className="p-2 bg-gray-50 rounded-lg group-hover:bg-primary-100 transition-colors">
                     <Building className="w-5 h-5 text-gray-400 group-hover:text-primary-600" />
                   </div>
                 </div>
                 <p className="text-gray-600 text-sm font-medium">
-                  Manage your fleet, bookings, and financial ledger with enterprise tools
+                  List your fleet and grow revenue
                 </p>
               </button>
 
@@ -765,14 +765,14 @@ function SignUpContent() {
                   className={`mt-1 h-5 w-5 border-gray-300 rounded transition-colors ${userType === 'car_hire' ? 'text-primary-600 focus:ring-primary-500' : 'text-primary-600 focus:ring-primary-500'}`}
                 />
                 <label htmlFor="agree" className="text-xs text-gray-600 leading-relaxed font-medium">
-                  I confirm that I have the authority to register this company and agree to the{" "}
+                  I agree to the{" "}
                   <Link href="/terms" className={`font-black ${userType === 'car_hire' ? 'text-primary-600 hover:text-primary-700' : 'text-primary-600 hover:text-primary-700'}`}>
-                    Terms of Use
+                    Terms
                   </Link>{" "}
-                  and{" "}
+                  &{" "}
                   <Link href="/privacy" className={`font-black ${userType === 'car_hire' ? 'text-primary-600 hover:text-primary-700' : 'text-primary-600 hover:text-primary-700'}`}>
                     Privacy Policy
-                  </Link>.
+                  </Link>
                 </label>
               </div>
 

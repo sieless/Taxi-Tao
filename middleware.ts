@@ -25,7 +25,7 @@ function matchesRoute(pathname: string, routes: string[]): boolean {
   return routes.some((route) => pathname === route || pathname.startsWith(route + "/"));
 }
 
-export function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const isProtectedRoute = matchesRoute(pathname, PROTECTED_ROUTES);
@@ -33,8 +33,8 @@ export function proxy(request: NextRequest) {
   const isAuthRoute = matchesRoute(pathname, AUTH_ROUTES);
 
   const sessionCookie = request.cookies.get("session")?.value;
-  const authTokenCookie = request.cookies.get("firebase-auth-token")?.value;
-  const isAuthenticated = !!(sessionCookie || authTokenCookie);
+  const legacyCookie = request.cookies.get("firebase-auth-token")?.value;
+  const isAuthenticated = !!(sessionCookie || legacyCookie);
 
   if (isProtectedRoute || isProtectedApi) {
     if (!isAuthenticated) {
@@ -56,10 +56,18 @@ export function proxy(request: NextRequest) {
   }
 
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+  const isDev = process.env.NODE_ENV !== "production";
+
   const cspHeader = [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
-    `style-src 'self' 'nonce-${nonce}'`,
+    // 'unsafe-eval' needed for Next.js dev (React Refresh)
+    // 'unsafe-inline' needed for Tailwind CSS inline styles
+    // In production, remove 'unsafe-eval' and 'unsafe-inline' for scripts
+    isDev
+      ? `script-src 'self' 'unsafe-inline' 'unsafe-eval' 'nonce-${nonce}' 'strict-dynamic'`
+      : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+    // 'unsafe-inline' required for Tailwind CSS (generates inline style attributes)
+    `style-src 'self' 'unsafe-inline'`,
     "img-src 'self' blob: data: https://images.unsplash.com https://firebasestorage.googleapis.com",
     "font-src 'self'",
     "connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://api.resend.com wss://*.firebaseio.com",

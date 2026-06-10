@@ -12,7 +12,7 @@ import NetworkStatus from "@/components/NetworkStatus";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Taxitao Services - Quick & Reliable Rides",
+  title: "TaxiTao Services - Quick & Reliable Rides",
   description: "Quick & Reliable Taxi Rides in Machakos, Kitui, and Makueni. Book online or call now for immediate service.",
   icons: {
     icon: '/icon.png',

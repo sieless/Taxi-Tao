@@ -25,12 +25,17 @@ export interface UserActionResult {
 // ── Guard ─────────────────────────────────────────────────────────────────────
 
 /**
- * Throws a user-facing error if the target email belongs to a super-admin.
+ * Throws a user-facing error if the target UID belongs to a super-admin.
  * Call this client-side before any destructive action so the user gets
  * immediate feedback rather than a Cloud Function rejection.
+ *
+ * Note: This is a client-side guard only. The Cloud Function also checks
+ * super-admin status server-side as a second layer of protection.
  */
-function guardSuperAdmin(targetEmail: string, action: string): void {
-  if (isSuperAdmin(targetEmail)) {
+function guardSuperAdmin(targetUid: string, action: string): void {
+  // Client-side check uses UID (no custom claims available here)
+  // The Cloud Function will also verify server-side
+  if (isSuperAdmin(targetUid)) {
     throw new Error(
       `Cannot ${action}: this account is a super-admin and is protected.`
     );
@@ -49,7 +54,7 @@ export async function suspendUser(
   targetEmail: string,
   adminUid: string
 ): Promise<UserActionResult> {
-  guardSuperAdmin(targetEmail, "suspend");
+  guardSuperAdmin(userId, "suspend");
 
   const fn = httpsCallable<
     { userId: string; adminUid: string },
@@ -89,7 +94,7 @@ export async function deleteUser(
   targetEmail: string,
   adminUid: string
 ): Promise<UserActionResult> {
-  guardSuperAdmin(targetEmail, "delete");
+  guardSuperAdmin(userId, "delete");
 
   const fn = httpsCallable<
     { userId: string; adminUid: string },
@@ -128,7 +133,7 @@ export interface ChangeRolePayload {
 export async function changeUserRole(
   payload: ChangeRolePayload
 ): Promise<UserActionResult> {
-  guardSuperAdmin(payload.targetEmail, "change role of");
+  guardSuperAdmin(payload.userId, "change role of");
 
   const fn = httpsCallable<ChangeRolePayload, UserActionResult>(
     functions,

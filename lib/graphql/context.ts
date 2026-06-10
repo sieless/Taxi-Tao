@@ -12,10 +12,29 @@ export interface GraphQLContext {
 export async function createContext(request: NextRequest): Promise<GraphQLContext> {
   try {
     const cookieStore = await cookies();
-    const session = cookieStore.get("session")?.value;
-    if (!session) return { uid: null, companyId: null, role: null };
 
-    const decoded = await getAuth(adminApp).verifySessionCookie(session, true);
+    // Try new "session" cookie first, then legacy "firebase-auth-token"
+    const sessionCookie =
+      cookieStore.get("session")?.value ||
+      cookieStore.get("firebase-auth-token")?.value;
+
+    if (!sessionCookie) {
+      return { uid: null, companyId: null, role: null };
+    }
+
+    // Determine which cookie we're dealing with
+    const isNewSession = !!cookieStore.get("session")?.value;
+
+    let decoded;
+    if (isNewSession) {
+      // Verify session cookie (proper Firebase Session Cookie)
+      decoded = await getAuth(adminApp).verifySessionCookie(sessionCookie, true);
+    } else {
+      // Legacy: verify ID token (stored in old cookie format)
+      // This handles users who haven't re-logged in since the migration
+      decoded = await getAuth(adminApp).verifyIdToken(sessionCookie);
+    }
+
     return {
       uid: decoded.uid,
       companyId: (decoded as Record<string, unknown>).companyId as string || null,
