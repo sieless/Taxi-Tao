@@ -30,6 +30,12 @@ import DriverCard from "@/components/DriverCard";
 import FindDriversButton from "@/components/FindDriversButton";
 import AvailableDrivers from "@/components/AvailableDrivers";
 import PhoneMockup from "@/components/PhoneMockup";
+import {
+  TaxiIllustration,
+  CarHireIllustration,
+  TransportIllustration,
+  HearseIllustration,
+} from "@/components/illustrations/ServiceIllustrations";
 
 import { useAuth } from "@/lib/auth-context";
 import { getAllDriversWithVehicles } from "@/lib/firestore";
@@ -448,135 +454,116 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 perspective-[1000px]">
             {/* Taxi Service */}
-            <div className="bg-white rounded-2xl shadow-md overflow-hidden transition duration-300 border border-gray-100 hover:border-gray-300 hover:shadow-xl flex flex-col">
-              <div className="h-48 bg-gray-50 relative">
-                <Image
-                  src="/images/service-standard.png"
-                  alt="Taxi"
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  className="object-cover"
-                />
+            <div className="group relative bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl transition-all duration-500 hover:shadow-[0_30px_60px_-12px_rgba(0,0,0,0.25)] hover:-translate-y-4 hover:rotate-x-[2deg] hover:rotate-y-[1deg] cursor-pointer flex flex-col">
+              <div className="h-52 bg-gradient-to-br from-primary-50 to-primary-100 relative flex items-center justify-center rounded-t-3xl">
+                <TaxiIllustration className="group-hover:scale-110 group-hover:rotate-3 transition-all duration-500" />
               </div>
-              <div className="p-6 flex flex-col flex-grow">
+              <div className="p-6 flex flex-col flex-grow relative z-10">
                 <div className="flex justify-between items-start mb-3">
-                  <h3 className="text-xl font-bold text-gray-900">
+                  <h3 className="text-xl font-bold text-gray-900 group-hover:text-primary-600 transition-colors duration-300">
                     Taxi
                   </h3>
-                  <span className="bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full text-xs font-semibold">
+                  <span className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-xs font-semibold group-hover:scale-105 transition-transform">
                     Active
                   </span>
                 </div>
-                <p className="text-gray-600 mb-4 flex-grow">
+                <p className="text-gray-600 mb-4 flex-grow leading-relaxed">
                   Fast, reliable home rides at your fingertips.
                 </p>
                 <div className="flex justify-end items-center mt-auto">
                   <button
                     onClick={() => handleBookClick("standard")}
-                    className="text-gray-900 hover:text-gray-700 font-semibold flex items-center"
+                    className="text-gray-900 hover:text-primary-600 font-semibold flex items-center group-hover:gap-3 transition-all duration-300"
                   >
                     Book <span className="ml-1 text-xs">→</span>
                   </button>
                 </div>
               </div>
+              {/* Floating glow effect */}
+              <div className="absolute inset-0 bg-gradient-to-t from-primary-500/10 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
             </div>
 
             {/* Car Hire Service */}
-            <div className="bg-white rounded-2xl shadow-md overflow-hidden transition duration-300 border border-gray-100 hover:border-gray-300 hover:shadow-xl flex flex-col">
-              <div className="h-48 bg-gray-50 relative">
-                <Image
-                  src="/images/service-executive.png"
-                  alt="Car Hire"
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  className="object-cover"
-                />
+            <div className="group relative bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl transition-all duration-500 hover:shadow-[0_30px_60px_-12px_rgba(0,0,0,0.25)] hover:-translate-y-4 hover:rotate-x-[2deg] hover:rotate-y-[1deg] cursor-pointer flex flex-col" style={{transitionDelay: '50ms'}}>
+              <div className="h-52 bg-gradient-to-br from-amber-50 to-amber-100 relative flex items-center justify-center rounded-t-3xl">
+                <CarHireIllustration className="group-hover:scale-110 group-hover:-rotate-3 transition-all duration-500" />
               </div>
-              <div className="p-6 flex flex-col flex-grow">
+              <div className="p-6 flex flex-col flex-grow relative z-10">
                 <div className="flex justify-between items-start mb-3">
-                  <h3 className="text-xl font-bold text-gray-900">
+                  <h3 className="text-xl font-bold text-gray-900 group-hover:text-primary-600 transition-colors duration-300">
                     Car Hire
                   </h3>
-                  <span className="bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full text-xs font-semibold">
+                  <span className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-xs font-semibold group-hover:scale-105 transition-transform">
                     Active
                   </span>
                 </div>
-                <p className="text-gray-600 mb-4 flex-grow">
+                <p className="text-gray-600 mb-4 flex-grow leading-relaxed">
                   Luxury rentals for travel and self-drive adventure.
                 </p>
                 <div className="flex justify-end items-center mt-auto">
                   <button
                     onClick={() => router.push("/hire")}
-                    className="text-primary-600 hover:text-primary-700 font-bold flex items-center gap-1"
+                    className="text-primary-600 hover:text-primary-700 font-bold flex items-center group-hover:gap-3 transition-all duration-300"
                   >
                     View Fleet <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
               </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-amber-500/10 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
             </div>
 
             {/* Transport Service - Coming Soon */}
-            <div className="bg-white rounded-2xl shadow-md overflow-hidden transition duration-300 border border-gray-100 hover:border-gray-300 hover:shadow-xl flex flex-col opacity-75">
-              <div className="h-48 bg-gray-50 relative">
-                <Image
-                  src="/images/service-group.png"
-                  alt="Transport"
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  className="object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent flex items-end p-4">
-                  <span className="bg-amber-400 text-black px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+            <div className="group relative bg-white/60 backdrop-blur-sm rounded-3xl shadow-xl transition-all duration-500 hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.15)] hover:-translate-y-2 hover:rotate-x-[2deg] hover:rotate-y-[1deg] cursor-pointer flex flex-col opacity-80" style={{transitionDelay: '100ms'}}>
+              <div className="h-52 bg-gradient-to-br from-gray-50 to-gray-100 relative flex items-center justify-center rounded-t-3xl">
+                <TransportIllustration className="group-hover:scale-110 transition-all duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-t from-amber-500/20 to-transparent flex items-end p-4 rounded-t-3xl">
+                  <span className="bg-amber-400 text-black px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest group-hover:scale-105 transition-transform">
                     Coming Soon
                   </span>
                 </div>
               </div>
-              <div className="p-6 flex flex-col flex-grow">
+              <div className="p-6 flex flex-col flex-grow relative z-10">
                 <div className="flex justify-between items-start mb-3">
-                  <h3 className="text-xl font-bold text-gray-900">
+                  <h3 className="text-xl font-bold text-gray-700 group-hover:text-gray-900 transition-colors duration-300">
                     Transport
                   </h3>
-                  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-semibold">
+                  <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-semibold">
                     Coming Soon
                   </span>
                 </div>
-                <p className="text-gray-600 mb-4 flex-grow">
+                <p className="text-gray-500 mb-4 flex-grow leading-relaxed">
                   Professional moving services and logistics.
                 </p>
               </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-gray-400/10 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
             </div>
 
             {/* Hearse Service - Coming Soon */}
-            <div className="bg-white rounded-2xl shadow-md overflow-hidden transition duration-300 border border-gray-100 hover:border-gray-300 hover:shadow-xl flex flex-col opacity-75">
-              <div className="h-48 bg-gray-900 relative">
-                <Image
-                  src="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?q=80&w=2070&auto=format&fit=crop"
-                  alt="Hearse"
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  className="object-cover opacity-80"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
-                  <span className="bg-amber-400 text-black px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+            <div className="group relative bg-gray-900/60 backdrop-blur-sm rounded-3xl shadow-xl transition-all duration-500 hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.3)] hover:-translate-y-2 hover:rotate-x-[2deg] hover:rotate-y-[1deg] cursor-pointer flex flex-col opacity-80" style={{transitionDelay: '150ms'}}>
+              <div className="h-52 bg-gradient-to-br from-gray-800 to-gray-900 relative flex items-center justify-center rounded-t-3xl">
+                <HearseIllustration className="group-hover:scale-110 text-amber-400 transition-all duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-t from-amber-500/20 to-transparent flex items-end p-4 rounded-t-3xl">
+                  <span className="bg-amber-400 text-black px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest group-hover:scale-105 transition-transform">
                     Coming Soon
                   </span>
                 </div>
               </div>
-              <div className="p-6 flex flex-col flex-grow">
+              <div className="p-6 flex flex-col flex-grow relative z-10">
                 <div className="flex justify-between items-start mb-3">
-                  <h3 className="text-xl font-bold text-gray-900">
+                  <h3 className="text-xl font-bold text-gray-200 group-hover:text-white transition-colors duration-300">
                     Hearse
                   </h3>
-                  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-semibold">
+                  <span className="bg-gray-700 text-gray-300 px-3 py-1 rounded-full text-xs font-semibold">
                     Coming Soon
                   </span>
                 </div>
-                <p className="text-gray-600 mb-4 flex-grow">
+                <p className="text-gray-400 mb-4 flex-grow leading-relaxed">
                   Specialized final send off solutions and support.
                 </p>
               </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-amber-500/10 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
             </div>
           </div>
         </div>

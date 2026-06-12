@@ -19,6 +19,7 @@ import {
   orderBy,
   writeBatch,
   increment,
+  limit,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { COLLECTIONS } from "@/lib/firestore-constants";
@@ -170,10 +171,13 @@ export async function batchActivateFleet(companyId: string): Promise<number> {
 
 /**
  * Search active fleet with filters.
+ * Matches mobile app's searchActiveFleet signature.
  */
 export async function searchActiveFleet(options: {
   companyId?: string;
-  type?: string;
+  driverId?: string;
+  isCorporate?: boolean;
+  vehicleType?: string;
   minPrice?: number;
   maxPrice?: number;
   limitCount?: number;
@@ -184,8 +188,33 @@ export async function searchActiveFleet(options: {
     where("isRental", "==", true)
   );
 
+  // 1. Ownership Filters (mutually exclusive)
   if (options.companyId) {
     q = query(q, where("companyId", "==", options.companyId));
+  } else if (options.driverId) {
+    q = query(q, where("driverId", "==", options.driverId));
+  }
+
+  // 2. Corporate/Executive Filter
+  if (options.isCorporate && !options.companyId) {
+    q = query(q, where("isCorporate", "==", true));
+  }
+
+  // 3. Price Filters (requires orderBy dailyRate)
+  if (options.minPrice !== undefined || options.maxPrice !== undefined) {
+    if (options.minPrice !== undefined) {
+      q = query(q, where("dailyRate", ">=", options.minPrice));
+    }
+    if (options.maxPrice !== undefined) {
+      q = query(q, where("dailyRate", "<=", options.maxPrice));
+    }
+    q = query(q, orderBy("dailyRate", "asc"));
+  } else {
+    q = query(q, orderBy("createdAt", "desc"));
+  }
+
+  if (options.limitCount) {
+    q = query(q, limit(options.limitCount));
   }
 
   const snapshot = await getDocs(q);
@@ -193,16 +222,10 @@ export async function searchActiveFleet(options: {
     (doc) => ({ id: doc.id, ...doc.data() } as Vehicle)
   );
 
-  // Apply client-side filters
-  if (options.type) {
-    vehicles = vehicles.filter((v) => v.type === options.type);
-  }
-  if (options.minPrice !== undefined) {
-    vehicles = vehicles.filter((v) => v.dailyRate >= options.minPrice!);
-  }
-  if (options.maxPrice !== undefined) {
-    vehicles = vehicles.filter((v) => v.dailyRate <= options.maxPrice!);
+  // 4. Client-side vehicleType filter (if not using Firestore index)
+  if (options.vehicleType && options.vehicleType !== "All") {
+    vehicles = vehicles.filter((v) => v.type === options.vehicleType);
   }
 
-  return vehicles.slice(0, options.limitCount || 50);
+  return vehicles;
 }
