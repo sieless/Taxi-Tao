@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useParams } from "next/navigation";
 import { searchActiveFleet } from "@/lib/carhire/vehicle-management-service";
+import { getDriverForHire } from "@/lib/carhire/driver-service";
 import { Vehicle } from "@/lib/types";
 import {
   Car,
@@ -11,12 +13,11 @@ import {
   Loader2,
   Users,
   Info,
+  UserCheck,
+  ShieldCheck,
   Star,
   X,
-  Search,
-  ShieldCheck,
-  Building2,
-  User,
+  MapPin,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -32,40 +33,54 @@ const PRICE_RANGES = [
   { label: "Over 20k", min: 20000, max: 1000000 },
 ];
 
-export default function GlobalFleetPage() {
+interface DriverProfile {
+  id: string;
+  name: string;
+  img: string;
+  businessLocation?: string;
+  rating: number;
+  totalRides: number;
+  vehicles: any[];
+}
+
+function DriverFleetContent() {
+  const params = useParams();
+  const driverId = params.driverId as string;
+
+  const [driver, setDriver] = useState<DriverProfile | null>(null);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState("All");
   const [selectedPrice, setSelectedPrice] = useState(PRICE_RANGES[0]);
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
-    setLoading(true);
-    searchActiveFleet({
-      vehicleType: selectedType !== "All" ? selectedType : undefined,
-      minPrice: selectedPrice.min,
-      maxPrice: selectedPrice.max,
-    })
-      .then((data) => {
-        setVehicles(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        logError("global-fleet-page", err);
-        setLoading(false);
-      });
-  }, [selectedType, selectedPrice]);
+    if (!driverId) return;
 
-  const filteredVehicles = vehicles.filter((v) => {
-    if (!searchTerm) return true;
-    const term = searchTerm.toLowerCase();
-    return (
-      v.make.toLowerCase().includes(term) ||
-      v.model.toLowerCase().includes(term) ||
-      v.type?.toLowerCase().includes(term)
-    );
-  });
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [driverData, vehicleData] = await Promise.all([
+          getDriverForHire(driverId),
+          searchActiveFleet({
+            driverId,
+            vehicleType: selectedType !== "All" ? selectedType : undefined,
+            minPrice: selectedPrice.min,
+            maxPrice: selectedPrice.max,
+          }),
+        ]);
+
+        setDriver(driverData);
+        setVehicles(vehicleData);
+      } catch (err) {
+        logError("driver-fleet-page", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [driverId, selectedType, selectedPrice]);
 
   return (
     <div className="min-h-screen bg-[#fafafa] pb-20 font-sans">
@@ -79,33 +94,60 @@ export default function GlobalFleetPage() {
             <ChevronLeft className="w-4 h-4" /> Back to Partners
           </Link>
 
-          <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-none">
-            Full Fleet
-          </h1>
-          <p className="text-gray-400 text-lg mt-3 font-medium">
-            {loading ? "Searching..." : `Showing ${filteredVehicles.length} vehicles across all partners`}
-          </p>
+          <div className="flex items-center gap-6">
+            {driver?.img ? (
+              <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-white/10">
+                <Image src={driver.img} alt={driver.name} fill className="object-cover" />
+              </div>
+            ) : (
+              <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center text-white font-black text-2xl">
+                {(driver?.name || "H").charAt(0)}
+              </div>
+            )}
+            <div>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl md:text-4xl font-black tracking-tight">
+                  {driver?.name || "Loading..."}
+                </h1>
+                <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-600/20 text-blue-400 rounded-full text-xs font-black uppercase tracking-widest">
+                  <UserCheck className="w-3 h-3" /> Peer Host
+                </span>
+              </div>
+              <div className="flex items-center gap-4 mt-1">
+                {driver?.businessLocation && (
+                  <p className="text-gray-400 font-medium text-sm flex items-center gap-1">
+                    <MapPin className="w-3 h-3" /> {driver.businessLocation}
+                  </p>
+                )}
+                {driver?.rating && (
+                  <p className="text-gray-400 font-medium text-sm flex items-center gap-1">
+                    <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" /> {driver.rating.toFixed(1)}
+                  </p>
+                )}
+                {driver?.totalRides ? (
+                  <p className="text-gray-400 font-medium text-sm">{driver.totalRides} rides</p>
+                ) : null}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 -mt-6">
-        {/* Search & Filters */}
-        <div className="bg-white/80 backdrop-blur-2xl p-3 rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-white/50 mb-10 flex flex-col md:flex-row gap-2">
-          <div className="flex-1 relative group">
-            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-primary-600 transition" />
-            <input
-              type="text"
-              placeholder="Search make, model, or type..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-14 pr-6 py-5 bg-white rounded-[2.2rem] border-none focus:ring-2 focus:ring-primary-500 outline-none transition text-gray-800 font-semibold text-lg"
-            />
+        {/* Filter Bar */}
+        <div className="bg-white/80 backdrop-blur-2xl p-3 rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-white/50 mb-10 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 pl-4">
+            <MapPin className="w-5 h-5 text-blue-600" />
+            <span className="font-bold text-gray-700 text-sm">
+              {loading ? "Searching..." : `${vehicles.length} vehicles`}
+            </span>
           </div>
           <button
             onClick={() => setShowFilters(true)}
-            className="flex items-center justify-center gap-2 bg-gray-900 px-6 py-5 rounded-[2.2rem] hover:bg-gray-800 transition shadow-xl group"
+            className="flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-[2.2rem] font-bold text-sm hover:bg-gray-800 transition shadow-lg"
           >
-            <Filter className="w-5 h-5 text-white group-hover:rotate-180 transition-transform duration-500" />
+            <Filter className="w-4 h-4" />
+            Filters
             {(selectedType !== "All" || selectedPrice.label !== "Any Price") && (
               <span className="w-2 h-2 bg-primary-500 rounded-full" />
             )}
@@ -115,22 +157,19 @@ export default function GlobalFleetPage() {
         {/* Vehicle Grid */}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-32">
-            <Loader2 className="w-16 h-16 text-primary-600 animate-spin mb-6" />
+            <Loader2 className="w-16 h-16 text-blue-600 animate-spin mb-6" />
             <p className="text-gray-400 font-bold tracking-widest uppercase text-sm">Loading fleet...</p>
           </div>
-        ) : filteredVehicles.length === 0 ? (
+        ) : vehicles.length === 0 ? (
           <div className="text-center py-32 bg-white rounded-[3rem] border border-dashed border-gray-200">
             <Car className="w-24 h-24 text-gray-100 mx-auto mb-6" />
             <h2 className="text-3xl font-black text-gray-800 tracking-tight">No Vehicles Found</h2>
-            <p className="text-gray-500 mt-2 font-medium">Try broadening your search or adjusting filters.</p>
+            <p className="text-gray-500 mt-2 font-medium">This host has no available vehicles.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {filteredVehicles.map((vehicle) => (
-              <div
-                key={vehicle.id}
-                className="bg-white rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-[0_30px_60px_rgba(0,0,0,0.1)] transition-all duration-500 group border border-transparent hover:border-gray-100"
-              >
+            {vehicles.map((vehicle) => (
+              <div key={vehicle.id} className="bg-white rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-[0_30px_60px_rgba(0,0,0,0.1)] transition-all duration-500 group border border-transparent hover:border-gray-100">
                 <div className="aspect-[16/10] bg-gray-50 relative overflow-hidden">
                   {vehicle.images?.[0] ? (
                     <Image
@@ -151,15 +190,9 @@ export default function GlobalFleetPage() {
                     </span>
                   </div>
                   <div className="absolute top-5 right-5">
-                    {vehicle.companyId ? (
-                      <span className="bg-blue-600/80 backdrop-blur-md px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest text-white shadow-xl flex items-center gap-1">
-                        <Building2 className="w-2.5 h-2.5" /> Fleet
-                      </span>
-                    ) : (
-                      <span className="bg-amber-500/80 backdrop-blur-md px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest text-white shadow-xl flex items-center gap-1">
-                        <User className="w-2.5 h-2.5" /> Private
-                      </span>
-                    )}
+                    <span className="bg-blue-600/80 backdrop-blur-md px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest text-white shadow-xl">
+                      Private
+                    </span>
                   </div>
                   {vehicle.averageRating && (
                     <div className="absolute bottom-5 right-5 flex items-center gap-1 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full">
@@ -204,7 +237,7 @@ export default function GlobalFleetPage() {
                   </div>
 
                   <Link
-                    href={`/hire/request?vehicleId=${vehicle.id}`}
+                    href={`/hire/request?vehicleId=${vehicle.id}&driverId=${driverId}`}
                     className="w-full py-5 bg-gray-900 text-white rounded-[1.5rem] font-black text-center flex items-center justify-center gap-3 group/btn hover:bg-primary-600 transition-all duration-500 shadow-xl shadow-gray-200 hover:shadow-primary-500/20"
                   >
                     Request Hire <ChevronRight className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform" />
@@ -282,5 +315,19 @@ export default function GlobalFleetPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function DriverFleetPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="w-12 h-12 text-primary-600 animate-spin" />
+        </div>
+      }
+    >
+      <DriverFleetContent />
+    </Suspense>
   );
 }
