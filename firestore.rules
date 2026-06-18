@@ -438,10 +438,11 @@ service cloud.firestore {
     // PROPOSALS SUBCOLLECTION
     // ============================================================
     match /bookingRequests/{bookingId}/proposals/{proposalId} {
-      // Driver can read/list proposals, customer who owns the booking request can read
+      // Driver can read only their own proposals; customer who owns the booking reads all; admin any
       allow read, list: if isSignedIn() && isEmailVerified() && (
-        isDriver() ||
-        request.auth.uid == get(/databases/$(database)/documents/bookingRequests/$(bookingId)).data.customerId
+        (isDriver() && resource.data.driverId == request.auth.uid) ||
+        request.auth.uid == get(/databases/$(database)/documents/bookingRequests/$(bookingId)).data.customerId ||
+        isAdmin()
       );
 
       // Driver can create their own proposal
@@ -466,9 +467,10 @@ service cloud.firestore {
     // PROPOSALS COLLECTION GROUP (For driver queries)
     // ============================================================
     match /{path=**}/proposals/{proposalId} {
-      // Driver can query/list their own proposals across all booking requests
+      // Driver can query/list their own proposals across all booking requests; admin any
       allow read, list: if isSignedIn() && isEmailVerified() && (
-        resource.data.driverId == request.auth.uid
+        resource.data.driverId == request.auth.uid ||
+        isAdmin()
       );
     }
 
