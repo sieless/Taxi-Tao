@@ -20,12 +20,12 @@ const yoga = createYoga({
 
 export async function GET(request: NextRequest) {
   const rateLimit = await rateLimitMiddleware(request, "graphql", RATE_LIMITS.GRAPHQL);
-  if (rateLimit) return rateLimit as NextResponse;
+  if (rateLimit) return rateLimit as unknown as NextResponse;
   return yoga.fetch(request);
 }
 
 export async function POST(request: NextRequest) {
   const rateLimit = await rateLimitMiddleware(request, "graphql", RATE_LIMITS.GRAPHQL);
-  if (rateLimit) return rateLimit as NextResponse;
+  if (rateLimit) return rateLimit as unknown as NextResponse;
   return yoga.fetch(request);
 }

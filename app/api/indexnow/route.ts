@@ -6,8 +6,8 @@ import { rateLimitMiddleware, RATE_LIMITS } from "@/lib/rate-limit";
 const MAX_URLS = 1000;
 
 export async function POST(request: NextRequest) {
-  const rateLimit = rateLimitMiddleware(request, "indexnow", RATE_LIMITS.API_STRICT);
-  if (rateLimit) return rateLimit as NextResponse;
+  const rateLimit = await rateLimitMiddleware(request, "indexnow", RATE_LIMITS.API_STRICT);
+  if (rateLimit) return rateLimit as unknown as NextResponse;
 
   try {
     const session = await requireAuth();
