@@ -4,7 +4,6 @@ import { makeExecutableSchema } from "@graphql-tools/schema";
 import { typeDefs } from "@/lib/graphql/schema";
 import { resolvers } from "@/lib/graphql/resolvers";
 import { createContext } from "@/lib/graphql/context";
-import { depthLimitRule } from "@/lib/graphql/depth-limit";
 import { rateLimitMiddleware, RATE_LIMITS } from "@/lib/rate-limit";
 
 const schema = makeExecutableSchema({ typeDefs, resolvers });
@@ -17,7 +16,6 @@ const yoga = createYoga({
   },
   graphqlEndpoint: "/api/graphql",
   landingPage: false,
-  validationRules: [depthLimitRule(7)],
 });
 
 export async function GET(request: NextRequest) {
