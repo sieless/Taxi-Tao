@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createYoga } from "graphql-yoga";
 import { makeExecutableSchema } from "@graphql-tools/schema";
 import { typeDefs } from "@/lib/graphql/schema";
@@ -22,12 +22,12 @@ const yoga = createYoga({
 
 export async function GET(request: NextRequest) {
   const rateLimit = await rateLimitMiddleware(request, "graphql", RATE_LIMITS.GRAPHQL);
-  if (rateLimit) return rateLimit;
+  if (rateLimit) return rateLimit as NextResponse;
   return yoga.fetch(request);
 }
 
 export async function POST(request: NextRequest) {
   const rateLimit = await rateLimitMiddleware(request, "graphql", RATE_LIMITS.GRAPHQL);
-  if (rateLimit) return rateLimit;
+  if (rateLimit) return rateLimit as NextResponse;
   return yoga.fetch(request);
 }
