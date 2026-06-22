@@ -507,7 +507,7 @@ if (process.env.NODE_ENV === "development") {
 | File | Purpose | Security Sensitivity |
 |------|---------|---------------------|
 | `app/layout.tsx` | Root layout, AuthProvider wrapper | HIGH |
-| `app/middleware.ts` | Route protection, security headers | HIGH |
+| `proxy.ts` (project root) | Route protection, security headers | HIGH |
 | `app/api/send-email/route.ts` | Email sending API | HIGH |
 | `app/api/vendor/reports/route.ts` | CSV report generation | MEDIUM |
 | `app/api/vendor/payments/confirm/route.ts` | Payment confirmation | HIGH |

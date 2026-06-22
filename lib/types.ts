@@ -153,6 +153,10 @@ export interface Vehicle {
   driverLocation?: string;
   driverPhone?: string;
 
+  slug?: string;
+  serviceCounty?: string;
+  serviceTown?: string;
+
   fuelLevel?: number;
   engineSize?: string;
   capacity?: number;

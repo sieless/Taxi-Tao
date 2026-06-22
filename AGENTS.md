@@ -506,7 +506,7 @@ Before deploying to production:
 |------|---------|---------------------|
 | `firestore.rules` | Database access control (shared with mobile) | CRITICAL |
 | `storage.rules` | File upload/download control (shared with mobile) | HIGH |
-| `middleware.ts` | Route protection, security headers | HIGH |
+| `proxy.ts` | Route protection, security headers | HIGH |
 | `lib/auth-context.tsx` | Client auth provider, session management | CRITICAL |
 | `lib/auth-server.ts` | Server-side auth verification | CRITICAL |
 | `lib/firebase.ts` | Client Firebase SDK init | HIGH |

@@ -25,9 +25,9 @@ const securityHeaders = [
     key: "Strict-Transport-Security",
     value: "max-age=63072000; includeSubDomains; preload",
   },
-  // NOTE: Content-Security-Policy is set by middleware.ts
+  // NOTE: Content-Security-Policy is set by proxy.ts
   // with per-request nonces for stronger XSS protection.
-  // Do NOT set CSP here — it would conflict with the middleware CSP.
+  // Do NOT set CSP here — it would conflict with the proxy CSP.
 ];
 
 const nextConfig: NextConfig = {

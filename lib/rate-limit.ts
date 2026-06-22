@@ -36,6 +36,7 @@ export const RATE_LIMITS = {
   EMAIL_SEND: { windowMs: 60 * 1000, maxRequests: 5 },
   STAFF_INVITE: { windowMs: 60 * 60 * 1000, maxRequests: 10 },
   FILE_UPLOAD: { windowMs: 60 * 1000, maxRequests: 10 },
+  GRAPHQL: { windowMs: 60 * 1000, maxRequests: 120 },
 } as const;
 
 // Upstash Ratelimit instances (keyed by config to reuse)

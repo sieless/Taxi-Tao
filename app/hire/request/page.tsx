@@ -91,7 +91,7 @@ function HireRequestContent() {
           <ChevronRight className="w-3 h-3" />
           {providerId ? (
             <>
-              <Link href={`/hire/${providerId}`} className="hover:text-primary-600 transition">
+              <Link href={`/hire/partner/${providerId}`} className="hover:text-primary-600 transition">
                 Company Fleet
               </Link>
               <ChevronRight className="w-3 h-3" />

@@ -50,6 +50,9 @@ Allow: /locations/
 Allow: /locations/*
 Allow: /hire/
 Allow: /hire/*
+Allow: /companies/
+Allow: /companies/*
+Allow: /search
 Allow: /download
 Allow: /help
 Allow: /terms
@@ -58,10 +61,10 @@ Allow: /about
 Allow: /contact
 
 # Sitemaps
-Sitemap: https://taxitao.com/sitemap.xml
-Sitemap: https://taxitao.com/sitemap-vehicles.xml
-Sitemap: https://taxitao.com/sitemap-services.xml
-Sitemap: https://taxitao.com/sitemap-locations.xml
+Sitemap: https://taxitao.co.ke/sitemap.xml
+Sitemap: https://taxitao.co.ke/sitemap-vehicles
+Sitemap: https://taxitao.co.ke/sitemap-services
+Sitemap: https://taxitao.co.ke/sitemap-locations
 
 # AI Bots - Same PII restrictions
 User-agent: GPTBot

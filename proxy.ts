@@ -19,13 +19,14 @@ const PROTECTED_API_ROUTES = [
   "/api/vendor",
   "/api/admin",
   "/api/send-email",
+  "/api/graphql",
 ];
 
 function matchesRoute(pathname: string, routes: string[]): boolean {
   return routes.some((route) => pathname === route || pathname.startsWith(route + "/"));
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const isProtectedRoute = matchesRoute(pathname, PROTECTED_ROUTES);
@@ -60,13 +61,9 @@ export function middleware(request: NextRequest) {
 
   const cspHeader = [
     "default-src 'self'",
-    // 'unsafe-eval' needed for Next.js dev (React Refresh)
-    // 'unsafe-inline' needed for Tailwind CSS inline styles
-    // In production, remove 'unsafe-eval' and 'unsafe-inline' for scripts
     isDev
-      ? `script-src 'self' 'unsafe-inline' 'unsafe-eval' 'nonce-${nonce}' 'strict-dynamic'`
+      ? `script-src 'self' 'unsafe-eval' 'nonce-${nonce}' 'strict-dynamic'`
       : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
-    // 'unsafe-inline' required for Tailwind CSS (generates inline style attributes)
     `style-src 'self' 'unsafe-inline'`,
     "img-src 'self' blob: data: https://images.unsplash.com https://firebasestorage.googleapis.com",
     "font-src 'self'",

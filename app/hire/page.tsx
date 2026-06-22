@@ -305,7 +305,7 @@ export default function HireLandingPage() {
                     badgeColor="bg-amber-600"
                     tagline={company.corporateTagline}
                     vehicleCount={company.stats?.fleetCount || 0}
-                    href={`/hire/${company.id}?isCorporate=true`}
+                    href={`/hire/partner/${company.id}?isCorporate=true`}
                   />
                 ))}
               </div>
@@ -351,7 +351,7 @@ export default function HireLandingPage() {
                     badgeColor="bg-green-500"
                     vehicleCount={company.stats?.fleetCount || 0}
                     location={extractLocation(company.officeLocation)}
-                    href={`/hire/${company.id}`}
+                    href={`/hire/partner/${company.id}`}
                   />
                 ))}
               </div>
