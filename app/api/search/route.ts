@@ -1,13 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
-import {
-  collection,
-  query,
-  where,
-  orderBy,
-  limit,
-  getDocs,
-} from "firebase-admin/firestore";
 
 const BASE_URL = "https://taxitao.co.ke";
 
@@ -37,15 +29,8 @@ interface VehicleDoc {
   [key: string]: unknown;
 }
 
-interface CompanyDoc {
-  id: string;
-  name: string;
-  status: string;
-  [key: string]: unknown;
-}
-
-function toVehicle(doc: { id: string; data: () => Record<string, unknown> }): VehicleDoc {
-  const data = doc.data();
+function toVehicle(doc: FirebaseFirestore.DocumentSnapshot<FirebaseFirestore.DocumentData>): VehicleDoc {
+  const data = doc.data() ?? {};
   return {
     id: doc.id,
     make: (data.make as string) ?? "",
@@ -84,24 +69,22 @@ export async function GET(request: NextRequest) {
     const maxPrice = searchParams.get("max_price");
     const seats = searchParams.get("seats");
 
-    let constraints: Array<unknown> = [
-      where("status", "==", "active"),
-      where("isRental", "==", true),
-    ];
+    let qRef: FirebaseFirestore.Query = adminDb.collection("vehicles");
+    qRef = qRef.where("status", "==", "active");
+    qRef = qRef.where("isRental", "==", true);
 
     if (county) {
-      constraints.push(where("serviceCounty", "==", county));
+      qRef = qRef.where("serviceCounty", "==", county);
     }
 
     if (town) {
-      constraints.push(where("serviceTown", "==", town));
+      qRef = qRef.where("serviceTown", "==", town);
     }
 
-    constraints.push(orderBy("createdAt", "desc"));
-    constraints.push(limit(100));
+    qRef = qRef.orderBy("createdAt", "desc");
+    qRef = qRef.limit(100);
 
-    const qRef = query(collection(adminDb, "vehicles"), ...constraints);
-    const snap = await getDocs(qRef);
+    const snap = await qRef.get();
 
     let vehicles = snap.docs.map(toVehicle);
 
