@@ -16,10 +16,11 @@ function initAdmin(): App {
 
   const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
   const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
-  const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(
-    /\\n/g,
-    "\n"
-  );
+  const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY
+    ?.replace(/\\n/g, "\n")
+    ?.replace(/\r\n/g, "\n")
+    ?.replace(/\r/g, "\n")
+    ?.replace(/^"|"$/g, "");
 
   if (!projectId || !clientEmail || !privateKey) {
     throw new Error(
