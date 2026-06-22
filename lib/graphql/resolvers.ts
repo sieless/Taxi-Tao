@@ -13,7 +13,9 @@ import {
   deleteDoc,
   writeBatch,
   serverTimestamp,
+  startAfter,
 } from "firebase/firestore";
+import { COLLECTIONS } from "@/lib/firestore-constants";
 
 interface PaginationArgs {
   limit?: number;
@@ -28,6 +30,10 @@ interface VehicleFilters {
 function getCompanyId(ctx: GraphQLContext): string {
   if (!ctx.companyId) throw new Error("Unauthorized: no company context");
   return ctx.companyId;
+}
+
+function requireAdmin(ctx: GraphQLContext): void {
+  if (ctx.role !== "admin") throw new Error("Forbidden: admin only");
 }
 
 export const resolvers = {
@@ -145,6 +151,130 @@ export const resolvers = {
         hasMore: offset + pageSize < total,
       };
     },
+
+    adminCompanies: async (_: unknown, __: unknown, ctx: GraphQLContext) => {
+      requireAdmin(ctx);
+      const snap = await getDocs(
+        query(collection(db, "companies"), orderBy("createdAt", "desc"))
+      );
+      return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    },
+
+    appCrashes: async (_: unknown, __: unknown, ctx: GraphQLContext) => {
+      requireAdmin(ctx);
+      const snap = await getDocs(
+        query(collection(db, COLLECTIONS.APP_CRASHES), orderBy("timestamp", "desc"))
+      );
+      return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    },
+
+    shareLinks: async (_: unknown, __: unknown, ctx: GraphQLContext) => {
+      requireAdmin(ctx);
+      const snap = await getDocs(
+        query(collection(db, COLLECTIONS.SHARE_LINKS), orderBy("createdAt", "desc"))
+      );
+      return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    },
+
+    auditLogs: async (
+      _: unknown,
+      args: { category?: string; severity?: string; limit?: number; cursor?: string },
+      ctx: GraphQLContext
+    ) => {
+      requireAdmin(ctx);
+      const pageSize = Math.min(args.limit ?? 30, 100);
+      const constraints: unknown[] = [
+        orderBy("timestamp", "desc"),
+        firestoreLimit(pageSize),
+      ];
+
+      if (args.category && args.category !== "all") {
+        constraints.unshift(where("category", "==", args.category));
+      }
+      if (args.severity && args.severity !== "all") {
+        constraints.unshift(where("severity", "==", args.severity));
+      }
+      if (args.cursor) {
+        const cursorDoc = await getDoc(doc(db, COLLECTIONS.ADMIN_AUDIT_EVENTS, args.cursor));
+        if (cursorDoc.exists()) {
+          constraints.push(startAfter(cursorDoc));
+        }
+      }
+
+      const q = query(collection(db, COLLECTIONS.ADMIN_AUDIT_EVENTS), ...constraints);
+      const snap = await getDocs(q);
+      const items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      const lastDoc = snap.docs[snap.docs.length - 1];
+
+      return {
+        items,
+        total: items.length,
+        hasMore: snap.docs.length === pageSize,
+        cursor: lastDoc?.id ?? null,
+      };
+    },
+
+    customerDashboard: async (_: unknown, __: unknown, ctx: GraphQLContext) => {
+      if (!ctx.uid) throw new Error("Unauthorized");
+      const q = query(
+        collection(db, "bookingRequests"),
+        where("customerId", "==", ctx.uid),
+        orderBy("createdAt", "desc"),
+        firestoreLimit(5)
+      );
+      const snapshot = await getDocs(q);
+      const bookings = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+      const active = bookings.filter(
+        (b: Record<string, unknown>) =>
+          !b.rideStatus ||
+          ["pending", "confirmed", "en_route", "arrived", "in_progress"].includes(
+            b.rideStatus as string
+          )
+      ).length;
+      const completed = bookings.filter(
+        (b: Record<string, unknown>) => b.rideStatus === "completed"
+      ).length;
+
+      return {
+        recentBookings: bookings,
+        total: snapshot.size,
+        active,
+        completed,
+      };
+    },
+
+    driverBookings: async (_: unknown, __: unknown, ctx: GraphQLContext) => {
+      if (!ctx.uid) throw new Error("Unauthorized");
+      const q = query(
+        collection(db, "bookingRequests"),
+        where("acceptedBy", "==", ctx.uid),
+        orderBy("createdAt", "desc")
+      );
+      const snap = await getDocs(q);
+      return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    },
+
+    companyProfile: async (_: unknown, args: { id?: string }, ctx: GraphQLContext) => {
+      const companyId = args.id || ctx.companyId;
+      if (!companyId) throw new Error("Unauthorized");
+      const snap = await getDoc(doc(db, "companies", companyId));
+      if (!snap.exists()) throw new Error("Company not found");
+      const data = snap.data();
+      return {
+        id: snap.id,
+        name: data.name || "",
+        phone: data.phone || "",
+        email: data.email || "",
+        logoUrl: data.logoUrl || "",
+        incorporationDocUrl: data.incorporationDocUrl || "",
+        address:
+          typeof data.officeLocation === "string"
+            ? data.officeLocation
+            : data.officeLocation?.address || "",
+        bio: data.bio || "",
+      };
+    },
   },
 
   Mutation: {
@@ -196,6 +326,128 @@ export const resolvers = {
 
       await deleteDoc(vehicleRef);
       return true;
+    },
+
+    updateCompanyStatus: async (
+      _: unknown,
+      args: { id: string; status: string },
+      ctx: GraphQLContext
+    ) => {
+      requireAdmin(ctx);
+      const companyRef = doc(db, "companies", args.id);
+      const snap = await getDoc(companyRef);
+      if (!snap.exists()) throw new Error("Company not found");
+
+      await updateDoc(companyRef, {
+        status: args.status,
+        updatedAt: serverTimestamp(),
+        updatedBy: ctx.uid,
+      });
+
+      if (args.status === "active") {
+        const vSnap = await getDocs(
+          query(
+            collection(db, "vehicles"),
+            where("companyId", "==", args.id),
+            where("status", "==", "draft")
+          )
+        );
+        if (!vSnap.empty) {
+          const batch = writeBatch(db);
+          vSnap.docs.forEach((v) =>
+            batch.update(v.ref, { status: "active", updatedAt: serverTimestamp() })
+          );
+          await batch.commit();
+        }
+      }
+
+      return { id: args.id, ...snap.data(), status: args.status };
+    },
+
+    toggleCorporate: async (
+      _: unknown,
+      args: { id: string; isCorporate: boolean },
+      ctx: GraphQLContext
+    ) => {
+      requireAdmin(ctx);
+      const companyRef = doc(db, "companies", args.id);
+      const snap = await getDoc(companyRef);
+      if (!snap.exists()) throw new Error("Company not found");
+
+      await updateDoc(companyRef, {
+        isCorporate: args.isCorporate,
+        updatedAt: serverTimestamp(),
+      });
+
+      return { id: args.id, ...snap.data(), isCorporate: args.isCorporate };
+    },
+
+    resolveCrash: async (_: unknown, { id }: { id: string }, ctx: GraphQLContext) => {
+      requireAdmin(ctx);
+      const crashRef = doc(db, COLLECTIONS.APP_CRASHES, id);
+      const snap = await getDoc(crashRef);
+      if (!snap.exists()) throw new Error("Crash not found");
+
+      await updateDoc(crashRef, { resolved: true, resolvedAt: new Date() });
+      return { id, ...snap.data(), resolved: true };
+    },
+
+    toggleShareLinkActive: async (_: unknown, { id }: { id: string }, ctx: GraphQLContext) => {
+      requireAdmin(ctx);
+      const linkRef = doc(db, COLLECTIONS.SHARE_LINKS, id);
+      const snap = await getDoc(linkRef);
+      if (!snap.exists()) throw new Error("Share link not found");
+
+      const newActive = !snap.data().active;
+      await updateDoc(linkRef, { active: newActive });
+      return { id, ...snap.data(), active: newActive };
+    },
+
+    deleteShareLink: async (_: unknown, { id }: { id: string }, ctx: GraphQLContext) => {
+      requireAdmin(ctx);
+      const linkRef = doc(db, COLLECTIONS.SHARE_LINKS, id);
+      const snap = await getDoc(linkRef);
+      if (!snap.exists()) throw new Error("Share link not found");
+
+      await deleteDoc(linkRef);
+      return true;
+    },
+
+    updateCompanyProfile: async (
+      _: unknown,
+      args: { input: Record<string, unknown> },
+      ctx: GraphQLContext
+    ) => {
+      const companyId = (args.input.id as string) || ctx.companyId;
+      if (!companyId) throw new Error("Unauthorized");
+
+      const companyRef = doc(db, "companies", companyId);
+      await updateDoc(companyRef, {
+        name: args.input.name,
+        phone: args.input.phone || "",
+        email: args.input.email || "",
+        logoUrl: args.input.logoUrl || "",
+        incorporationDocUrl: args.input.incorporationDocUrl || "",
+        bio: args.input.bio || "",
+        "officeLocation.address": args.input.address || "",
+        updatedAt: serverTimestamp(),
+      });
+
+      const snap = await getDoc(companyRef);
+      const data = snap.data()!;
+      return {
+        id: snap.id,
+        name: data.name || "",
+        phone: data.phone || "",
+        email: data.email || "",
+        logoUrl: data.logoUrl || "",
+        incorporationDocUrl: data.incorporationDocUrl || "",
+        address:
+          typeof data.officeLocation === "string"
+            ? data.officeLocation
+            : data.officeLocation?.address || "",
+        bio: data.bio || "",
+      };
     },
   },
 };

@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, query, orderBy, getDocs, doc, updateDoc, where } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { COLLECTIONS } from "@/lib/firestore-constants";
-import { Bug, CheckCircle, AlertTriangle, Search, RefreshCw } from "lucide-react";
 import { useModal } from "@/lib/admin-modal-context";
+import { Bug, CheckCircle, AlertTriangle, Search, RefreshCw } from "lucide-react";
+import { graphqlClient } from "@/lib/graphql/client";
+import { APP_CRASHES_QUERY, RESOLVE_CRASH_MUTATION } from "@/lib/graphql/queries";
 
+import { logError } from "@/lib/logger";
 
-import { logError } from "@/lib/logger";type SeverityFilter = "all" | "low" | "medium" | "high" | "critical";
+type SeverityFilter = "all" | "low" | "medium" | "high" | "critical";
 type ResolvedFilter = "open" | "resolved" | "all";
 
 interface AppCrash {
@@ -52,18 +52,18 @@ export default function CrashesPage() {
   async function loadCrashes() {
     setLoading(true);
     try {
-      const snap = await getDocs(query(collection(db, COLLECTIONS.APP_CRASHES), orderBy("timestamp", "desc")));
-      setCrashes(snap.docs.map((d) => ({ id: d.id, ...d.data() } as AppCrash)));
-    } catch (err) { logError("page", err); }
+      const result = await graphqlClient.query(APP_CRASHES_QUERY, {}).toPromise();
+      setCrashes(result.data?.appCrashes ?? []);
+    } catch (err) { logError("crashes-page", err); }
     finally { setLoading(false); }
   }
 
   async function markResolved(id: string) {
     setResolving(id);
     try {
-      await updateDoc(doc(db, COLLECTIONS.APP_CRASHES, id), { resolved: true, resolvedAt: new Date() });
+      await graphqlClient.mutation(RESOLVE_CRASH_MUTATION, { id }).toPromise();
       setCrashes((prev) => prev.map((c) => c.id === id ? { ...c, resolved: true } : c));
-    } catch (err: any) { await modal.showAlert(`Failed: ${err?.message}`, "error"); }
+    } catch (err: any) { logError("crashes-page resolve", err); await modal.showAlert(`Failed: ${err?.message}`, "error"); }
     finally { setResolving(null); }
   }
 

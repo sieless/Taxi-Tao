@@ -136,18 +136,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
           }
 
-          if (effectiveCompanyId) {
-            try {
-              const companyDoc = await getDoc(doc(db, "companies", effectiveCompanyId));
-              if (companyDoc.exists()) {
-                const companyData = { id: companyDoc.id, ...companyDoc.data() };
-              }
-            } catch (compErr: any) {
-              if (compErr.code !== "permission-denied" && process.env.NODE_ENV === "development") {
-                console.error("Company profile fetch error:", compErr);
-              }
-            }
-          }
         } else {
           setDriverProfile(null);
         }

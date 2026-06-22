@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth-context";
 import { MapPin, Calendar, Clock, PlusCircle } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
+import { graphqlClient } from "@/lib/graphql/client";
+import { CUSTOMER_DASHBOARD_QUERY } from "@/lib/graphql/queries";
 
+import { logError } from "@/lib/logger";
 
-import { logError } from "@/lib/logger";interface Booking {
+interface Booking {
   id: string;
   pickupLocation: string;
   destination: string;
@@ -34,30 +35,14 @@ export default function CustomerDashboardPage() {
     if (!user) return;
 
     try {
-      // Load recent bookings
-      const q = query(
-        collection(db, "bookingRequests"),
-        where("customerId", "==", user.uid),
-        orderBy("createdAt", "desc"),
-        limit(5)
-      );
-      
-      const snapshot = await getDocs(q);
-      const bookings = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Booking[];
-      
-      setRecentBookings(bookings);
-
-      // Calculate stats
-      const total = snapshot.size;
-      const active = bookings.filter(b => !b.rideStatus || ['pending', 'confirmed', 'en_route', 'arrived', 'in_progress'].includes(b.rideStatus)).length;
-      const completed = bookings.filter(b => b.rideStatus === 'completed').length;
-      
-      setStats({ total, active, completed });
+      const result = await graphqlClient.query(CUSTOMER_DASHBOARD_QUERY, {}).toPromise();
+      const data = result.data?.customerDashboard;
+      if (data) {
+        setRecentBookings(data.recentBookings);
+        setStats({ total: data.total, active: data.active, completed: data.completed });
+      }
     } catch (error) {
-      logError("page", error);
+      logError("customer-dashboard", error);
     } finally {
       setLoading(false);
     }

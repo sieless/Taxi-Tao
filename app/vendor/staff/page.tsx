@@ -139,14 +139,26 @@ export default function StaffManagementPage() {
       const numbers = "23456789";
       const specials = "!@#$%^&*";
       const allChars = uppers + lowers + numbers;
-      let tempPassword = uppers.charAt(Math.floor(Math.random() * uppers.length));
-      tempPassword += lowers.charAt(Math.floor(Math.random() * lowers.length));
-      tempPassword += numbers.charAt(Math.floor(Math.random() * numbers.length));
-      tempPassword += specials.charAt(Math.floor(Math.random() * specials.length));
-      for (let i = 0; i < 6; i++) {
-        tempPassword += allChars.charAt(Math.floor(Math.random() * allChars.length));
+
+      function secureRandom(max: number): number {
+        const arr = new Uint32Array(1);
+        crypto.getRandomValues(arr);
+        return arr[0] % max;
       }
-      tempPassword = tempPassword.split("").sort(() => 0.5 - Math.random()).join("");
+
+      let tempPassword = uppers.charAt(secureRandom(uppers.length));
+      tempPassword += lowers.charAt(secureRandom(lowers.length));
+      tempPassword += numbers.charAt(secureRandom(numbers.length));
+      tempPassword += specials.charAt(secureRandom(specials.length));
+      for (let i = 0; i < 6; i++) {
+        tempPassword += allChars.charAt(secureRandom(allChars.length));
+      }
+      const pwArray = tempPassword.split("");
+      for (let i = pwArray.length - 1; i > 0; i--) {
+        const j = secureRandom(i + 1);
+        [pwArray[i], pwArray[j]] = [pwArray[j], pwArray[i]];
+      }
+      tempPassword = pwArray.join("");
 
       const functions = getFunctions(app, "europe-west3");
       const createStaffAccountFn = httpsCallable(functions, "createStaffAccount");

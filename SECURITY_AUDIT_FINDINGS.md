@@ -262,7 +262,7 @@ The entire fallback block was removed. Only the Firebase Auth token (verified vi
 
 ## <a name="crit-4"></a>CRIT-4: Admin Emails Exposed via `NEXT_PUBLIC_` Prefix
 
-### Severity: CRITICAL
+### Severity: CRITICAL — **FIXED**
 
 ### What Was Found
 
@@ -1039,18 +1039,18 @@ Removed the header entirely (replaced by CSP).
 
 ## <a name="low-1"></a>LOW-1: companyProfile Never Cleaned on Logout
 
-### Severity: LOW
+### Severity: LOW — **FIXED**
 
 ### What Was Found
 
-`companyProfile` was stored in localStorage but never removed:
+`companyProfile` was documented as stored in localStorage but never removed:
 - Not on account suspension
 - Not on auth state change
 - Not on logout
 
 ### The Fix
 
-Added `localStorage.removeItem("companyProfile")` to all three cleanup paths.
+All `localStorage` usage has been removed from `auth-context.tsx` (commit `840ff5f`). Profiles are now stored in React state only, which is cleared on unmount. The `app/vendor/layout.tsx` fetches company logo via Firestore `onSnapshot` subscription.
 
 ---
 

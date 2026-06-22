@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { doc, getDoc, updateDoc, Timestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { uploadImage } from "@/lib/image-upload";
 import { 
@@ -24,9 +22,12 @@ import {
   Fingerprint
 } from "lucide-react";
 import Link from "next/link";
+import { graphqlClient } from "@/lib/graphql/client";
+import { COMPANY_PROFILE_QUERY, UPDATE_COMPANY_PROFILE_MUTATION } from "@/lib/graphql/queries";
 
+import { logError } from "@/lib/logger";
 
-import { logError } from "@/lib/logger";export default function CompanyProfilePage() {
+export default function CompanyProfilePage() {
   const { user, userProfile, refreshUserProfile } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -57,22 +58,23 @@ import { logError } from "@/lib/logger";export default function CompanyProfilePa
       if (!user || !mounted) return;
       try {
         const companyId = userProfile?.companyId || user.uid;
-        const companyRef = doc(db, "companies", companyId);
-        const snap = await getDoc(companyRef);
-        if (snap.exists()) {
-          const data = snap.data();
+        const result = await graphqlClient
+          .query(COMPANY_PROFILE_QUERY, { id: companyId })
+          .toPromise();
+        const data = result.data?.companyProfile;
+        if (data) {
           setFormData({
             name: data.name || "",
             phone: data.phone || "",
             email: data.email || "",
             logoUrl: data.logoUrl || "",
             incorporationDocUrl: data.incorporationDocUrl || "",
-            address: typeof data.officeLocation === 'string' ? data.officeLocation : (data.officeLocation?.address || ""),
+            address: data.address || "",
             bio: data.bio || "",
           });
         }
       } catch (err) {
-        logError("page", err);
+        logError("company-profile load", err);
       } finally {
         setLoading(false);
       }
@@ -87,7 +89,7 @@ import { logError } from "@/lib/logger";export default function CompanyProfilePa
       setFormData(prev => ({ ...prev, logoUrl: result.url }));
       setSuccess(false);
     } catch (err) {
-      logError("page", err);
+      logError("company-profile logoUpload", err);
     } finally {
       setUploading(false);
     }
@@ -100,7 +102,7 @@ import { logError } from "@/lib/logger";export default function CompanyProfilePa
       setFormData(prev => ({ ...prev, incorporationDocUrl: result.url }));
       setSuccess(false);
     } catch (err) {
-      logError("page", err);
+      logError("company-profile docUpload", err);
     } finally {
       setUploading(false);
     }
@@ -113,23 +115,26 @@ import { logError } from "@/lib/logger";export default function CompanyProfilePa
     setSaving(true);
     try {
       const companyId = userProfile?.companyId || user.uid;
-      const companyRef = doc(db, "companies", companyId);
-      await updateDoc(companyRef, {
-        name: formData.name,
-        phone: formData.phone,
-        email: formData.email,
-        logoUrl: formData.logoUrl,
-        incorporationDocUrl: formData.incorporationDocUrl,
-        bio: formData.bio,
-        "officeLocation.address": formData.address,
-        updatedAt: Timestamp.now(),
-      });
+      await graphqlClient
+        .mutation(UPDATE_COMPANY_PROFILE_MUTATION, {
+          input: {
+            id: companyId,
+            name: formData.name,
+            phone: formData.phone,
+            email: formData.email,
+            logoUrl: formData.logoUrl,
+            incorporationDocUrl: formData.incorporationDocUrl,
+            address: formData.address,
+            bio: formData.bio,
+          },
+        })
+        .toPromise();
       
       await refreshUserProfile();
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      logError("page", err);
+      logError("company-profile save", err);
     } finally {
       setSaving(false);
     }

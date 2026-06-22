@@ -156,7 +156,9 @@ export default function DriverRegisterPage() {
       try {
         await sendAuthVerificationEmail(email, name);
       } catch (err) {
-        console.warn("Custom email failed, sending standard verification:", err);
+        if (process.env.NODE_ENV === "development") {
+          console.warn("Custom email failed, sending standard verification:", err);
+        }
         await sendEmailVerification(user);
       }
 

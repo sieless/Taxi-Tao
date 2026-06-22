@@ -53,7 +53,6 @@ export default function DriverDashboard({ driver }: DriverDashboardProps) {
     setSaving(true);
     try {
       // TODO: implement saving profile info
-      console.log('Profile updated', editForm, selectedImage);
     } catch (err) {
       logError("DriverDashboard", err);
     } finally {
@@ -66,7 +65,6 @@ export default function DriverDashboard({ driver }: DriverDashboardProps) {
     setSaving(true);
     try {
       // TODO: implement saving vehicle info
-      console.log('Vehicle updated', vehicleForm, selectedCarImage);
     } catch (err) {
       logError("DriverDashboard", err);
     } finally {

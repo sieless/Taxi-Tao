@@ -222,9 +222,11 @@ async function checkAndAutoComplete(
     // 0.1 km = 100 meters
     if (distanceKm >= 0.1) return;
 
-    console.log(
-      `Driver is near destination (${(distanceKm * 1000).toFixed(0)}m). Checking auto-complete...`
-    );
+    if (process.env.NODE_ENV === "development") {
+      console.log(
+        `Driver is near destination (${(distanceKm * 1000).toFixed(0)}m). Checking auto-complete...`
+      );
+    }
 
     const bookingRef = doc(db, 'bookingRequests', bookingId);
     const snap = await getDoc(bookingRef);
@@ -235,7 +237,9 @@ async function checkAndAutoComplete(
 
     if (data?.rideStatus === 'in_progress') {
       await updateRideStatus(bookingId, 'completed');
-      console.log('Ride auto-completed.');
+      if (process.env.NODE_ENV === "development") {
+        console.log('Ride auto-completed.');
+      }
     }
 
   } catch (error) {

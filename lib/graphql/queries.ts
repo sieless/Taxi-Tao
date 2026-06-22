@@ -82,3 +82,186 @@ export const HIRE_REQUESTS_QUERY = `
     }
   }
 `;
+
+export const ADMIN_COMPANIES_QUERY = `
+  query AdminCompanies {
+    adminCompanies {
+      id
+      name
+      contactEmail
+      contactPhone
+      location
+      status
+      isCorporate
+      subscriptionTier
+      subscriptionStatus
+      driverCount
+      vehicleCount
+      createdAt
+    }
+  }
+`;
+
+export const UPDATE_COMPANY_STATUS_MUTATION = `
+  mutation UpdateCompanyStatus($id: ID!, $status: String!) {
+    updateCompanyStatus(id: $id, status: $status) {
+      id
+      status
+    }
+  }
+`;
+
+export const TOGGLE_CORPORATE_MUTATION = `
+  mutation ToggleCorporate($id: ID!, $isCorporate: Boolean!) {
+    toggleCorporate(id: $id, isCorporate: $isCorporate) {
+      id
+      isCorporate
+    }
+  }
+`;
+
+export const APP_CRASHES_QUERY = `
+  query AppCrashes {
+    appCrashes {
+      id
+      message
+      stack
+      userId
+      platform
+      appVersion
+      severity
+      resolved
+      resolvedBy
+      timestamp
+      count
+    }
+  }
+`;
+
+export const RESOLVE_CRASH_MUTATION = `
+  mutation ResolveCrash($id: ID!) {
+    resolveCrash(id: $id) {
+      id
+      resolved
+    }
+  }
+`;
+
+export const SHARE_LINKS_QUERY = `
+  query ShareLinks {
+    shareLinks {
+      id
+      code
+      driverId
+      driverName
+      type
+      active
+      clicks
+      conversions
+      createdAt
+      expiresAt
+    }
+  }
+`;
+
+export const TOGGLE_SHARE_LINK_MUTATION = `
+  mutation ToggleShareLinkActive($id: ID!) {
+    toggleShareLinkActive(id: $id) {
+      id
+      active
+    }
+  }
+`;
+
+export const DELETE_SHARE_LINK_MUTATION = `
+  mutation DeleteShareLink($id: ID!) {
+    deleteShareLink(id: $id)
+  }
+`;
+
+export const AUDIT_LOGS_QUERY = `
+  query AuditLogs($category: String, $severity: String, $limit: Int, $cursor: String) {
+    auditLogs(category: $category, severity: $severity, limit: $limit, cursor: $cursor) {
+      items {
+        id
+        actorEmail
+        actorUid
+        action
+        category
+        severity
+        targetId
+        targetType
+        description
+        timestamp
+      }
+      hasMore
+      cursor
+    }
+  }
+`;
+
+export const CUSTOMER_DASHBOARD_QUERY = `
+  query CustomerDashboard {
+    customerDashboard {
+      recentBookings {
+        id
+        pickupLocation
+        destination
+        pickupDate
+        pickupTime
+        status
+        rideStatus
+        createdAt
+      }
+      total
+      active
+      completed
+    }
+  }
+`;
+
+export const DRIVER_BOOKINGS_QUERY = `
+  query DriverBookings {
+    driverBookings {
+      id
+      pickupLocation
+      destination
+      status
+      rideStatus
+      customerName
+      customerPhone
+      fare
+      createdAt
+    }
+  }
+`;
+
+export const COMPANY_PROFILE_QUERY = `
+  query CompanyProfile($id: ID) {
+    companyProfile(id: $id) {
+      id
+      name
+      phone
+      email
+      logoUrl
+      incorporationDocUrl
+      address
+      bio
+    }
+  }
+`;
+
+export const UPDATE_COMPANY_PROFILE_MUTATION = `
+  mutation UpdateCompanyProfile($input: UpdateCompanyProfileInput!) {
+    updateCompanyProfile(input: $input) {
+      id
+      name
+      phone
+      email
+      logoUrl
+      incorporationDocUrl
+      address
+      bio
+    }
+  }
+`;

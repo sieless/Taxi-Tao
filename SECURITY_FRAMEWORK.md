@@ -478,7 +478,7 @@ DEFENSE: Validate returnTo parameter
 |---------------|----------|------|-----|
 | `userProfile` | localStorage | XSS steals role, email, PII | Use React state |
 | `driverProfile` | localStorage | XSS steals driver data | Use React state |
-| `companyProfile` | localStorage | XSS steals company data | Use React state |
+| `companyProfile` | localStorage | XSS steals company data | **FIXED** — Removed all localStorage from auth-context.tsx |
 | `userRole` | localStorage | Role simulation, confusing | Remove in production |
 
 **Rules:**
@@ -559,9 +559,9 @@ scratch/
 2. Removed from git tracking (`git rm --cached`)
 3. The key rotated (it's compromised if committed)
 
-### 3.5 Finding: Admin Emails Exposed via NEXT_PUBLIC_
+### 3.5 Finding: Admin Emails Exposed via NEXT_PUBLIC_ — **FIXED**
 
-`lib/admin-permission-helper.ts` (lines 28-48) uses `NEXT_PUBLIC_MAIN_ADMIN_EMAIL` and `NEXT_PUBLIC_MAIN_ADMIN_ACTION_EMAIL`. These are exposed in the browser JavaScript bundle.
+`lib/admin-permission-helper.ts` now uses `SUPER_ADMIN_UIDS` (server-only, no `NEXT_PUBLIC_` prefix). The old `NEXT_PUBLIC_MAIN_ADMIN_EMAIL` and `NEXT_PUBLIC_MAIN_ADMIN_ACTION_EMAIL` variables have been removed.
 
 **Rules:**
 - NEVER use `NEXT_PUBLIC_` prefix for admin emails

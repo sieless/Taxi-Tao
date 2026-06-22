@@ -1,0 +1,82 @@
+# TaxiTao SEO - Privacy-First Robots.txt
+# Blocks all PII pages, allows only public service pages
+
+User-agent: *
+# DISALLOW - All PII and private pages
+Disallow: /driver/*/profile
+Disallow: /driver/*/earnings
+Disallow: /driver/*/documents
+Disallow: /driver/*/settings
+Disallow: /driver/*/vehicles
+Disallow: /customer/*/profile
+Disallow: /customer/*/payment
+Disallow: /customer/*/history
+Disallow: /customer/*/settings
+Disallow: /vendor/*/staff
+Disallow: /vendor/*/finance
+Disallow: /vendor/*/documents
+Disallow: /vendor/*/settings
+Disallow: /booking/*
+Disallow: /hire/*/payment
+Disallow: /hire/*/contract
+Disallow: /wallet/*
+Disallow: /payouts/*
+Disallow: /api/*
+Disallow: /_next/*
+Disallow: /static/*
+Disallow: /*?*sort=*
+Disallow: /*?*page=*
+Disallow: /*?*filter=*
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /verify-email
+Disallow: /reset-password
+Disallow: /auth/*
+Disallow: /onboarding/*
+Disallow: /admin/*
+Disallow: /driver/dashboard
+Disallow: /customer/dashboard
+Disallow: /vendor/dashboard
+
+# ALLOW - Public service pages for indexing
+Allow: /vehicles/
+Allow: /vehicles/*/details
+Allow: /drivers/public/
+Allow: /drivers/public/*
+Allow: /services/
+Allow: /services/*
+Allow: /locations/
+Allow: /locations/*
+Allow: /hire/
+Allow: /hire/*
+Allow: /download
+Allow: /help
+Allow: /terms
+Allow: /privacy
+Allow: /about
+Allow: /contact
+
+# Sitemaps
+Sitemap: https://taxitao.com/sitemap.xml
+Sitemap: https://taxitao.com/sitemap-vehicles.xml
+Sitemap: https://taxitao.com/sitemap-services.xml
+Sitemap: https://taxitao.com/sitemap-locations.xml
+
+# AI Bots - Same PII restrictions
+User-agent: GPTBot
+User-agent: ClaudeBot
+User-agent: PerplexityBot
+User-agent: OAI-Searchbot
+User-agent: ChatGPT-User
+User-agent: Google-Extended
+Disallow: /driver/*/profile
+Disallow: /customer/*/profile
+Disallow: /vendor/*/staff
+Disallow: /vendor/*/finance
+Disallow: /booking/*
+Disallow: /hire/*/payment
+Disallow: /wallet/*
+Disallow: /api/*
+Disallow: /*?*sort=*
+Disallow: /*?*page=*

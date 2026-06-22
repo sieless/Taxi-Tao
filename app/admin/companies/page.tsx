@@ -1,15 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, getDocs, query, orderBy, doc, updateDoc, where, writeBatch, serverTimestamp } from "firebase/firestore";
+import { doc, updateDoc, where, writeBatch, serverTimestamp, collection, query, getDocs } from "firebase/firestore";
 import { db, app } from "@/lib/firebase";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { useAuth } from "@/lib/auth-context";
 import { Building2, Search, CheckCircle, XCircle, Phone, Mail, MapPin, Users, Trash2, Briefcase, MessageSquare, X } from "lucide-react";
 import { useModal } from "@/lib/admin-modal-context";
+import { graphqlClient } from "@/lib/graphql/client";
+import { ADMIN_COMPANIES_QUERY, UPDATE_COMPANY_STATUS_MUTATION, TOGGLE_CORPORATE_MUTATION } from "@/lib/graphql/queries";
 
+import { logError } from "@/lib/logger";
 
-import { logError } from "@/lib/logger";type CompanyStatus = "all" | "pending" | "active" | "suspended";
+type CompanyStatus = "all" | "pending" | "active" | "suspended";
 
 interface Company {
   id: string;
@@ -54,9 +57,9 @@ export default function CompaniesPage() {
   async function loadCompanies() {
     setLoading(true);
     try {
-      const snap = await getDocs(query(collection(db, "companies"), orderBy("createdAt", "desc")));
-      setCompanies(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Company)));
-    } catch (err) { logError("page", err); }
+      const result = await graphqlClient.query(ADMIN_COMPANIES_QUERY, {}).toPromise();
+      setCompanies(result.data?.adminCompanies ?? []);
+    } catch (err) { logError("companies-page", err); }
     finally { setLoading(false); }
   }
 
@@ -65,20 +68,9 @@ export default function CompaniesPage() {
     if (!ok) return;
     setActing(company.id);
     try {
-      await updateDoc(doc(db, "companies", company.id), { status: newStatus, updatedAt: serverTimestamp(), updatedBy: user?.uid });
-      
-      // 🚀 Automatic Fleet Activation (Web Version)
-      if (newStatus === "active") {
-        const vSnap = await getDocs(query(collection(db, "vehicles"), where("companyId", "==", company.id), where("status", "==", "draft")));
-        if (!vSnap.empty) {
-          const batch = writeBatch(db);
-          vSnap.docs.forEach(v => batch.update(v.ref, { status: "active", updatedAt: serverTimestamp() }));
-          await batch.commit();
-        }
-      }
-      
+      await graphqlClient.mutation(UPDATE_COMPANY_STATUS_MUTATION, { id: company.id, status: newStatus }).toPromise();
       setCompanies((prev) => prev.map((c) => c.id === company.id ? { ...c, status: newStatus } : c));
-    } catch (err: any) { await modal.showAlert(`Failed: ${err?.message}`, "error"); }
+    } catch (err: any) { logError("companies-page setStatus", err); await modal.showAlert(`Failed: ${err?.message}`, "error"); }
     finally { setActing(null); }
   }
   
@@ -99,7 +91,7 @@ export default function CompaniesPage() {
       await modal.showAlert("Company and login account purged successfully.", "success");
       setCompanies((prev) => prev.filter((c) => c.id !== company.id));
     } catch (err: any) {
-      logError("page", err);
+      logError("companies-page purgeCompany", err);
       await modal.showAlert(`Purge failed: ${err?.message || "Internal error"}`, "error");
     } finally {
       setActing(null);
@@ -116,12 +108,11 @@ export default function CompaniesPage() {
     if (!ok) return;
     setActing(company.id);
     try {
-      const functions = getFunctions(app, "europe-west3");
-      const toggleFn = httpsCallable(functions, "toggleCorporateStatus");
-      await toggleFn({ companyId: company.id, isCorporate: newStatus });
+      await graphqlClient.mutation(TOGGLE_CORPORATE_MUTATION, { id: company.id, isCorporate: newStatus }).toPromise();
       setCompanies(prev => prev.map(c => c.id === company.id ? { ...c, isCorporate: newStatus } : c));
       modal.showAlert(`Corporate status ${newStatus ? "granted" : "revoked"} successfully`, "success");
     } catch (err: any) {
+      logError("companies-page toggleCorporate", err);
       modal.showAlert(`Update failed: ${err?.message || "Internal error"}`, "error");
     } finally {
       setActing(null);

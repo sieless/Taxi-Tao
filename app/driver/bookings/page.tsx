@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, query, where, orderBy, getDocs, Timestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { Calendar, MapPin, Clock, User, Phone } from "lucide-react";
 import { BookingRequest } from "@/lib/types";
+import { graphqlClient } from "@/lib/graphql/client";
+import { DRIVER_BOOKINGS_QUERY } from "@/lib/graphql/queries";
 
+import { logError } from "@/lib/logger";
 
-import { logError } from "@/lib/logger";export default function DriverBookingsPage() {
+export default function DriverBookingsPage() {
   const { user } = useAuth();
   const [bookings, setBookings] = useState<BookingRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,22 +24,10 @@ import { logError } from "@/lib/logger";export default function DriverBookingsPa
     if (!user) return;
     setLoading(true);
     try {
-      // Query bookings where acceptedBy is the current driver
-      const q = query(
-        collection(db, "bookingRequests"),
-        where("acceptedBy", "==", user.uid),
-        orderBy("createdAt", "desc")
-      );
-
-      const snapshot = await getDocs(q);
-      const bookingsList = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as BookingRequest[];
-      
-      setBookings(bookingsList);
+      const result = await graphqlClient.query(DRIVER_BOOKINGS_QUERY, {}).toPromise();
+      setBookings(result.data?.driverBookings ?? []);
     } catch (error) {
-      logError("page", error);
+      logError("driver-bookings", error);
     } finally {
       setLoading(false);
     }

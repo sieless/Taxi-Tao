@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, query, orderBy, limit, startAfter, getDocs, QueryDocumentSnapshot, where } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { COLLECTIONS } from "@/lib/firestore-constants";
 import { ClipboardList, Clock, Search, User, Activity } from "lucide-react";
+import { graphqlClient } from "@/lib/graphql/client";
+import { AUDIT_LOGS_QUERY } from "@/lib/graphql/queries";
 
+import { logError } from "@/lib/logger";
 
-import { logError } from "@/lib/logger";const PAGE_SIZE = 30;
 type CategoryFilter = "all" | "payment" | "user" | "driver" | "system";
 type SeverityFilter = "all" | "info" | "warning" | "critical";
 
@@ -50,7 +49,7 @@ export default function AuditLogsPage() {
   const [category, setCategory] = useState<CategoryFilter>("all");
   const [severity, setSeverity] = useState<SeverityFilter>("all");
   const [search, setSearch] = useState("");
-  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot | null>(null);
+  const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
 
   useEffect(() => { loadLogs(true); }, [category, severity]);
@@ -58,17 +57,20 @@ export default function AuditLogsPage() {
   async function loadLogs(reset = false) {
     setLoading(true);
     try {
-      let constraints: any[] = [orderBy("timestamp", "desc"), limit(PAGE_SIZE)];
-      if (category !== "all") constraints = [where("category", "==", category), ...constraints];
-      if (severity !== "all") constraints = [where("severity", "==", severity), ...constraints];
-      if (!reset && lastDoc) constraints = [...constraints, startAfter(lastDoc)];
+      const result = await graphqlClient
+        .query(AUDIT_LOGS_QUERY, {
+          category: category !== "all" ? category : undefined,
+          severity: severity !== "all" ? severity : undefined,
+          limit: 30,
+          cursor: reset ? undefined : cursor ?? undefined,
+        })
+        .toPromise();
 
-      const q = query(collection(db, COLLECTIONS.ADMIN_AUDIT_EVENTS), ...constraints);
-      const snap = await getDocs(q);
-      const list = snap.docs.map((d) => ({ id: d.id, ...d.data() } as AuditLog));
-      setLogs(reset ? list : (prev) => [...prev, ...list]);
-      setLastDoc(snap.docs[snap.docs.length - 1] ?? null);
-      setHasMore(snap.docs.length === PAGE_SIZE);
+      const data = result.data?.auditLogs;
+      const items = data?.items ?? [];
+      setLogs(reset ? items : (prev) => [...prev, ...items]);
+      setCursor(data?.cursor ?? null);
+      setHasMore(data?.hasMore ?? false);
     } catch (err: any) { logError("page", err); }
     finally { setLoading(false); }
   }

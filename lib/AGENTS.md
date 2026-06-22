@@ -105,22 +105,15 @@ export async function setSessionCookie(uid: string, idToken: string) {
 }
 ```
 
-### companyProfile Cleanup Bug
+### companyProfile — Resolved
 
 **File:** `lib/auth-context.tsx`
 
-`companyProfile` is stored in localStorage (line 164) but NEVER removed:
-- Not on account suspension (lines 98-99 only remove userProfile/driverProfile)
-- Not on auth state change (lines 207-208 only remove userProfile/driverProfile)
-- Not on logout (lines 360-361 only remove userProfile/driverProfile)
+All `localStorage` usage has been removed from `auth-context.tsx` (commit `840ff5f`). Profiles are now stored in React state only, which is cleared on unmount.
 
-**Fix:** Add `localStorage.removeItem("companyProfile")` in all cleanup paths:
-```typescript
-// In logout(), onAuthStateChanged null, and suspension handling:
-localStorage.removeItem("userProfile");
-localStorage.removeItem("driverProfile");
-localStorage.removeItem("companyProfile");  // ADD THIS
-```
+**Previous issue:** `companyProfile` was documented as stored in localStorage but never cleaned up on logout/suspension. This was resolved by removing ALL localStorage operations from the auth provider.
+
+**Current state:** `app/vendor/layout.tsx` fetches company logo via Firestore `onSnapshot` subscription (no localStorage involved).
 
 ---
 

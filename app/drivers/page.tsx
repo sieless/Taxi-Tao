@@ -9,7 +9,9 @@ import Link from "next/link";
 import { getDriverPricing, createRouteKey } from "@/lib/pricing-service";
 
 
-import { logError } from "@/lib/logger";export default function AllDriversPage() {
+import { logError, logWarn } from "@/lib/logger";
+
+export default function AllDriversPage() {
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [filteredDrivers, setFilteredDrivers] = useState<Driver[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,7 +74,7 @@ import { logError } from "@/lib/logger";export default function AllDriversPage()
             const vSnapshot = await getDocs(vQ);
             driver.vehicles = vSnapshot.docs.map(vDoc => ({ ...vDoc.data(), id: vDoc.id } as Vehicle));
           } catch (vErr) {
-            console.warn(`Failed to fetch vehicles for driver ${driver.id}:`, vErr);
+            logWarn("AllDriversPage", `Failed to fetch vehicles for driver`, { driverId: driver.id });
           }
         }
         

@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import Logo from "@/components/Logo";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { collection, query, where, onSnapshot, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export default function VendorLayout({ children }: { children: React.ReactNode }) {
@@ -50,21 +50,18 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
   ];
 
   useEffect(() => {
-    // Get logo from localStorage (stored during profile refresh)
-    if (typeof window !== "undefined") {
-      try {
-        const companyProfile = localStorage.getItem("companyProfile");
-        if (companyProfile) {
-          const parsed = JSON.parse(companyProfile);
-          if (parsed.logoUrl) {
-            setCompanyLogo(parsed.logoUrl);
-          }
-        }
-      } catch (e) {
-        // Ignore parse errors
-      }
-    }
-  }, []);
+    if (!userProfile?.companyId) return;
+
+    const unsub = onSnapshot(
+      doc(db, "companies", userProfile.companyId),
+      (snap) => {
+        setCompanyLogo(snap.exists() ? (snap.data().logoUrl || null) : null);
+      },
+      () => {}
+    );
+
+    return () => unsub();
+  }, [userProfile?.companyId]);
 
   // Subscribe to unread alerts count
   useEffect(() => {

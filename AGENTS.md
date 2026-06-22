@@ -214,7 +214,7 @@ These are absolute prohibitions discovered in the web codebase. Violating any of
 4. **NEVER** store Firebase service account JSON in the repository -- rotate immediately if committed.
    -> Found in: `scratch/firebase-service-account.json`
 5. **NEVER** use `NEXT_PUBLIC_` prefix for admin emails or server-only secrets -- they are exposed in the browser bundle.
-   -> Found in: `lib/admin-permission-helper.ts` lines 28-48
+   -> **FIXED:** `lib/admin-permission-helper.ts` now uses `SUPER_ADMIN_UIDS` (server-only, no public prefix)
 6. **NEVER** use wildcard CORS (`"origin": ["*"]`) in production -- restrict to your domains.
    -> Found in: `cors.json` line 3
 

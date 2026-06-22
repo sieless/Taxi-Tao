@@ -1,16 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, getDocs, query, orderBy, doc, deleteDoc, updateDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { COLLECTIONS } from "@/lib/firestore-constants";
 import { useAuth } from "@/lib/auth-context";
 import { hasAdminPermission } from "@/lib/admin-permission-helper";
 import { Link2, Copy, Trash2, ToggleLeft, ToggleRight, Search, ExternalLink } from "lucide-react";
 import { useModal } from "@/lib/admin-modal-context";
+import { graphqlClient } from "@/lib/graphql/client";
+import { SHARE_LINKS_QUERY, TOGGLE_SHARE_LINK_MUTATION, DELETE_SHARE_LINK_MUTATION } from "@/lib/graphql/queries";
 
+import { logError } from "@/lib/logger";
 
-import { logError } from "@/lib/logger";interface ShareLink {
+interface ShareLink {
   id: string;
   code: string;
   driverId?: string;
@@ -43,18 +43,18 @@ export default function ShareLinksPage() {
   async function loadLinks() {
     setLoading(true);
     try {
-      const snap = await getDocs(query(collection(db, COLLECTIONS.SHARE_LINKS), orderBy("createdAt", "desc")));
-      setLinks(snap.docs.map((d) => ({ id: d.id, ...d.data() } as ShareLink)));
-    } catch (err) { logError("page", err); }
+      const result = await graphqlClient.query(SHARE_LINKS_QUERY, {}).toPromise();
+      setLinks(result.data?.shareLinks ?? []);
+    } catch (err) { logError("share-links-page", err); }
     finally { setLoading(false); }
   }
 
   async function toggleActive(link: ShareLink) {
     if (!canManage) { await modal.showAlert("Permission denied", "error"); return; }
     try {
-      await updateDoc(doc(db, COLLECTIONS.SHARE_LINKS, link.id), { active: !link.active });
+      await graphqlClient.mutation(TOGGLE_SHARE_LINK_MUTATION, { id: link.id }).toPromise();
       setLinks((prev) => prev.map((l) => l.id === link.id ? { ...l, active: !l.active } : l));
-    } catch (err: any) { await modal.showAlert(`Failed: ${err?.message}`, "error"); }
+    } catch (err: any) { logError("share-links-page toggle", err); await modal.showAlert(`Failed: ${err?.message}`, "error"); }
   }
 
   async function handleDelete(id: string) {
@@ -62,9 +62,9 @@ export default function ShareLinksPage() {
     const ok = await modal.showConfirm("Delete this share link?", "Delete Link", "Delete");
     if (!ok) return;
     try {
-      await deleteDoc(doc(db, COLLECTIONS.SHARE_LINKS, id));
+      await graphqlClient.mutation(DELETE_SHARE_LINK_MUTATION, { id }).toPromise();
       setLinks((prev) => prev.filter((l) => l.id !== id));
-    } catch (err: any) { await modal.showAlert(`Failed: ${err?.message}`, "error"); }
+    } catch (err: any) { logError("share-links-page delete", err); await modal.showAlert(`Failed: ${err?.message}`, "error"); }
   }
 
   function copyLink(link: ShareLink) {

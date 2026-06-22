@@ -89,9 +89,11 @@ export default function NotificationBell({
         setDriverNotifications(notifs);
         updateUnreadCount();
         setLoading(false);
-        console.log(
-          `[NotificationBell] Loaded ${notifs.length} driver notifications for driverId: ${driverId}`
-        );
+        if (process.env.NODE_ENV === "development") {
+          console.log(
+            `[NotificationBell] Loaded ${notifs.length} driver notifications for driverId: ${driverId}`
+          );
+        }
       },
       (error) => {
         logError("NotificationBell", error);

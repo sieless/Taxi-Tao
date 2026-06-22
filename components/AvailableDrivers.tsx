@@ -29,7 +29,9 @@ import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 
 
-import { logError } from "@/lib/logger";export default function AvailableDrivers() {
+import { logError, logWarn } from "@/lib/logger";
+
+export default function AvailableDrivers() {
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [loading, setLoading] = useState(true);
   const { user, userProfile } = useAuth();
@@ -67,7 +69,7 @@ import { logError } from "@/lib/logger";export default function AvailableDrivers
             const vSnapshot = await getDocs(vQ);
             driver.vehicles = vSnapshot.docs.map(vDoc => ({ ...vDoc.data(), id: vDoc.id } as Vehicle));
           } catch (vErr) {
-            console.warn(`Failed to fetch vehicles for driver ${driver.id}:`, vErr);
+            logWarn("AvailableDrivers", `Failed to fetch vehicles for driver`, { driverId: driver.id });
           }
         }
         

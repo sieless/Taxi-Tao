@@ -12,6 +12,8 @@ export const graphqlClient = createClient({
         HireRequestConnection: () => null,
         VendorDashboard: () => null,
         BatchPublishResult: () => null,
+        AuditLogConnection: () => null,
+        CustomerDashboard: () => null,
       },
     }),
     fetchExchange,
