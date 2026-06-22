@@ -52,8 +52,8 @@ export default function DashboardOverview() {
 
   async function loadStats() {
     try {
-      const getAdminStats = httpsCallable<Record<string, never>, AdminStats>(functions, "getAdminStats");
-      const result = await getAdminStats({});
+      const getAdminStats = httpsCallable(functions, "getAdminStats");
+      const result = await getAdminStats({}) as { data: AdminStats };
       setStats(result.data);
     } catch (err) {
       logError("DashboardOverview", err);

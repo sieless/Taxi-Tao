@@ -34,7 +34,7 @@ export default function AvailabilityCalendar({ isOpen, onClose, vehicleId }: Ava
     );
   };
 
-  const days = [];
+  const days: React.ReactElement[] = [];
   const totalDays = daysInMonth(year, month);
   const startDay = firstDayOfMonth(year, month);
 

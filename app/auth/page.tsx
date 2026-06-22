@@ -6,8 +6,8 @@ import { useState, useEffect } from "react";
 import { 
   confirmPasswordReset, 
   verifyPasswordResetCode, 
-  applyActionCode 
 } from "firebase/auth";
+import { applyActionCode } from "@firebase/auth";
 import { auth } from "@/lib/firebase";
 import { 
   Lock, 

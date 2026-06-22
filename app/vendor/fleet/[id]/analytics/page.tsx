@@ -106,7 +106,7 @@ export default function VehicleAnalyticsPage() {
       const key = `${d.getFullYear()}-${d.getMonth()}`;
       monthlyMap[key] = (monthlyMap[key] || 0) + (h.totalAmount || 0);
     });
-    const monthlyRevenue = [];
+    const monthlyRevenue: { month: string; amount: number }[] = [];
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const key = `${d.getFullYear()}-${d.getMonth()}`;

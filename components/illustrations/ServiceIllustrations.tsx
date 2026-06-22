@@ -2,41 +2,41 @@
 
 import { Car, Key, Truck } from "lucide-react";
 
-export function TaxiIllustration() {
+export function TaxiIllustration({ className }: { className?: string }) {
   return (
     <Car
-      className="w-16 h-16 text-primary-600"
+      className={className ?? "w-16 h-16 text-primary-600"}
       strokeWidth={1.5}
       aria-hidden="true"
     />
   );
 }
 
-export function CarHireIllustration() {
+export function CarHireIllustration({ className }: { className?: string }) {
   return (
     <Key
-      className="w-16 h-16 text-primary-600"
+      className={className ?? "w-16 h-16 text-primary-600"}
       strokeWidth={1.5}
       aria-hidden="true"
     />
   );
 }
 
-export function TransportIllustration() {
+export function TransportIllustration({ className }: { className?: string }) {
   return (
     <Truck
-      className="w-16 h-16 text-primary-600"
+      className={className ?? "w-16 h-16 text-primary-600"}
       strokeWidth={1.5}
       aria-hidden="true"
     />
   );
 }
 
-export function HearseIllustration() {
+export function HearseIllustration({ className }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
-      className="w-16 h-16 text-primary-600"
+      className={className ?? "w-16 h-16 text-primary-600"}
       fill="none"
       stroke="currentColor"
       strokeWidth={1.5}

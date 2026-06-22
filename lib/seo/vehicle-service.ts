@@ -1,16 +1,5 @@
 import { adminDb } from "@/lib/firebase-admin";
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  where,
-  orderBy,
-  limit,
-  startAfter,
-  type QueryDocumentSnapshot,
-} from "firebase-admin/firestore";
+import type { QueryDocumentSnapshot } from "firebase-admin/firestore";
 
 const VEHICLES = "vehicles";
 const COMPANIES = "companies";
@@ -171,39 +160,34 @@ export async function getCompanyById(
 export async function getVehiclesByLocation(
   params: VehicleSearchParams
 ): Promise<VehicleListResult> {
-  let q: FirebaseFirestore.Query;
+  const maxResults = Math.min(params.limitCount ?? 20, 50);
+
+  let q: FirebaseFirestore.Query = adminDb.collection(VEHICLES);
 
   if (params.county && params.town) {
-    q = query(
-      adminDb.collection(VEHICLES),
-      where("status", "==", "active"),
-      where("isRental", "==", true),
-      where("serviceCounty", "==", params.county),
-      where("serviceTown", "==", params.town),
-      orderBy("createdAt", "desc")
-    );
+    q = q
+      .where("status", "==", "active")
+      .where("isRental", "==", true)
+      .where("serviceCounty", "==", params.county)
+      .where("serviceTown", "==", params.town)
+      .orderBy("createdAt", "desc");
   } else if (params.county) {
-    q = query(
-      adminDb.collection(VEHICLES),
-      where("status", "==", "active"),
-      where("isRental", "==", true),
-      where("serviceCounty", "==", params.county),
-      orderBy("createdAt", "desc")
-    );
+    q = q
+      .where("status", "==", "active")
+      .where("isRental", "==", true)
+      .where("serviceCounty", "==", params.county)
+      .orderBy("createdAt", "desc");
   } else {
-    q = query(
-      adminDb.collection(VEHICLES),
-      where("status", "==", "active"),
-      where("isRental", "==", true),
-      orderBy("createdAt", "desc")
-    );
+    q = q
+      .where("status", "==", "active")
+      .where("isRental", "==", true)
+      .orderBy("createdAt", "desc");
   }
 
-  const maxResults = Math.min(params.limitCount ?? 20, 50);
-  let finalQuery = query(q, limit(maxResults + 1));
+  let finalQuery: FirebaseFirestore.Query = q.limit(maxResults + 1);
 
   if (params.cursor) {
-    finalQuery = query(q, startAfter(params.cursor), limit(maxResults + 1));
+    finalQuery = q.startAfter(params.cursor).limit(maxResults + 1);
   }
 
   const snap = await finalQuery.get();

@@ -2,7 +2,8 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { confirmPasswordReset, verifyPasswordResetCode, applyActionCode } from "firebase/auth";
+import { confirmPasswordReset, verifyPasswordResetCode } from "firebase/auth";
+import { applyActionCode } from "@firebase/auth";
 import { auth } from "@/lib/firebase";
 import { Lock, Eye, EyeOff, CheckCircle, AlertTriangle, Loader2, Mail } from "lucide-react";
 import Link from "next/link";

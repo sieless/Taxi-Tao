@@ -19,7 +19,8 @@ declare module "firebase/firestore" {
   export function increment(...args: any[]): any;
   export function arrayUnion(...args: any[]): any;
   export function arrayRemove(...args: any[]): any;
-  export const Timestamp: any;
+  export interface Timestamp { toDate(): Date; seconds: number; nanoseconds: number; }
+  export const Timestamp: { new (seconds: number, nanoseconds: number): Timestamp; now(): Timestamp; fromDate(date: Date): Timestamp; fromMillis(milliseconds: number): Timestamp; };
   export const GeoPoint: any;
   export const FieldValue: any;
   export function initializeFirestore(...args: any[]): any;
@@ -31,6 +32,9 @@ declare module "firebase/firestore" {
   export function endBefore(...args: any[]): any;
   export function getCountFromServer(...args: any[]): any;
   export function connectFirestoreEmulator(...args: any[]): any;
+  export function deleteField(...args: any[]): any;
+  export interface QueryDocumentSnapshot { id: string; data(): any; exists: boolean; [key: string]: any; }
+  export interface DocumentData { [field: string]: any; }
 }
 
 declare module "firebase/auth" {
@@ -53,6 +57,13 @@ declare module "firebase/auth" {
   export const EmailAuthProvider: any;
   export function connectAuthEmulator(...args: any[]): any;
   export function getIdToken(...args: any[]): any;
+  export function sendEmailVerification(...args: any[]): any;
+  export function applyActionCode(...args: any[]): any;
+  export function isSignInWithEmailLink(...args: any[]): any;
+  export function sendSignInLinkToEmail(...args: any[]): any;
+  export function linkWithCredential(...args: any[]): any;
+  export function signInWithCredential(...args: any[]): any;
+  export interface User { uid: string; email: string | null; emailVerified: boolean; [key: string]: any; }
 }
 
 declare module "firebase/functions" {

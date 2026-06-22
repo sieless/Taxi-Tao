@@ -48,7 +48,7 @@ export default function DbDiagnosticsTab() {
       const usersMap = new Map(usersSnap.docs.map((d) => [d.id, d.data()]));
       const driversMap = new Map(driversSnap.docs.map((d) => [d.id, d.data()]));
 
-      const driverUserIds = new Set(usersSnap.docs.filter((d) => d.data().role === "driver").map((d) => d.id));
+      const driverUserIds = new Set<string>(usersSnap.docs.filter((d) => d.data().role === "driver").map((d) => d.id));
 
       const orphanedDrivers = driversSnap.docs.filter((d) => !usersMap.has(d.id)).map((d) => d.id);
       const orphanedUserDrivers = [...driverUserIds].filter((uid) => !driversMap.has(uid));

@@ -341,11 +341,8 @@ export async function sendExpiredSubscriptionReminder(
   daysExpired: number
 ): Promise<ReminderResult> {
   try {
-    const fn = httpsCallable<{ driverId: string; daysExpired: number }, ReminderResult>(
-      functions,
-      "sendExpiredSubscriptionReminder"
-    );
-    const result = await fn({ driverId, daysExpired });
+    const fn = httpsCallable(functions, "sendExpiredSubscriptionReminder");
+    const result = await fn({ driverId, daysExpired }) as { data: ReminderResult };
     return result.data;
   } catch (err: any) {
     logError("admin", err);
@@ -358,11 +355,8 @@ export async function sendExpiredSubscriptionReminder(
  */
 export async function sendBulkExpiredReminders(): Promise<ReminderResult> {
   try {
-    const fn = httpsCallable<Record<string, never>, ReminderResult>(
-      functions,
-      "sendBulkExpiredReminders"
-    );
-    const result = await fn({});
+    const fn = httpsCallable(functions, "sendBulkExpiredReminders");
+    const result = await fn({}) as { data: ReminderResult };
     return result.data;
   } catch (err: any) {
     logError("admin", err);

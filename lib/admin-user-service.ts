@@ -56,12 +56,8 @@ export async function suspendUser(
 ): Promise<UserActionResult> {
   guardSuperAdmin(userId, "suspend");
 
-  const fn = httpsCallable<
-    { userId: string; adminUid: string },
-    UserActionResult
-  >(functions, "suspendUser");
-
-  const result = await fn({ userId, adminUid });
+  const fn = httpsCallable(functions, "suspendUser");
+  const result = await fn({ userId, adminUid }) as { data: UserActionResult };
   return result.data;
 }
 
@@ -73,12 +69,8 @@ export async function unsuspendUser(
   userId: string,
   adminUid: string
 ): Promise<UserActionResult> {
-  const fn = httpsCallable<
-    { userId: string; adminUid: string },
-    UserActionResult
-  >(functions, "unsuspendUser");
-
-  const result = await fn({ userId, adminUid });
+  const fn = httpsCallable(functions, "unsuspendUser");
+  const result = await fn({ userId, adminUid }) as { data: UserActionResult };
   return result.data;
 }
 
@@ -96,12 +88,8 @@ export async function deleteUser(
 ): Promise<UserActionResult> {
   guardSuperAdmin(userId, "delete");
 
-  const fn = httpsCallable<
-    { userId: string; adminUid: string },
-    UserActionResult
-  >(functions, "deleteUser");
-
-  const result = await fn({ userId, adminUid });
+  const fn = httpsCallable(functions, "deleteUser");
+  const result = await fn({ userId, adminUid }) as { data: UserActionResult };
   return result.data;
 }
 
@@ -135,11 +123,7 @@ export async function changeUserRole(
 ): Promise<UserActionResult> {
   guardSuperAdmin(payload.userId, "change role of");
 
-  const fn = httpsCallable<ChangeRolePayload, UserActionResult>(
-    functions,
-    "changeUserRole"
-  );
-
-  const result = await fn(payload);
+  const fn = httpsCallable(functions, "changeUserRole");
+  const result = await fn(payload) as { data: UserActionResult };
   return result.data;
 }
