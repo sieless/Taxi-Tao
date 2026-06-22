@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { collection, getDocs, query, where, Timestamp } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Driver } from "@/lib/types";
 import { LogOut, AlertTriangle, Send, Copy, MessageCircle, ArrowLeft } from "lucide-react";
@@ -48,8 +48,8 @@ import { logError } from "@/lib/logger";export default function ExpiredSubscript
 
       // Sort by days overdue (most overdue first)
       const sorted = driversData.sort((a, b) => {
-        const aDue = a.nextPaymentDue ? (a.nextPaymentDue instanceof Date ? a.nextPaymentDue : (a.nextPaymentDue as Timestamp).toDate()) : new Date();
-        const bDue = b.nextPaymentDue ? (b.nextPaymentDue instanceof Date ? b.nextPaymentDue : (b.nextPaymentDue as Timestamp).toDate()) : new Date();
+        const aDue = a.nextPaymentDue ? (a.nextPaymentDue instanceof Date ? a.nextPaymentDue : (a.nextPaymentDue as any).toDate()) : new Date();
+        const bDue = b.nextPaymentDue ? (b.nextPaymentDue instanceof Date ? b.nextPaymentDue : (b.nextPaymentDue as any).toDate()) : new Date();
         return aDue.getTime() - bDue.getTime();
       });
 
@@ -61,9 +61,9 @@ import { logError } from "@/lib/logger";export default function ExpiredSubscript
     }
   }
 
-  function getDaysOverdue(nextPaymentDue: Timestamp | Date | undefined | null): number {
+  function getDaysOverdue(nextPaymentDue: any): number {
     if (!nextPaymentDue) return 0;
-    const dueDate = nextPaymentDue instanceof Date ? nextPaymentDue : (nextPaymentDue as Timestamp).toDate();
+    const dueDate = nextPaymentDue instanceof Date ? nextPaymentDue : (nextPaymentDue as any).toDate();
     const today = new Date();
     const diffTime = today.getTime() - dueDate.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -237,7 +237,7 @@ import { logError } from "@/lib/logger";export default function ExpiredSubscript
               <tbody className="bg-white divide-y divide-gray-200">
                 {drivers.map((driver) => {
                   const daysOverdue = getDaysOverdue(driver.nextPaymentDue);
-                  const lastPayment = driver.lastPaymentDate ? (driver.lastPaymentDate instanceof Date ? driver.lastPaymentDate : (driver.lastPaymentDate as Timestamp).toDate()) : null;
+                  const lastPayment = driver.lastPaymentDate ? (driver.lastPaymentDate instanceof Date ? driver.lastPaymentDate : (driver.lastPaymentDate as any).toDate()) : null;
                   
                   return (
                     <tr key={driver.id} className="hover:bg-gray-50">
