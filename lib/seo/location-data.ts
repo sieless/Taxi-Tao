@@ -1,5 +1,3 @@
-import { KENYA_COUNTIES } from "@/lib/kenya-locations";
-
 export interface LocationInfo {
   county: string;
   town: string;

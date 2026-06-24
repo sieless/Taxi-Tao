@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     url: BASE_URL,
     images: [
       {
-        url: `${BASE_URL}/icon.png`,
+        url: `${BASE_URL}/icon.svg`,
         width: 512,
         height: 512,
         alt: "TaxiTao",
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
     title: "TaxiTao — Kenya's Transport Ecosystem",
     description:
       "Book reliable taxi and car hire services across Kenya.",
-    images: [`${BASE_URL}/icon.png`],
+    images: [`${BASE_URL}/icon.svg`],
   },
   robots: {
     index: true,
@@ -60,7 +60,7 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: "/icon.png",
+    icon: "/icon.svg",
   },
   alternates: {
     canonical: BASE_URL,

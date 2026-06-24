@@ -1,7 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { adminDb } from "@/lib/firebase-admin";
+import { rateLimitMiddleware, RATE_LIMITS } from "@/lib/rate-limit";
 
-const BASE_URL = "https://taxitao.co.ke";
+const SearchParamsSchema = z.object({
+  q: z.string().max(200).optional().default(""),
+  county: z.string().max(100).optional().default(""),
+  town: z.string().max(100).optional().default(""),
+  type: z.string().max(20).optional().default(""),
+  min_price: z.string().max(10).optional().default(""),
+  max_price: z.string().max(10).optional().default(""),
+  seats: z.string().max(5).optional().default(""),
+});
+
+const VALID_TYPES = ["sedan", "suv", "van", "bike", "tuk-tuk"];
 
 interface VehicleDoc {
   id: string;
@@ -26,7 +38,7 @@ interface VehicleDoc {
   averageRating?: number;
   totalRatings?: number;
   chauffeurDailyRate?: number;
-  [key: string]: unknown;
+  companyName?: string;
 }
 
 function toVehicle(doc: FirebaseFirestore.DocumentSnapshot<FirebaseFirestore.DocumentData>): VehicleDoc {
@@ -54,20 +66,31 @@ function toVehicle(doc: FirebaseFirestore.DocumentSnapshot<FirebaseFirestore.Doc
     averageRating: data.averageRating as number | undefined,
     totalRatings: data.totalRatings as number | undefined,
     chauffeurDailyRate: data.chauffeurDailyRate as number | undefined,
-    ...data,
   } as VehicleDoc;
 }
 
 export async function GET(request: NextRequest) {
+  const rateLimit = await rateLimitMiddleware(request, "search", RATE_LIMITS.API_DEFAULT);
+  if (rateLimit) return rateLimit;
+
   try {
     const { searchParams } = new URL(request.url);
-    const q = searchParams.get("q") ?? "";
-    const county = searchParams.get("county") ?? "";
-    const town = searchParams.get("town") ?? "";
-    const vehicleType = searchParams.get("type") ?? "";
-    const minPrice = searchParams.get("min_price");
-    const maxPrice = searchParams.get("max_price");
-    const seats = searchParams.get("seats");
+    const raw = {
+      q: searchParams.get("q"),
+      county: searchParams.get("county"),
+      town: searchParams.get("town"),
+      type: searchParams.get("type"),
+      min_price: searchParams.get("min_price"),
+      max_price: searchParams.get("max_price"),
+      seats: searchParams.get("seats"),
+    };
+
+    const parsed = SearchParamsSchema.safeParse(raw);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid parameters" }, { status: 400 });
+    }
+
+    const { q, county, town, type: vehicleType, min_price, max_price, seats } = parsed.data;
 
     let qRef: FirebaseFirestore.Query = adminDb.collection("vehicles");
     qRef = qRef.where("status", "==", "active");
@@ -88,27 +111,27 @@ export async function GET(request: NextRequest) {
 
     let vehicles = snap.docs.map(toVehicle);
 
-    if (vehicleType) {
+    if (vehicleType && VALID_TYPES.includes(vehicleType)) {
       vehicles = vehicles.filter((v) => v.type === vehicleType);
     }
 
-    if (minPrice) {
-      const min = Number(minPrice);
-      if (!isNaN(min)) {
+    if (min_price) {
+      const min = Number(min_price);
+      if (!isNaN(min) && min >= 0) {
         vehicles = vehicles.filter((v) => v.dailyRate >= min);
       }
     }
 
-    if (maxPrice) {
-      const max = Number(maxPrice);
-      if (!isNaN(max)) {
+    if (max_price) {
+      const max = Number(max_price);
+      if (!isNaN(max) && max <= 1000000) {
         vehicles = vehicles.filter((v) => v.dailyRate <= max);
       }
     }
 
     if (seats) {
       const s = Number(seats);
-      if (!isNaN(s)) {
+      if (!isNaN(s) && s >= 1 && s <= 50) {
         vehicles = vehicles.filter((v) => v.seats >= s);
       }
     }
@@ -160,7 +183,7 @@ export async function GET(request: NextRequest) {
       vehicles: result,
       total: vehicles.length,
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Search failed", vehicles: [], total: 0 },
       { status: 500 }

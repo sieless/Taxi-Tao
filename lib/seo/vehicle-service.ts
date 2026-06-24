@@ -226,8 +226,13 @@ export async function getRandomVehicles(
     .get();
 
   const all = snap.docs.map(toVehicle);
-  const shuffled = all.sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, count);
+  for (let i = all.length - 1; i > 0; i--) {
+    const array = new Uint32Array(1);
+    crypto.getRandomValues(array);
+    const j = array[0] % (i + 1);
+    [all[i], all[j]] = [all[j]!, all[i]!];
+  }
+  return all.slice(0, count);
 }
 
 export async function getVerifiedCompanies(

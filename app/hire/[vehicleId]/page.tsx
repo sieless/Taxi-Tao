@@ -93,6 +93,7 @@ export default async function VehicleDetailPage({ params }: Props) {
       ? {
           "@type": "Organization",
           name: company.name,
+          logo: company.logoUrl,
         }
       : undefined,
   };

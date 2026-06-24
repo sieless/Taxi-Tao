@@ -25,7 +25,6 @@ Disallow: /api/*
 Disallow: /_next/*
 Disallow: /static/*
 Disallow: /*?*sort=*
-Disallow: /*?*page=*
 Disallow: /*?*filter=*
 Disallow: /login
 Disallow: /signup

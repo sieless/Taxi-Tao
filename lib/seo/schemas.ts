@@ -93,15 +93,20 @@ interface VehicleSchemaParams {
   dailyRate?: number;
   currency?: string;
   image?: string;
+  sellerName?: string;
+  sellerLogo?: string;
+  ratingValue?: number;
+  reviewCount?: number;
 }
 
-export function vehicleSchema({ make, model, year, dailyRate, currency, image }: VehicleSchemaParams) {
+export function vehicleSchema({ make, model, year, dailyRate, currency, image, sellerName, sellerLogo, ratingValue, reviewCount }: VehicleSchemaParams) {
   return {
     "@context": "https://schema.org",
     "@type": "Vehicle",
     brand: make,
     model,
     modelDate: year?.toString(),
+    image,
     offers: dailyRate
       ? {
           "@type": "Offer",
@@ -110,7 +115,20 @@ export function vehicleSchema({ make, model, year, dailyRate, currency, image }:
           availability: "https://schema.org/InStock",
         }
       : undefined,
-    image,
+    seller: sellerName
+      ? {
+          "@type": "Organization",
+          name: sellerName,
+          logo: sellerLogo,
+        }
+      : undefined,
+    aggregateRating: ratingValue && reviewCount
+      ? {
+          "@type": "AggregateRating",
+          ratingValue: ratingValue.toString(),
+          reviewCount: reviewCount.toString(),
+        }
+      : undefined,
   };
 }
 

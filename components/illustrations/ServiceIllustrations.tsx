@@ -54,3 +54,8 @@ export function HearseIllustration({ className }: { className?: string }) {
     </svg>
   );
 }
+
+export const ILLUSTRATION_SIZES = {
+  default: "w-16 h-16",
+  card: "w-16 h-16",
+} as const;
