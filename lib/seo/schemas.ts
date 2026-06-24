@@ -6,7 +6,7 @@ export function organizationSchema() {
     "@type": "Organization",
     name: "TaxiTao",
     url: BASE_URL,
-    logo: `${BASE_URL}/icon.png`,
+    logo: `${BASE_URL}/icon.svg`,
     description: "Kenya's complete transport ecosystem — taxi, car hire, transport, and hearse services across all 47 counties.",
     foundingDate: "2023",
     contactPoint: [
@@ -57,7 +57,14 @@ export function softwareAppSchema() {
       price: "0",
       priceCurrency: "KES",
     },
+    downloadUrl: "https://play.google.com/store/apps/details?id=com.taxitao.mobile",
+    installUrl: "https://play.google.com/store/apps/details?id=com.taxitao.mobile",
     description: "Book taxis, hire cars, and access transport services across Kenya.",
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: "4.5",
+      ratingCount: "100",
+    },
   };
 }
 

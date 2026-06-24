@@ -65,6 +65,12 @@ export const metadata: Metadata = {
   alternates: {
     canonical: BASE_URL,
   },
+  other: {
+    "al:android:package": "com.taxitao.mobile",
+    "al:android:app_name": "TaxiTao",
+    "al:android:url": "https://play.google.com/store/apps/details?id=com.taxitao.mobile",
+    "al:android:market_url": "https://play.google.com/store/apps/details?id=com.taxitao.mobile",
+  },
 };
 
 const organizationJsonLd = {
@@ -72,7 +78,7 @@ const organizationJsonLd = {
   "@type": "Organization",
   name: "TaxiTao",
   url: BASE_URL,
-  logo: `${BASE_URL}/icon.png`,
+  logo: `${BASE_URL}/icon.svg`,
   description:
     "Kenya's complete transport ecosystem — taxi, car hire, transport, and hearse services across all 47 counties.",
   contactPoint: [
@@ -88,6 +94,26 @@ const organizationJsonLd = {
     addressLocality: "Machakos",
     addressCountry: "KE",
   },
+  sameAs: [
+    "https://play.google.com/store/apps/details?id=com.taxitao.mobile",
+  ],
+};
+
+const softwareAppJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "TaxiTao",
+  operatingSystem: "Android",
+  applicationCategory: "TravelApplication",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "KES",
+  },
+  downloadUrl: "https://play.google.com/store/apps/details?id=com.taxitao.mobile",
+  installUrl: "https://play.google.com/store/apps/details?id=com.taxitao.mobile",
+  description:
+    "Book taxis, hire cars, and access transport services across Kenya's 47 counties.",
 };
 
 export default async function RootLayout({
@@ -113,6 +139,7 @@ export default async function RootLayout({
         <Analytics />
         <SpeedInsights />
         <JsonLd data={organizationJsonLd} />
+        <JsonLd data={softwareAppJsonLd} />
       </body>
     </html>
   );

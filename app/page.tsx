@@ -302,6 +302,14 @@ export default function Home() {
               Experience seamless movement with our diverse range of professional services.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4 mb-12">
+              <a
+                href="https://play.google.com/store/apps/details?id=com.taxitao.mobile"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-[#FFD84D] hover:bg-[#FFC107] text-gray-900 font-bold py-4 px-8 rounded-full text-lg transition-all shadow-xl hover:shadow-2xl transform hover:scale-105 flex items-center justify-center gap-2"
+              >
+                <Smartphone className="w-5 h-5" /> Get it on Google Play
+              </a>
               <Link
                 href="/#booking"
                 className="bg-gray-900 hover:bg-gray-800 text-white font-bold py-4 px-8 rounded-full text-lg transition-all shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2"
@@ -325,30 +333,34 @@ export default function Home() {
               
               {/* Download Button - Visible on all screens below mockup */}
               <div className="mt-10 lg:mt-12">
-                <Link
-                  href="/download"
+                <a
+                  href="https://play.google.com/store/apps/details?id=com.taxitao.mobile"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="bg-[#FFD84D] hover:bg-[#FFC107] text-gray-900 font-bold py-4 px-10 rounded-full text-lg transition-all shadow-xl hover:shadow-2xl transform hover:scale-105 flex items-center justify-center gap-3 group"
                 >
-                  <Download className="w-6 h-6 group-hover:animate-bounce" />
-                  <span>Download Mobile App</span>
-                </Link>
+                  <Smartphone className="w-6 h-6 group-hover:animate-bounce" />
+                  <span>Get it on Google Play</span>
+                </a>
               </div>
             </div>
 
             {/* Floating Card 1 - Top Left - Download App */}
-            <Link
-              href="/download"
+            <a
+              href="https://play.google.com/store/apps/details?id=com.taxitao.mobile"
+              target="_blank"
+              rel="noopener noreferrer"
               className="hidden lg:block absolute top-8 left-0 md:-left-12 lg:-left-20 bg-[#FFD84D] rounded-2xl p-5 shadow-2xl transform hover:scale-110 transition-all z-30 w-44 cursor-pointer"
               style={{ transform: "rotate(-8deg)" }}
             >
-              <Download className="w-6 h-6 mb-2 text-gray-900" />
+              <Smartphone className="w-6 h-6 mb-2 text-gray-900" />
               <div className="text-2xl font-bold text-gray-900 mb-1">
                 Download
               </div>
               <div className="text-xs font-semibold text-gray-800">
                 Get the App
               </div>
-            </Link>
+            </a>
 
             {/* Floating Card 2 - Top Right - Find Drivers */}
             <Link
@@ -924,12 +936,14 @@ export default function Home() {
                 anywhere.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                <Link
-                  href="/download"
+                <a
+                  href="https://play.google.com/store/apps/details?id=com.taxitao.mobile"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="group bg-white text-gray-900 hover:bg-gray-100 px-8 py-4 rounded-full font-bold text-lg shadow-lg transition-all transform hover:scale-105 flex items-center justify-center gap-3"
                 >
-                  <Download className="w-6 h-6" />
-                  Download Now
+                  <Smartphone className="w-6 h-6" />
+                  Get it on Google Play
                   <svg
                     className="w-5 h-5 group-hover:translate-x-1 transition-transform"
                     fill="none"
@@ -943,7 +957,7 @@ export default function Home() {
                       d="M13 7l5 5m0 0l-5 5m5-5H6"
                     />
                   </svg>
-                </Link>
+                </a>
               </div>
               <div className="mt-6 flex flex-wrap justify-center lg:justify-start gap-6 text-sm text-white/80">
                 <div className="flex items-center gap-2">
