@@ -126,7 +126,7 @@ function JoinWorkspaceContent() {
   if (validating) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-        <div className="w-10 h-10 border-4 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
         <p className="text-gray-500 font-bold mt-4 animate-pulse">Securing connection...</p>
       </div>
     );
@@ -176,9 +176,9 @@ function JoinWorkspaceContent() {
             generated and emailed to you shortly.
           </p>
 
-          <div className="bg-violet-50/50 border border-violet-100/50 rounded-2xl p-4 flex items-start gap-3 text-left">
-            <ShieldAlert className="w-5 h-5 text-violet-600 flex-shrink-0 mt-0.5" />
-            <p className="text-[11px] font-black text-violet-850 leading-relaxed uppercase tracking-wider">
+          <div className="bg-blue-50/50 border border-blue-100/50 rounded-2xl p-4 flex items-start gap-3 text-left">
+            <ShieldAlert className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+            <p className="text-[11px] font-black text-blue-800 leading-relaxed uppercase tracking-wider">
               Note: Wait for your credentials email containing your password before signing in.
             </p>
           </div>
@@ -240,7 +240,7 @@ function JoinWorkspaceContent() {
       <div className="bg-white rounded-[2.5rem] p-8 max-w-md w-full border border-gray-100 shadow-2xl space-y-6">
         <div className="flex justify-between items-center">
           <Logo />
-          <div className="bg-violet-50 text-violet-600 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider">
+          <div className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider">
             Workspace Invitation
           </div>
         </div>
@@ -249,7 +249,7 @@ function JoinWorkspaceContent() {
           <h1 className="text-2xl font-black text-gray-900 leading-tight">Fleet Onboarding</h1>
           <p className="text-xs font-bold text-gray-500 leading-relaxed">
             You have been invited to join{" "}
-            <span className="font-black text-violet-600">{companyName}</span> as an operational assistant.
+            <span className="font-black text-blue-600">{companyName}</span> as an operational assistant.
           </p>
         </div>
 
@@ -264,7 +264,7 @@ function JoinWorkspaceContent() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. John Doe"
-                className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border-2 border-gray-100 focus:border-violet-600 rounded-2xl font-semibold text-sm outline-none transition-all duration-300"
+                className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border-2 border-gray-100 focus:border-blue-600 rounded-2xl font-semibold text-sm outline-none transition-all duration-300"
               />
             </div>
           </div>
@@ -279,7 +279,7 @@ function JoinWorkspaceContent() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="e.g. john@domain.com"
-                className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border-2 border-gray-100 focus:border-violet-600 rounded-2xl font-semibold text-sm outline-none transition-all duration-300"
+                className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border-2 border-gray-100 focus:border-blue-600 rounded-2xl font-semibold text-sm outline-none transition-all duration-300"
               />
             </div>
           </div>
@@ -294,7 +294,7 @@ function JoinWorkspaceContent() {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="e.g. +254 700 000 000"
-                className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border-2 border-gray-100 focus:border-violet-600 rounded-2xl font-semibold text-sm outline-none transition-all duration-300"
+                className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border-2 border-gray-100 focus:border-blue-600 rounded-2xl font-semibold text-sm outline-none transition-all duration-300"
               />
             </div>
           </div>
@@ -302,7 +302,7 @@ function JoinWorkspaceContent() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full bg-violet-600 hover:bg-violet-750 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition shadow-lg shadow-violet-200 flex items-center justify-center gap-2 mt-2 disabled:opacity-50"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition shadow-lg shadow-blue-200 flex items-center justify-center gap-2 mt-2 disabled:opacity-50"
           >
             {submitting ? (
               "Sending Details..."

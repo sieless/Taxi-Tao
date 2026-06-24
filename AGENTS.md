@@ -273,6 +273,15 @@ These are absolute prohibitions discovered in the web codebase. Violating any of
 
 ---
 
+## Deployment & Git Rules
+
+1. **NEVER** run `git commit`, `git push`, `firebase deploy`, `vercel deploy`, or any deployment command without explicit user permission
+2. **NEVER** create new branches or modify git history without permission
+3. **NEVER** install new npm packages without checking existing dependencies first
+4. **ALWAYS** ask before running destructive commands (`rm`, `Remove-Item`, `drop`, `delete`)
+
+---
+
 ## ALWAYS Do -- Mandatory Security Practices (Web-Specific)
 
 ### Session & Cookie Security
