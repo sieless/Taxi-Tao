@@ -9,9 +9,15 @@ import {
 import JsonLd from "@/components/seo/JsonLd";
 
 const BASE_URL = "https://taxitao.co.ke";
+export const revalidate = 3600;
 
 interface Props {
   params: Promise<{ vehicleId: string }>;
+}
+
+export async function generateStaticParams() {
+  const { vehicles } = await getVehiclesByLocation({ limitCount: 200 });
+  return vehicles.map((v) => ({ vehicleId: v.id }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
