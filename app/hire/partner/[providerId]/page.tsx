@@ -33,6 +33,9 @@ export async function generateMetadata({
     },
     alternates: {
       canonical: `${BASE_URL}/hire/partner/${providerId}`,
+      languages: {
+        "en-KE": `${BASE_URL}/hire/partner/${providerId}`,
+      },
     },
   };
 }

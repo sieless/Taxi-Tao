@@ -36,6 +36,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description,
     alternates: {
       canonical: `${BASE_URL}/companies/${companyId}`,
+      languages: {
+        "en-KE": `${BASE_URL}/companies/${companyId}`,
+      },
     },
     openGraph: {
       title,
@@ -44,6 +47,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       images: company.logoUrl
         ? [{ url: company.logoUrl, width: 200, height: 200, alt: company.name }]
         : [],
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description: description.slice(0, 200),
+      images: company.logoUrl ? [company.logoUrl] : [],
     },
   };
 }

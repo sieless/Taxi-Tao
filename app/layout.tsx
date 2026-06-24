@@ -64,6 +64,10 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: BASE_URL,
+    languages: {
+      "en-KE": BASE_URL,
+      "sw-KE": BASE_URL,
+    },
   },
   other: {
     "al:android:package": "com.taxitao.mobile",

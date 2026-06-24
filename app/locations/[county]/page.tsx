@@ -22,11 +22,26 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const locations = getLocationsByCounty(countyName);
   if (locations.length === 0) return {};
 
+  const desc = `Book reliable taxi and car hire services across ${countyName} County, Kenya. Professional drivers, well-maintained vehicles, 24/7 support.`;
+
   return {
     title: `Taxi & Car Hire in ${countyName} County | TaxiTao`,
-    description: `Book reliable taxi and car hire services across ${countyName} County, Kenya. Professional drivers, well-maintained vehicles, 24/7 support.`,
+    description: desc,
     alternates: {
       canonical: `${BASE_URL}/locations/${county}`,
+      languages: {
+        "en-KE": `${BASE_URL}/locations/${county}`,
+      },
+    },
+    openGraph: {
+      title: `Taxi & Car Hire in ${countyName} County | TaxiTao`,
+      description: desc,
+      url: `${BASE_URL}/locations/${county}`,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `Taxi & Car Hire in ${countyName} County | TaxiTao`,
+      description: desc.slice(0, 200),
     },
   };
 }

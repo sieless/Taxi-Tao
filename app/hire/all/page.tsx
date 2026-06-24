@@ -21,6 +21,9 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: `${BASE_URL}/hire/all`,
+    languages: {
+      "en-KE": `${BASE_URL}/hire/all`,
+    },
   },
 };
 

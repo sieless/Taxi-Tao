@@ -23,17 +23,28 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const location = getLocationBySlug(town);
   if (!location) return {};
 
+  const desc = location.description ?? "";
+  const ogTitle = `Taxi & Car Hire in ${location.town}, ${location.county} | TaxiTao`;
+
   return {
     title: `Taxi & Car Hire in ${location.town}, ${location.county}`,
-    description: location.description,
+    description: desc,
     keywords: location.keywords.join(", "),
     alternates: {
       canonical: `${BASE_URL}/locations/${location.county.toLowerCase()}/${location.slug}`,
+      languages: {
+        "en-KE": `${BASE_URL}/locations/${location.county.toLowerCase()}/${location.slug}`,
+      },
     },
     openGraph: {
-      title: `Taxi & Car Hire in ${location.town}, ${location.county} | TaxiTao`,
-      description: location.description,
+      title: ogTitle,
+      description: desc,
       url: `${BASE_URL}/locations/${location.county.toLowerCase()}/${location.slug}`,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: ogTitle,
+      description: desc.slice(0, 200),
     },
   };
 }

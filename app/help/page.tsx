@@ -27,8 +27,23 @@ export const metadata: Metadata = {
   title: "Help Center & FAQ | TaxiTao",
   description:
     "Find answers to common questions about TaxiTao's taxi, car hire, and transport services. Learn how to book rides, driver payments, and contact support.",
+  openGraph: {
+    title: "Help Center & FAQ | TaxiTao",
+    description:
+      "Find answers to common questions about TaxiTao's taxi, car hire, and transport services.",
+    url: `${BASE_URL}/help`,
+  },
+  twitter: {
+    card: "summary",
+    title: "Help Center & FAQ | TaxiTao",
+    description:
+      "Find answers to common questions about TaxiTao's taxi, car hire, and transport services.",
+  },
   alternates: {
     canonical: `${BASE_URL}/help`,
+    languages: {
+      "en-KE": `${BASE_URL}/help`,
+    },
   },
 };
 

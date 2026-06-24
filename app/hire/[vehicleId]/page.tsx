@@ -24,15 +24,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     : null;
 
   const title = `${vehicle.year} ${vehicle.make} ${vehicle.model} for Hire${company ? ` — ${company.name}` : ""}`;
-  const description = vehicle.description
-    ? vehicle.description.slice(0, 160)
+  const rawDescription = vehicle.description
+    ? vehicle.description
     : `Hire a ${vehicle.year} ${vehicle.make} ${vehicle.model} in Kenya. KES ${vehicle.dailyRate.toLocaleString()}/day. ${vehicle.seats} seats. ${vehicle.transmission ?? "Automatic"}.`;
+  const description = rawDescription.length > 160
+    ? rawDescription.slice(0, rawDescription.lastIndexOf(" ", 157)) + "..."
+    : rawDescription;
 
   return {
     title,
     description,
     alternates: {
       canonical: `${BASE_URL}/hire/${vehicle.id}`,
+      languages: {
+        "en-KE": `${BASE_URL}/hire/${vehicle.id}`,
+      },
     },
     openGraph: {
       title,
@@ -41,6 +47,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       images: vehicle.images[0]
         ? [{ url: vehicle.images[0], width: 800, height: 600, alt: `${vehicle.make} ${vehicle.model}` }]
         : [],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description: description.slice(0, 200),
+      images: vehicle.images[0] ? [vehicle.images[0]] : [],
     },
   };
 }

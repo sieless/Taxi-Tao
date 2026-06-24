@@ -37,6 +37,9 @@ export async function generateMetadata({
     },
     alternates: {
       canonical: `${BASE_URL}/d/${driverId}`,
+      languages: {
+        "en-KE": `${BASE_URL}/d/${driverId}`,
+      },
     },
   };
 }

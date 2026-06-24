@@ -13,6 +13,9 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: `${BASE_URL}/search`,
+    languages: {
+      "en-KE": `${BASE_URL}/search`,
+    },
   },
 };
 
