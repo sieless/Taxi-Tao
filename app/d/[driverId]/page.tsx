@@ -1,8 +1,45 @@
+import type { Metadata } from "next";
 import { getDriverWithVehiclesServer } from "@/lib/firestore-server";
 import { Driver, Vehicle } from "@/lib/types";
 import { Phone, Star, Shield, Car, MapPin } from "lucide-react";
 import Link from "next/link";
 import BookingForm from "@/components/BookingForm";
+
+const BASE_URL = "https://taxitao.co.ke";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ driverId: string }>;
+}): Promise<Metadata> {
+  const { driverId } = await params;
+  const { driver } = await getDriverWithVehiclesServer(driverId);
+
+  if (!driver) {
+    return { title: "Driver Not Found | TaxiTao" };
+  }
+
+  const title = `${driver.name} | Taxi Driver | TaxiTao`;
+  const description = `Book a ride with ${driver.name}, a ${driver.active ? "verified and active" : "professional"} driver on TaxiTao. Rating: ${driver.averageRating?.toFixed(1) || "New"}. Available in ${driver.businessLocation || "Kenya"}.`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `${BASE_URL}/d/${driverId}`,
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description,
+    },
+    alternates: {
+      canonical: `${BASE_URL}/d/${driverId}`,
+    },
+  };
+}
 
 export default async function DriverPage({
   params,
