@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     siteName: "TaxiTao",
     images: [
       {
-        url: `${BASE_URL}/icon.svg`,
+        url: `${BASE_URL}/icon.png`,
         width: 512,
         height: 512,
         alt: "TaxiTao App",
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     card: "summary",
     title: "Download TaxiTao — Free Taxi & Car Hire App",
     description: "Get the TaxiTao app on Google Play. Available on Android.",
-    images: [`${BASE_URL}/icon.svg`],
+    images: [`${BASE_URL}/icon.png`],
   },
   alternates: {
     canonical: `${BASE_URL}/download`,

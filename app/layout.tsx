@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     url: BASE_URL,
     images: [
       {
-        url: `${BASE_URL}/icon.svg`,
+        url: `${BASE_URL}/icon.png`,
         width: 512,
         height: 512,
         alt: "TaxiTao",
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
     title: "TaxiTao — Kenya's Transport Ecosystem",
     description:
       "Book reliable taxi and car hire services across Kenya.",
-    images: [`${BASE_URL}/icon.svg`],
+    images: [`${BASE_URL}/icon.png`],
   },
   robots: {
     index: true,
@@ -60,7 +60,7 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: "/icon.svg",
+    icon: "/icon.png",
   },
   alternates: {
     canonical: BASE_URL,
@@ -78,7 +78,7 @@ const organizationJsonLd = {
   "@type": "Organization",
   name: "TaxiTao",
   url: BASE_URL,
-  logo: `${BASE_URL}/icon.svg`,
+  logo: `${BASE_URL}/icon.png`,
   description:
     "Kenya's complete transport ecosystem — taxi, car hire, transport, and hearse services across all 47 counties.",
   contactPoint: [

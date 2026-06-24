@@ -248,6 +248,11 @@ These are absolute prohibitions discovered in the web codebase. Violating any of
 18. **NEVER** expose Cloud Function business logic in client-side code
     -> If the client can see the logic, an attacker can find bypasses
 
+### Assets & Files
+24. **NEVER** create placeholder assets (icons, images, logos, mock data) without explicit user approval
+    -> Always search the ENTIRE repository (including `join-app/public/`, `scripts/`, `scratch/`, nested `public/` folders) before creating or introducing new files
+    -> Found in: `public/icon.svg` was created without authorization; real logo was at `join-app/public/icon.png`
+
 ### Cloud Functions (Shared with Mobile)
 19. **NEVER** skip `withGuard()` for any callable Cloud Function
 20. **NEVER** expose `error.message` to clients in `HttpsError("internal", ...)` -- use generic messages

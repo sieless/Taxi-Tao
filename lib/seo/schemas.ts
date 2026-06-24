@@ -6,7 +6,7 @@ export function organizationSchema() {
     "@type": "Organization",
     name: "TaxiTao",
     url: BASE_URL,
-    logo: `${BASE_URL}/icon.svg`,
+    logo: `${BASE_URL}/icon.png`,
     description: "Kenya's complete transport ecosystem — taxi, car hire, transport, and hearse services across all 47 counties.",
     foundingDate: "2023",
     contactPoint: [
