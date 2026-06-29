@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+const isDev = process.env.NODE_ENV !== "production";
+
 const securityHeaders = [
   {
     key: "X-Frame-Options",
@@ -21,10 +23,15 @@ const securityHeaders = [
     key: "X-DNS-Prefetch-Control",
     value: "on",
   },
-  {
-    key: "Strict-Transport-Security",
-    value: "max-age=63072000; includeSubDomains; preload",
-  },
+  // HSTS only in production — breaks localhost dev without valid cert
+  ...(!isDev
+    ? [
+        {
+          key: "Strict-Transport-Security",
+          value: "max-age=63072000; includeSubDomains; preload",
+        },
+      ]
+    : []),
   // NOTE: Content-Security-Policy is set by proxy.ts
   // with per-request nonces for stronger XSS protection.
   // Do NOT set CSP here — it would conflict with the proxy CSP.
@@ -53,8 +60,8 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        // Apply security headers to all routes
-        source: "/(.*)",
+        // Apply security headers to all routes EXCEPT Firebase auth handler
+        source: "/((?!_next/static|_next/image|favicon.ico|public/|__/auth/).*)",
         headers: securityHeaders,
       },
       {

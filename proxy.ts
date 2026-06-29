@@ -29,6 +29,11 @@ function matchesRoute(pathname: string, routes: string[]): boolean {
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Firebase Auth handler — bypass CSP, let Firebase manage its own security
+  if (pathname.startsWith("/__/auth/")) {
+    return NextResponse.next();
+  }
+
   const isProtectedRoute = matchesRoute(pathname, PROTECTED_ROUTES);
   const isProtectedApi = matchesRoute(pathname, PROTECTED_API_ROUTES);
   const isAuthRoute = matchesRoute(pathname, AUTH_ROUTES);
