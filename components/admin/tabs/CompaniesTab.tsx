@@ -10,9 +10,8 @@ import {
   updateDoc, 
   limit 
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { getFunctions, httpsCallable } from "firebase/functions";
-import { app } from "@/lib/firebase";
+import { db, functions } from "@/lib/firebase";
+import { httpsCallable } from "firebase/functions";
 import { 
   Building2, 
   Search, 
@@ -163,7 +162,6 @@ export default function CompaniesTab() {
     if (!ok) return;
     setActing(company.id);
     try {
-      const functions = getFunctions(app, "europe-west3");
       const purgeFn = httpsCallable(functions, "adminPurgeCompany");
       await purgeFn({ companyId: company.id });
       setCompanies(prev => prev.filter(c => c.id !== company.id));

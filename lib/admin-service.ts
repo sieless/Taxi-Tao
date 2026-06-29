@@ -568,7 +568,7 @@ export async function syncCompanySubscriptionAndInvoice(
 ): Promise<void> {
   try {
     // 1. Get current vehicle count
-    const q = query(collection(db, "vehicles"), where("companyId", "==", companyId), where("active", "==", true));
+    const q = query(collection(db, "vehicles"), where("companyId", "==", companyId), where("status", "==", "active"));
     const snap = await getDocs(q);
     const vehicleCount = snap.size;
 

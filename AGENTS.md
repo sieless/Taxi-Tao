@@ -204,11 +204,11 @@ These are absolute prohibitions discovered in the web codebase. Violating any of
 
 ### Session Management
 1. **NEVER** store user profiles in `localStorage` -- it is XSS-accessible. Use React state or httpOnly cookies.
-   -> Found in: `lib/auth-context.tsx` lines 108, 123, 150, 164
+   -> **FIXED:** `lib/auth-context.tsx` now uses React state only (no localStorage)
 2. **NEVER** set session cookies via `document.cookie` -- it cannot set the `httpOnly` flag. Use server-side `Set-Cookie` headers.
-   -> Found in: `lib/auth-context.tsx` lines 221-234
+   -> **FIXED:** `lib/auth-context.tsx` calls `/api/auth/session` which sets httpOnly cookies via Set-Cookie header
 3. **NEVER** trust a plain UID from the session cookie without verifying against Firebase Auth -- an attacker can forge cookies.
-   -> Found in: `lib/auth-server.ts` lines 70-90
+   -> **FIXED:** `lib/auth-server.ts` now uses `verifySessionCookie()` (not plain UID trust)
 
 ### Secrets & Credentials
 4. **NEVER** store Firebase service account JSON in the repository -- rotate immediately if committed.
@@ -235,30 +235,30 @@ These are absolute prohibitions discovered in the web codebase. Violating any of
 ### Firestore Rules
 11. **NEVER** use `allow create: if true` or `allow read, write: if true` on collections containing user data
 12. **NEVER** create duplicate `match` blocks for the same path -- the last one silently wins and the first becomes dead code
-    -> Found in: `firestore.rules` lines 460/813 (notifications), 477/833 (driverNotifications), 570/780 (app_crashes)
 13. **NEVER** reference undefined functions in rules -- this causes deployment failure
 14. **NEVER** leave `isEmailVerified()` as a no-op -- it must check `request.auth.token.email_verified == true`
 15. **NEVER** use `getUserData()` without first checking `exists()` -- it throws if the user document is missing
+16. **NEVER** leave TEMPORARY rules in production -- restrict to admin-only or remove (found at `firestore.rules:682-704`)
 
 ### Frontend-Backend Bridge
-16. **NEVER** perform security-sensitive operations directly from the client (role changes, payment processing, subscription activation)
+17. **NEVER** perform security-sensitive operations directly from the client (role changes, payment processing, subscription activation)
     -> These MUST go through Cloud Functions or server-side API routes
-17. **NEVER** trust client-computed values for pricing, balances, or financial amounts
+18. **NEVER** trust client-computed values for pricing, balances, or financial amounts
     -> Server MUST compute all financial amounts from source data
-18. **NEVER** expose Cloud Function business logic in client-side code
+19. **NEVER** expose Cloud Function business logic in client-side code
     -> If the client can see the logic, an attacker can find bypasses
 
 ### Assets & Files
-24. **NEVER** create placeholder assets (icons, images, logos, mock data) without explicit user approval
+20. **NEVER** create placeholder assets (icons, images, logos, mock data) without explicit user approval
     -> Always search the ENTIRE repository (including `join-app/public/`, `scripts/`, `scratch/`, nested `public/` folders) before creating or introducing new files
     -> Found in: `public/icon.svg` was created without authorization; real logo was at `join-app/public/icon.png`
 
 ### Cloud Functions (Shared with Mobile)
-19. **NEVER** skip `withGuard()` for any callable Cloud Function
-20. **NEVER** expose `error.message` to clients in `HttpsError("internal", ...)` -- use generic messages
-21. **NEVER** use `enforceAppCheck: false` on production endpoints
-22. **NEVER** export the same function name twice -- the second overwrites the first silently
-23. **NEVER** use `console.log` for tokens, UIDs, API keys, or PII in production code
+21. **NEVER** skip `withGuard()` for any callable Cloud Function
+22. **NEVER** expose `error.message` to clients in `HttpsError("internal", ...)` -- use generic messages
+23. **NEVER** use `enforceAppCheck: false` on production endpoints
+24. **NEVER** export the same function name twice -- the second overwrites the first silently
+25. **NEVER** use `console.log` for tokens, UIDs, API keys, or PII in production code
     -> Found in: `app/signup/page.tsx` (user UIDs), `lib/email-service.ts` (recipient emails), 72+ instances total
 
 ---

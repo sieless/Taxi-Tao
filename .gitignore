@@ -29,6 +29,25 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+*.log
+crash.log
+firestore-debug.log
+dev-output.log
+
+# build logs
+build-log*.txt
+build_output*.txt
+tsc_output*.txt
+web-firestore-rules.txt
+
+# Expo / mobile artifacts
+.expo/
+app.json
+eas.json
+temp_app/
+
+# logs directory
+logs/
 
 # scratch (debug scripts with hardcoded secrets)
 scratch/

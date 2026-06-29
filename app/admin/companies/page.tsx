@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { doc, updateDoc, where, writeBatch, serverTimestamp, collection, query, getDocs } from "firebase/firestore";
-import { db, app } from "@/lib/firebase";
-import { getFunctions, httpsCallable } from "firebase/functions";
+import { db, functions } from "@/lib/firebase";
+import { httpsCallable } from "firebase/functions";
 import { useAuth } from "@/lib/auth-context";
 import { Building2, Search, CheckCircle, XCircle, Phone, Mail, MapPin, Users, Trash2, Briefcase, MessageSquare, X } from "lucide-react";
 import { useModal } from "@/lib/admin-modal-context";
@@ -84,7 +84,6 @@ export default function CompaniesPage() {
     
     setActing(company.id);
     try {
-      const functions = getFunctions(app, "europe-west3");
       const purgeFn = httpsCallable(functions, "adminPurgeCompany");
       await purgeFn({ companyId: company.id });
       

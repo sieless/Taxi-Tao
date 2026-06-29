@@ -314,7 +314,7 @@ export default function HireTab() {
                     <div key={idx} className="flex items-center justify-between p-2 bg-slate-50 rounded-xl border border-slate-100 text-xs">
                       <span className="text-slate-600 font-medium">{doc.label}</span>
                       {doc.url ? (
-                        <a href={doc.url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:text-indigo-700 transition-colors">
+                        <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-700 transition-colors">
                           <ExternalLink size={14} />
                         </a>
                       ) : (
@@ -781,8 +781,8 @@ export default function HireTab() {
                               key={i}
                               href={d.url}
                               target="_blank"
-                              rel="noreferrer"
-                              className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${
+                               rel="noopener noreferrer"
+                               className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${
                                 d.url 
                                   ? "bg-white border-slate-200 hover:border-indigo-500 hover:shadow-md cursor-pointer" 
                                   : "bg-slate-50 border-slate-100 opacity-50 cursor-not-allowed"

@@ -32,21 +32,12 @@ export const metadata: Metadata = {
     description:
       "Book reliable taxi and car hire services across Kenya. Professional drivers, well-maintained vehicles, 24/7 support.",
     url: BASE_URL,
-    images: [
-      {
-        url: `${BASE_URL}/icon.png`,
-        width: 512,
-        height: 512,
-        alt: "TaxiTao",
-      },
-    ],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "TaxiTao — Kenya's Transport Ecosystem",
     description:
       "Book reliable taxi and car hire services across Kenya.",
-    images: [`${BASE_URL}/icon.png`],
   },
   robots: {
     index: true,

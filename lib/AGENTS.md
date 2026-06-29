@@ -51,31 +51,33 @@ DEFENSE: Never import firebase-admin in client code
 
 ## Session Management
 
-### Finding C5: Session Cookie Trusts Plain UID
+### Finding C5: Session Cookie Trusts Plain UID — **FIXED**
 
-**File:** `lib/auth-server.ts` lines 70-90
+**File:** `lib/auth-server.ts`
 
-The session cookie fallback path trusts a plain UID without cryptographic verification:
+The session cookie now uses `verifySessionCookie()` to cryptographically verify against Firebase Auth. The old plain UID trust path has been removed.
 
 ```typescript
-// VULNERABLE -- Trusts plain UID from cookie
+// CORRECT -- Current implementation
+const decodedToken = await getAuth().verifySessionCookie(sessionCookie, true);
+// Use decodedToken.uid
+
+// WRONG -- Old vulnerable pattern (FIXED)
 if (sessionCookie) {
   const uid = sessionCookie;  // FORGEABLE!
-  const userDoc = await db.collection("users").doc(uid).get();
-  // ...
 }
 ```
 
 **Rules:**
-- MUST verify session cookie against Firebase Auth (`verifyIdToken`)
+- MUST verify session cookie against Firebase Auth (`verifySessionCookie`)
 - NEVER trust a plain UID from a cookie without verification
 - An attacker who can set cookies (via subdomain) can forge this
 
-### Finding H4: Cookies Set via document.cookie
+### Finding H4: Cookies Set via document.cookie — **FIXED**
 
-**File:** `lib/auth-context.tsx` lines 221-234
+**File:** `lib/auth-context.tsx`
 
-Session cookies are set via `document.cookie` which CANNOT set the `httpOnly` flag.
+Session cookies are now set server-side via `/api/auth/session` API route which uses `Set-Cookie` header with `httpOnly` flag. The old `document.cookie` approach has been removed.
 
 **Rules:**
 - MUST set session cookies server-side via `Set-Cookie` header

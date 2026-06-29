@@ -218,9 +218,9 @@ export default function ProfileForm() {
 
 ---
 
-## localStorage Usage (CRITICAL)
+## localStorage Usage (CRITICAL) — **FIXED**
 
-**Finding C4:** User profiles, driver profiles, and company profiles are stored in `localStorage` (lines 108, 123, 150, 164 of `lib/auth-context.tsx`). localStorage is XSS-accessible.
+**Finding C4:** User profiles, driver profiles, and company profiles were stored in `localStorage` (XSS-accessible). **All localStorage usage has been removed from `lib/auth-context.tsx`** — profiles are now stored in React state only, which is cleared on unmount.
 
 ### Rules
 

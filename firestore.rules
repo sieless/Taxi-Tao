@@ -39,18 +39,10 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
     
-    // Check if user is NOT suspended
-    function isNotSuspended() {
-      return isSignedIn() && (
-        !exists(/databases/$(database)/documents/users/$(request.auth.uid)) ||
-        !("suspended" in get(/databases/$(database)/documents/users/$(request.auth.uid)).data) ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.suspended != true
-      );
-    }
-    
-    // Get current user's profile data
+    // Get current user's profile data (returns {} if user doc missing)
     function getUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      let ref = /databases/$(database)/documents/users/$(request.auth.uid);
+      return exists(ref) ? get(ref).data : {};
     }
     
     // Check if user is admin (requires email verification)
@@ -111,12 +103,6 @@ service cloud.firestore {
           (!("suspended" in getUserData()) || getUserData().suspended != true)
         )
       );
-    }
-
-    // Check if current user's companyId matches the given id (vendor ownership)
-    function isCompanyOwner(companyId) {
-      return isCarHire() &&
-             getUserData().companyId == companyId;
     }
 
     // Check if current user matches the driver for a resource
@@ -482,8 +468,8 @@ service cloud.firestore {
       // CRITICAL: Only subscribed drivers (with verified email) OR admins can read private data
       allow read: if isSignedIn() && isEmailVerified() && (isSubscribedDriver() || isAdmin());
       
-      // System creates during booking flow (no auth required for system operations)
-      allow create: if true;
+      // Cloud Functions use Admin SDK (bypasses rules) — deny all client writes
+      allow create: if false;
       
       // Only admins can modify
       allow update, delete: if isAdmin();
@@ -604,7 +590,7 @@ service cloud.firestore {
     // RIDE REQUESTS (Legacy fallback)
     // ============================================================
     match /rideRequests/{requestId} {
-      allow create: if true;
+      allow create: if isSignedIn() && isEmailVerified();
       allow read: if isSignedIn() && (isDriver() || isAdmin());
       allow update: if isSignedIn() && (
         (isDriver() && resource.data.status == 'pending') ||

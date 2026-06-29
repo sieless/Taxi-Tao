@@ -132,7 +132,7 @@ export default function ShareLinksPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
-                <a href={`https://taxitao.co.ke/ref/${link.code}`} target="_blank" rel="noreferrer" className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 transition"><ExternalLink size={15} /></a>
+                <a href={`https://taxitao.co.ke/ref/${link.code}`} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 transition"><ExternalLink size={15} /></a>
                 <button onClick={() => copyLink(link)} className={`p-2 rounded-lg transition ${copied === link.id ? "bg-primary-100 text-primary-700" : "bg-gray-100 hover:bg-gray-200 text-gray-500"}`}><Copy size={15} /></button>
                 {canManage && (
                   <>

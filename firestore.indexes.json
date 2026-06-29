@@ -69,14 +69,6 @@
       ]
     },
     {
-      "collectionGroup": "bookingRequests",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "status", "arrayConfig": "CONTAINS" },
-        { "fieldPath": "notifiedDrivers", "arrayConfig": "CONTAINS" }
-      ]
-    },
-    {
       "collectionGroup": "drivers",
       "queryScope": "COLLECTION",
       "fields": [
@@ -420,13 +412,6 @@
         { "fieldPath": "isRental", "order": "ASCENDING" },
         { "fieldPath": "driverId", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "vehicles",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "slug", "order": "ASCENDING" }
       ]
     },
     {

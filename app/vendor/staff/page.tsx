@@ -35,8 +35,8 @@ import {
 } from 'firebase/firestore';
 import { db } from "@/lib/firebase";
 import { useRouter } from 'next/navigation';
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { app } from '@/lib/firebase';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '@/lib/firebase';
 
 export default function StaffManagementPage() {
   const { user, userProfile } = useAuth();
@@ -160,7 +160,6 @@ export default function StaffManagementPage() {
       }
       tempPassword = pwArray.join("");
 
-      const functions = getFunctions(app, "europe-west3");
       const createStaffAccountFn = httpsCallable(functions, "createStaffAccount");
       const result = await createStaffAccountFn({
         email,

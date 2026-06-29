@@ -56,9 +56,16 @@ export async function suspendUser(
 ): Promise<UserActionResult> {
   guardSuperAdmin(userId, "suspend");
 
-  const fn = httpsCallable(functions, "suspendUser");
-  const result = await fn({ userId, adminUid }) as { data: UserActionResult };
-  return result.data;
+  try {
+    const fn = httpsCallable(functions, "suspendUser");
+    const result = await fn({ userId, adminUid }) as { data: UserActionResult };
+    return result.data;
+  } catch (error: any) {
+    if (process.env.NODE_ENV === "development") {
+      console.error("suspendUser Cloud Function error:", error);
+    }
+    throw new Error(error?.message || "Failed to suspend user. Please try again.");
+  }
 }
 
 /**
@@ -69,9 +76,16 @@ export async function unsuspendUser(
   userId: string,
   adminUid: string
 ): Promise<UserActionResult> {
-  const fn = httpsCallable(functions, "unsuspendUser");
-  const result = await fn({ userId, adminUid }) as { data: UserActionResult };
-  return result.data;
+  try {
+    const fn = httpsCallable(functions, "unsuspendUser");
+    const result = await fn({ userId, adminUid }) as { data: UserActionResult };
+    return result.data;
+  } catch (error: any) {
+    if (process.env.NODE_ENV === "development") {
+      console.error("unsuspendUser Cloud Function error:", error);
+    }
+    throw new Error(error?.message || "Failed to unsuspend user. Please try again.");
+  }
 }
 
 // ── Delete ────────────────────────────────────────────────────────────────────
@@ -88,9 +102,16 @@ export async function deleteUser(
 ): Promise<UserActionResult> {
   guardSuperAdmin(userId, "delete");
 
-  const fn = httpsCallable(functions, "deleteUser");
-  const result = await fn({ userId, adminUid }) as { data: UserActionResult };
-  return result.data;
+  try {
+    const fn = httpsCallable(functions, "deleteUser");
+    const result = await fn({ userId, adminUid }) as { data: UserActionResult };
+    return result.data;
+  } catch (error: any) {
+    if (process.env.NODE_ENV === "development") {
+      console.error("deleteUser Cloud Function error:", error);
+    }
+    throw new Error(error?.message || "Failed to delete user. Please try again.");
+  }
 }
 
 // ── Role change ───────────────────────────────────────────────────────────────
@@ -123,7 +144,14 @@ export async function changeUserRole(
 ): Promise<UserActionResult> {
   guardSuperAdmin(payload.userId, "change role of");
 
-  const fn = httpsCallable(functions, "changeUserRole");
-  const result = await fn(payload) as { data: UserActionResult };
-  return result.data;
+  try {
+    const fn = httpsCallable(functions, "changeUserRole");
+    const result = await fn(payload) as { data: UserActionResult };
+    return result.data;
+  } catch (error: any) {
+    if (process.env.NODE_ENV === "development") {
+      console.error("changeUserRole Cloud Function error:", error);
+    }
+    throw new Error(error?.message || "Failed to change user role. Please try again.");
+  }
 }

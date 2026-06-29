@@ -1,7 +1,5 @@
-import { getFunctions, httpsCallable } from "firebase/functions";
-import { app } from "./firebase";
-
-const functions = getFunctions(app, "europe-west3");
+import { httpsCallable } from "firebase/functions";
+import { functions } from "./firebase";
 
 /**
  * Trigger the custom Resend-based verification email Cloud Function

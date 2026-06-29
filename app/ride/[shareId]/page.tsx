@@ -96,7 +96,7 @@ export default function RideShareHandoffPage() {
                 href={playStoreUrl}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 text-white px-4 py-3 font-semibold hover:bg-slate-800 transition"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
               >
                 <Download size={18} />
                 Get Android App

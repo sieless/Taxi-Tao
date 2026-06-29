@@ -42,8 +42,6 @@ import {
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { forceTokenRefresh } from "@/lib/admin-service";
-import { httpsCallable } from "firebase/functions";
-import { functions } from "@/lib/firebase";
 import { suspendUser, unsuspendUser } from "@/lib/admin-user-service";
 import { useModal } from "@/lib/admin-modal-context";
 import { 

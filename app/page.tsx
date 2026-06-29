@@ -594,21 +594,7 @@ export default function Home() {
               with your taxi bookings and inquiries.
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-              <div className="bg-gray-50 text-gray-900 rounded-xl p-6 shadow-lg transform transition hover:scale-105 border border-gray-200">
-                <div className="text-lg font-bold mb-1 flex items-center justify-center gap-2">
-                  <Phone className="w-5 h-5" /> +254 710 450 640
-                </div>
-                <p className="text-sm text-gray-600 mb-3">
-                  Primary Booking Line
-                </p>
-                <a
-                  href="tel:+254710450640"
-                  className="inline-block text-sm bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-lg transition font-medium"
-                >
-                  Call Now
-                </a>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
               <div className="bg-gray-50 text-gray-900 rounded-xl p-6 shadow-lg transform transition hover:scale-105 border border-gray-200">
                 <div className="text-lg font-bold mb-1 flex items-center justify-center gap-2">
                   <Phone className="w-5 h-5" /> +254 743 942 883
@@ -839,7 +825,7 @@ export default function Home() {
                         href="tel:+254708674665"
                         className="hover:text-gray-900"
                       >
-                        +254 710 450 640
+                        +254 708 674 665
                       </a>{" "}
                       (Booking)
                     </p>

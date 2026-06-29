@@ -118,11 +118,6 @@ match /adminAuditLogs/{logId} {
 | `getUserData()` without `exists()` guard | Throws error if user document is missing |
 | `get()` on potentially missing documents | Must use `exists()` first in Firestore rules v2 |
 
-**Known duplicate match blocks in this codebase:**
-- `/notifications/{notificationId}`: Lines 460 and 813
-- `/driverNotifications/{notificationId}`: Lines 477 and 833
-- `/app_crashes/{crashId}`: Lines 570 and 780
-
 #### 1.1.4 Default Deny Rule
 
 Every Firestore rules file MUST end with:
@@ -247,28 +242,26 @@ DEFENSE: httpOnly + secure + sameSite=Lax
   → sameSite=Lax: Cookie not sent on cross-site form submissions
 ```
 
-**Finding C5:** Session cookie fallback to unverified UID
+**Finding C5:** Session cookie fallback to unverified UID — **FIXED**
 
-The session cookie in `lib/auth-server.ts` (lines 70-90) trusts a plain UID without cryptographic verification. An attacker who can set cookies (via subdomain) can forge this cookie.
+The session cookie in `lib/auth-server.ts` now uses `verifySessionCookie()` to cryptographically verify the session against Firebase Auth. The old plain UID trust path has been removed.
 
 **Rules:**
 
 ```typescript
-// CORRECT -- Verify against Firebase Auth
-if (authTokenCookie) {
-  const decoded = await getAuth(adminApp).verifyIdToken(authTokenCookie);
-  // Use decoded.uid
-}
+// CORRECT -- Verify against Firebase Auth (current implementation)
+const decodedToken = await getAuth().verifySessionCookie(sessionCookie, true);
+// Use decodedToken.uid
 
-// WRONG -- Trust plain UID from cookie (C5 finding)
+// WRONG -- Trust plain UID from cookie (C5 finding — FIXED)
 if (sessionCookie) {
   const uid = sessionCookie;  // FORGEABLE!
 }
 ```
 
-**Finding H4:** Session cookies set via document.cookie
+**Finding H4:** Session cookies set via document.cookie — **FIXED**
 
-`lib/auth-context.tsx` (lines 221-234) sets cookies via `document.cookie` which CANNOT set the `httpOnly` flag. This means XSS attacks can steal session tokens.
+`lib/auth-context.tsx` now calls `/api/auth/session` which sets httpOnly cookies via `Set-Cookie` header. The old `document.cookie` approach has been removed.
 
 **Rules:**
 - MUST set session cookies server-side via `Set-Cookie` header
@@ -476,8 +469,8 @@ DEFENSE: Validate returnTo parameter
 
 | What's Stored | Location | Risk | Fix |
 |---------------|----------|------|-----|
-| `userProfile` | localStorage | XSS steals role, email, PII | Use React state |
-| `driverProfile` | localStorage | XSS steals driver data | Use React state |
+| `userProfile` | localStorage | XSS steals role, email, PII | **FIXED** — Removed all localStorage from auth-context.tsx |
+| `driverProfile` | localStorage | XSS steals driver data | **FIXED** — Removed all localStorage from auth-context.tsx |
 | `companyProfile` | localStorage | XSS steals company data | **FIXED** — Removed all localStorage from auth-context.tsx |
 | `userRole` | localStorage | Role simulation, confusing | Remove in production |
 

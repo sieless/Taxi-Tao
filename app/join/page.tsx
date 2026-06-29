@@ -199,7 +199,7 @@ function JoinWorkspaceContent() {
               <a 
                 href="https://play.google.com/store/apps/details?id=co.ke.taxitao"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="flex-1 bg-gray-900 hover:bg-gray-850 text-white py-3 rounded-xl flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-wider transition shadow-md"
               >
                 <svg viewBox="0 0 512 512" className="w-4 h-4 shrink-0" fill="none" xmlns="http://www.w3.org/2000/svg">

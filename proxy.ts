@@ -65,12 +65,14 @@ export function proxy(request: NextRequest) {
       ? `script-src 'self' 'unsafe-eval' 'nonce-${nonce}' 'strict-dynamic'`
       : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
     `style-src 'self' 'unsafe-inline'`,
-    "img-src 'self' blob: data: https://images.unsplash.com https://firebasestorage.googleapis.com",
+    "img-src 'self' blob: data: https://images.unsplash.com https://firebasestorage.googleapis.com https://lh3.googleusercontent.com",
     "font-src 'self'",
-    "connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://api.resend.com wss://*.firebaseio.com",
+    "connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://api.resend.com https://europe-west3-studio-6444216032-ee9f7.cloudfunctions.net wss://*.firebaseio.com",
+    "frame-src https://accounts.google.com https://taxitao.co.ke",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
+    "object-src 'none'",
     "upgrade-insecure-requests",
   ].join("; ");
 
