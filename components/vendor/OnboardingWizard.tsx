@@ -33,19 +33,26 @@ import { logError } from "@/lib/logger";export default function OnboardingWizard
   const router = useRouter();
 
   // Form State
+  // ── Form state matches mobile schema exactly ──
   const [formData, setFormData] = useState({
     name: userProfile?.name || "",
     phone: userProfile?.phone || "",
-    address: "",
-    bankName: "",
-    accountNumber: "",
-    accountName: "",
-    mpesaTill: "",
-    mpesaPaybill: "",
-    mpesaAccount: "",
-    permitUrls: [] as string[], // Synchronized with mobile
+    physicalAddress: "",       // Mobile writes: physicalAddress (string)
+    permitUrls: [] as string[], // Mobile writes: permitUrls (string[])
     logoUrl: "",
-    yardImageUrl: "", // Office Anchor field from mobile
+    yardImageUrl: "",           // Mobile writes: yardImageUrl (string)
+    // bankDetails object — matches mobile saveCompanySettings shape
+    bankName: "",
+    bankAccountNumber: "",
+    bankAccountName: "",
+    bankBranchCode: "",
+    // mpesaDetails object — matches mobile saveCompanySettings shape
+    mpesaType: "till" as "till" | "paybill" | "send_money",
+    mpesaTillNumber: "",
+    mpesaPaybillNumber: "",
+    mpesaAccountNumber: "",
+    mpesaPhoneNumber: "",
+    mpesaAccountName: "",
   });
 
   useEffect(() => {
@@ -55,19 +62,26 @@ import { logError } from "@/lib/logger";export default function OnboardingWizard
         const snap = await getDoc(doc(db, "companies", user.uid));
         if (snap.exists()) {
           const data = snap.data();
+          // Read from mobile-compatible fields with legacy fallbacks
           setFormData({
             name: data.name || userProfile?.name || "",
             phone: data.phone || userProfile?.phone || "",
-            address: data.officeLocation?.address || "",
-            bankName: data.paymentDetails?.bankName || "",
-            accountNumber: data.paymentDetails?.accountNumber || "",
-            accountName: data.paymentDetails?.accountName || "",
-            mpesaTill: data.paymentDetails?.mpesaTill || "",
-            mpesaPaybill: data.paymentDetails?.mpesaPaybill || "",
-            mpesaAccount: data.paymentDetails?.mpesaAccount || "",
+            physicalAddress: data.physicalAddress || data.officeLocation?.address || "",
             permitUrls: data.permitUrls || [],
             logoUrl: data.logoUrl || "",
             yardImageUrl: data.yardImageUrl || "",
+            // bankDetails (mobile schema) with legacy paymentDetails fallback
+            bankName: data.bankDetails?.bankName || data.paymentDetails?.bankName || "",
+            bankAccountNumber: data.bankDetails?.accountNumber || data.paymentDetails?.accountNumber || "",
+            bankAccountName: data.bankDetails?.accountName || data.paymentDetails?.accountName || "",
+            bankBranchCode: data.bankDetails?.branchCode || "",
+            // mpesaDetails (mobile schema) with legacy paymentDetails fallback
+            mpesaType: data.mpesaDetails?.type || "till",
+            mpesaTillNumber: data.mpesaDetails?.tillNumber || data.paymentDetails?.mpesaTill || "",
+            mpesaPaybillNumber: data.mpesaDetails?.paybillNumber || data.paymentDetails?.mpesaPaybill || "",
+            mpesaAccountNumber: data.mpesaDetails?.accountNumber || data.paymentDetails?.mpesaAccount || "",
+            mpesaPhoneNumber: data.mpesaDetails?.phoneNumber || "",
+            mpesaAccountName: data.mpesaDetails?.accountName || "",
           });
         }
       } catch (err) {
@@ -86,7 +100,7 @@ import { logError } from "@/lib/logger";export default function OnboardingWizard
   const nextStep = () => {
     // Basic validation before moving forward
     if (step === 1) {
-      if (!formData.name || !formData.phone || !formData.address || !formData.yardImageUrl) {
+      if (!formData.name || !formData.phone || !formData.physicalAddress || !formData.yardImageUrl) {
         alert("Please fill in all company profile details and upload your Yard Image (Office Anchor).");
         return;
       }
@@ -98,8 +112,8 @@ import { logError } from "@/lib/logger";export default function OnboardingWizard
       }
     }
     if (step === 3) {
-      const hasBank = !!(formData.bankName && formData.accountNumber && formData.accountName);
-      const hasMpesa = !!(formData.mpesaTill || (formData.mpesaPaybill && formData.mpesaAccount));
+      const hasBank = !!(formData.bankName && formData.bankAccountNumber && formData.bankAccountName);
+      const hasMpesa = !!(formData.mpesaTillNumber || (formData.mpesaPaybillNumber && formData.mpesaAccountNumber));
       if (!hasBank && !hasMpesa) {
         alert("Please provide at least one complete payment method (Bank or M-Pesa) so customers can pay you.");
         return;
@@ -165,14 +179,14 @@ import { logError } from "@/lib/logger";export default function OnboardingWizard
     if (!user) return;
     
     // Final Validation
-    if (!formData.name || !formData.phone || !formData.address || !formData.yardImageUrl || formData.permitUrls.length === 0) {
+    if (!formData.name || !formData.phone || !formData.physicalAddress || !formData.yardImageUrl || formData.permitUrls.length === 0) {
       alert("Missing required information. Please ensure all details, yard image, and documents are provided.");
       setStep(1); // Go back to start to fix
       return;
     }
 
-    const hasBank = !!(formData.bankName && formData.accountNumber && formData.accountName);
-    const hasMpesa = !!(formData.mpesaTill || (formData.mpesaPaybill && formData.mpesaAccount));
+    const hasBank = !!(formData.bankName && formData.bankAccountNumber && formData.bankAccountName);
+    const hasMpesa = !!(formData.mpesaTillNumber || (formData.mpesaPaybillNumber && formData.mpesaAccountNumber));
     
     if (!hasBank && !hasMpesa) {
       alert("Please provide at least one complete payment method (Bank or M-Pesa) so customers can pay you.");
@@ -182,24 +196,30 @@ import { logError } from "@/lib/logger";export default function OnboardingWizard
 
     setLoading(true);
     try {
-      // Update Company document
+      // Update Company document — writes mobile-compatible schema
       const companyRef = doc(db, "companies", user.uid);
       await updateDoc(companyRef, {
         name: formData.name,
         phone: formData.phone,
         logoUrl: formData.logoUrl,
         yardImageUrl: formData.yardImageUrl,
-        officeLocation: {
-          address: formData.address,
-        },
-        permitUrls: formData.permitUrls,
-        paymentDetails: {
+        physicalAddress: formData.physicalAddress,   // Mobile field
+        permitUrls: formData.permitUrls,              // Mobile field
+        // bankDetails — matches mobile saveCompanySettings shape
+        bankDetails: {
           bankName: formData.bankName,
-          accountNumber: formData.accountNumber,
-          accountName: formData.accountName,
-          mpesaTill: formData.mpesaTill,
-          mpesaPaybill: formData.mpesaPaybill,
-          mpesaAccount: formData.mpesaAccount,
+          accountName: formData.bankAccountName,
+          accountNumber: formData.bankAccountNumber,
+          branchCode: formData.bankBranchCode,
+        },
+        // mpesaDetails — matches mobile saveCompanySettings shape
+        mpesaDetails: {
+          type: formData.mpesaType,
+          tillNumber: formData.mpesaTillNumber,
+          paybillNumber: formData.mpesaPaybillNumber,
+          accountNumber: formData.mpesaAccountNumber,
+          phoneNumber: formData.mpesaPhoneNumber,
+          accountName: formData.mpesaAccountName,
         },
         subscriptionStatus: "pending",
         onboardingStep: 3, // Completed
@@ -371,8 +391,8 @@ import { logError } from "@/lib/logger";export default function OnboardingWizard
                 <MapPin className="absolute left-4 top-3.5 text-gray-400 w-5 h-5" />
                 <input 
                   type="text" 
-                  value={formData.address}
-                  onChange={(e) => updateFormData("address", e.target.value)}
+                  value={formData.physicalAddress}
+                  onChange={(e) => updateFormData("physicalAddress", e.target.value)}
                   className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm transition-all"
                   placeholder="e.g. Westlands, Nairobi, ABC Building"
                 />
@@ -505,8 +525,8 @@ import { logError } from "@/lib/logger";export default function OnboardingWizard
                   <label className="block text-sm font-medium text-gray-700 mb-1">Account Name</label>
                   <input
                     type="text"
-                    value={formData.accountName}
-                    onChange={(e) => updateFormData("accountName", e.target.value)}
+                    value={formData.bankAccountName}
+                    onChange={(e) => updateFormData("bankAccountName", e.target.value)}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none"
                     placeholder="Full Legal/Business Name"
                   />
@@ -515,8 +535,8 @@ import { logError } from "@/lib/logger";export default function OnboardingWizard
                   <label className="block text-sm font-medium text-gray-700 mb-1">Account Number</label>
                   <input
                     type="text"
-                    value={formData.accountNumber}
-                    onChange={(e) => updateFormData("accountNumber", e.target.value)}
+                    value={formData.bankAccountNumber}
+                    onChange={(e) => updateFormData("bankAccountNumber", e.target.value)}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none"
                     placeholder="0123 4567 890"
                   />
@@ -531,8 +551,8 @@ import { logError } from "@/lib/logger";export default function OnboardingWizard
                   <label className="block text-sm font-medium text-gray-700 mb-1">Buy Goods Till Number</label>
                   <input
                     type="text"
-                    value={formData.mpesaTill}
-                    onChange={(e) => updateFormData("mpesaTill", e.target.value)}
+                    value={formData.mpesaTillNumber}
+                    onChange={(e) => updateFormData("mpesaTillNumber", e.target.value)}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none"
                     placeholder="e.g. 543210"
                   />
@@ -541,19 +561,19 @@ import { logError } from "@/lib/logger";export default function OnboardingWizard
                   <label className="block text-sm font-medium text-gray-700 mb-1">Paybill Number (Optional)</label>
                   <input
                     type="text"
-                    value={formData.mpesaPaybill}
-                    onChange={(e) => updateFormData("mpesaPaybill", e.target.value)}
+                    value={formData.mpesaPaybillNumber}
+                    onChange={(e) => updateFormData("mpesaPaybillNumber", e.target.value)}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none"
                     placeholder="e.g. 247247"
                   />
                 </div>
-                {formData.mpesaPaybill && (
+                {formData.mpesaPaybillNumber && (
                   <div className="animate-in slide-in-from-top-2 duration-300">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Paybill Account Number</label>
                     <input
                       type="text"
-                      value={formData.mpesaAccount}
-                      onChange={(e) => updateFormData("mpesaAccount", e.target.value)}
+                      value={formData.mpesaAccountNumber}
+                      onChange={(e) => updateFormData("mpesaAccountNumber", e.target.value)}
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none"
                       placeholder="e.g. Your Business Name or Number"
                     />

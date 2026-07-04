@@ -31,7 +31,9 @@ import {
   ExternalLink,
   Zap,
   CreditCard,
-  Wallet
+  Wallet,
+  MapPin,
+  Image as ImageIcon
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useModal } from "@/lib/admin-modal-context";
@@ -305,30 +307,46 @@ export default function HireTab() {
 
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="space-y-3">
-                  <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Company Documents</p>
-                  {[
-                    { label: "Incorporation Cert", url: c.incorporationDocUrl },
-                    { label: "KRA PIN Cert", url: c.kraPinDocUrl },
-                    { label: "Compliance Doc", url: c.complianceDocUrl }
-                  ].map((doc, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-2 bg-slate-50 rounded-xl border border-slate-100 text-xs">
-                      <span className="text-slate-600 font-medium">{doc.label}</span>
-                      {doc.url ? (
-                        <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-700 transition-colors">
+                  <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Legal Documents</p>
+                  {(c.permitUrls && c.permitUrls.length > 0) ? (
+                    c.permitUrls.map((url: string, idx: number) => (
+                      <div key={idx} className="flex items-center justify-between p-2 bg-slate-50 rounded-xl border border-slate-100 text-xs">
+                        <span className="text-slate-600 font-medium">Document #{idx + 1}</span>
+                        <a href={url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-700 transition-colors">
                           <ExternalLink size={14} />
                         </a>
-                      ) : (
-                        <span className="text-slate-300"><XCircle size={14} /></span>
-                      )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="flex items-center justify-between p-2 bg-slate-50 rounded-xl border border-slate-100 text-xs">
+                      <span className="text-slate-400 font-medium">No Documents Uploaded</span>
+                      <span className="text-slate-300"><XCircle size={14} /></span>
                     </div>
-                  ))}
+                  )}
+                  {/* Yard Image (Office Anchor) */}
+                  <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider pt-2">Office Anchor</p>
+                  <div className="flex items-center justify-between p-2 bg-slate-50 rounded-xl border border-slate-100 text-xs">
+                    <span className="text-slate-600 font-medium">Yard Image</span>
+                    {c.yardImageUrl ? (
+                      <a href={c.yardImageUrl} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-700 transition-colors">
+                        <ExternalLink size={14} />
+                      </a>
+                    ) : (
+                      <span className="text-slate-300"><XCircle size={14} /></span>
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-3">
                   <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Representative</p>
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                    <p className="text-xs font-bold text-slate-900">{c.representativeName || "N/A"}</p>
-                    <p className="text-[10px] text-slate-500 mt-1">{c.representativePhone || "No Phone"}</p>
-                    <p className="text-[10px] text-slate-500">{c.representativeEmail || "No Email"}</p>
+                    <p className="text-xs font-bold text-slate-900">{c.representativeName || c.name || "N/A"}</p>
+                    <p className="text-[10px] text-slate-500 mt-1">{c.representativeRole || ""}</p>
+                    <p className="text-[10px] text-slate-500 mt-1">{c.phone || "No Phone"}</p>
+                    <p className="text-[10px] text-slate-500">{c.email || "No Email"}</p>
+                  </div>
+                  <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider pt-2">Address</p>
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                    <p className="text-xs font-bold text-slate-900">{c.physicalAddress || c.officeLocation?.address || "N/A"}</p>
                   </div>
                 </div>
               </div>
@@ -701,7 +719,7 @@ export default function HireTab() {
                           </div>
                           <div>
                             <p className="text-[10px] text-slate-400 font-bold uppercase">Physical Address</p>
-                            <p className="text-sm font-bold text-slate-900">{selectedCompany.officeLocation?.address || "No Address Provided"}</p>
+                            <p className="text-sm font-bold text-slate-900">{selectedCompany.physicalAddress || selectedCompany.officeLocation?.address || "No Address Provided"}</p>
                           </div>
                           <div>
                             <p className="text-[10px] text-slate-400 font-bold uppercase">Bio / Description</p>
@@ -723,11 +741,11 @@ export default function HireTab() {
                           </div>
                           <div className="flex items-center gap-3">
                             <Phone size={14} className="text-slate-400" />
-                            <p className="text-xs font-bold text-slate-700">{selectedCompany.representativePhone || selectedCompany.phone || "N/A"}</p>
+                            <p className="text-xs font-bold text-slate-700">{selectedCompany.phone || selectedCompany.representativePhone || "N/A"}</p>
                           </div>
                           <div className="flex items-center gap-3">
                             <MessageSquare size={14} className="text-slate-400" />
-                            <p className="text-xs font-bold text-slate-700">{selectedCompany.representativeEmail || selectedCompany.email || "N/A"}</p>
+                            <p className="text-xs font-bold text-slate-700">{selectedCompany.email || selectedCompany.representativeEmail || "N/A"}</p>
                           </div>
                         </div>
                       </div>
@@ -744,9 +762,9 @@ export default function HireTab() {
                             <p className="text-[10px] text-primary-600 font-black uppercase mb-2 flex items-center gap-1.5">
                               <Building2 size={12} /> Bank Transfer
                             </p>
-                            <p className="text-sm font-black text-slate-900">{selectedCompany.paymentDetails?.bankName || "Not Set"}</p>
-                            <p className="text-xs font-bold text-slate-500 mt-1">Acc: {selectedCompany.paymentDetails?.accountNumber || "N/A"}</p>
-                            <p className="text-[10px] text-slate-400 font-medium">{selectedCompany.paymentDetails?.accountName || "N/A"}</p>
+                            <p className="text-sm font-black text-slate-900">{selectedCompany.bankDetails?.bankName || selectedCompany.paymentDetails?.bankName || "Not Set"}</p>
+                            <p className="text-xs font-bold text-slate-500 mt-1">Acc: {selectedCompany.bankDetails?.accountNumber || selectedCompany.paymentDetails?.accountNumber || "N/A"}</p>
+                            <p className="text-[10px] text-slate-400 font-medium">{selectedCompany.bankDetails?.accountName || selectedCompany.paymentDetails?.accountName || "N/A"}</p>
                           </div>
                           <div>
                             <p className="text-[10px] text-primary-600 font-black uppercase mb-2 flex items-center gap-1.5">
@@ -755,12 +773,12 @@ export default function HireTab() {
                             <div className="grid grid-cols-2 gap-4">
                               <div>
                                 <p className="text-[10px] text-slate-400 font-bold">Till Number</p>
-                                <p className="text-sm font-black text-slate-900">{selectedCompany.paymentDetails?.mpesaTill || "None"}</p>
+                                <p className="text-sm font-black text-slate-900">{selectedCompany.mpesaDetails?.tillNumber || selectedCompany.paymentDetails?.mpesaTill || "None"}</p>
                               </div>
                               <div>
                                 <p className="text-[10px] text-slate-400 font-bold">Paybill + Account</p>
-                                <p className="text-sm font-black text-slate-900">{selectedCompany.paymentDetails?.mpesaPaybill || "None"}</p>
-                                {selectedCompany.paymentDetails?.mpesaAccount && <p className="text-[10px] font-bold text-primary-600">Acc: {selectedCompany.paymentDetails.mpesaAccount}</p>}
+                                <p className="text-sm font-black text-slate-900">{selectedCompany.mpesaDetails?.paybillNumber || selectedCompany.paymentDetails?.mpesaPaybill || "None"}</p>
+                                {(selectedCompany.mpesaDetails?.accountNumber || selectedCompany.paymentDetails?.mpesaAccount) && <p className="text-[10px] font-bold text-primary-600">Acc: {selectedCompany.mpesaDetails?.accountNumber || selectedCompany.paymentDetails?.mpesaAccount}</p>}
                               </div>
                             </div>
                           </div>
@@ -772,31 +790,51 @@ export default function HireTab() {
                           <FileText size={14} className="text-indigo-600" /> Compliance Documents
                         </h4>
                         <div className="space-y-3">
-                          {[
-                            { label: "Incorporation Certificate", url: selectedCompany.incorporationDocUrl },
-                            { label: "KRA PIN Certificate", url: selectedCompany.kraPinDocUrl },
-                            { label: "Tax Compliance", url: selectedCompany.complianceDocUrl }
-                          ].map((d, i) => (
-                            <a 
-                              key={i}
-                              href={d.url}
-                              target="_blank"
-                               rel="noopener noreferrer"
-                               className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${
-                                d.url 
-                                  ? "bg-white border-slate-200 hover:border-indigo-500 hover:shadow-md cursor-pointer" 
-                                  : "bg-slate-50 border-slate-100 opacity-50 cursor-not-allowed"
-                              }`}
-                            >
+                          {selectedCompany.permitUrls && selectedCompany.permitUrls.length > 0 ? (
+                            selectedCompany.permitUrls.map((url: string, i: number) => (
+                              <a 
+                                key={i}
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center justify-between p-4 rounded-2xl border transition-all bg-white border-slate-200 hover:border-indigo-500 hover:shadow-md cursor-pointer" 
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600">
+                                    <FileText size={18} />
+                                  </div>
+                                  <span className="text-sm font-bold text-slate-700">Document #{i + 1}</span>
+                                </div>
+                                <ExternalLink size={16} className="text-slate-300" />
+                              </a>
+                            ))
+                          ) : (
+                            <div className="flex items-center justify-between p-4 rounded-2xl border transition-all bg-slate-50 border-slate-100 opacity-50 cursor-not-allowed">
                               <div className="flex items-center gap-3">
-                                <div className={`p-2 rounded-lg ${d.url ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-300'}`}>
+                                <div className="p-2 rounded-lg bg-slate-100 text-slate-300">
                                   <FileText size={18} />
                                 </div>
-                                <span className="text-sm font-bold text-slate-700">{d.label}</span>
+                                <span className="text-sm font-bold text-slate-700">No Documents Uploaded</span>
                               </div>
-                              {d.url && <ExternalLink size={16} className="text-slate-300" />}
-                            </a>
-                          ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Office Anchor */}
+                      <div>
+                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                          <MapPin size={14} className="text-indigo-600" /> Office Anchor (Yard Image)
+                        </h4>
+                        <div className="w-full h-48 bg-slate-100 rounded-3xl overflow-hidden border border-slate-200">
+                          {selectedCompany.yardImageUrl ? (
+                            <img src={selectedCompany.yardImageUrl} alt="Yard/Office" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-slate-400 flex-col gap-2">
+                              <ImageIcon size={24} />
+                              <span className="text-xs font-bold uppercase tracking-widest">No Image</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

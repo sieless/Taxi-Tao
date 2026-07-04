@@ -5,13 +5,24 @@ import {
   getCompanyById,
   getVehiclesByCompanyId,
   getCompanyFleetStats,
+  getVerifiedCompanies,
 } from "@/lib/seo/vehicle-service";
 import JsonLd from "@/components/seo/JsonLd";
 
 const BASE_URL = "https://taxitao.co.ke";
+export const revalidate = 3600;
 
 interface Props {
   params: Promise<{ companyId: string }>;
+}
+
+export async function generateStaticParams() {
+  try {
+    const companies = await getVerifiedCompanies(50);
+    return companies.map((c) => ({ companyId: c.id }));
+  } catch {
+    return [];
+  }
 }
 
 function normalizeOfficeLocation(
@@ -23,38 +34,42 @@ function normalizeOfficeLocation(
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { companyId } = await params;
-  const company = await getCompanyById(companyId);
-  if (!company || company.status !== "active") return {};
+  try {
+    const { companyId } = await params;
+    const company = await getCompanyById(companyId);
+    if (!company || company.status !== "active") return {};
 
-  const location = normalizeOfficeLocation(company.officeLocation);
-  const title = `${company.name}${location ? ` — ${location}` : ""} | Car Hire`;
-  const description = `${company.name} is a verified car hire provider${location ? ` in ${location}` : ""} in Kenya. Browse their fleet and book a vehicle today.`;
+    const location = normalizeOfficeLocation(company.officeLocation);
+    const title = `${company.name}${location ? ` — ${location}` : ""} | Car Hire`;
+    const description = `${company.name} is a verified car hire provider${location ? ` in ${location}` : ""} in Kenya. Browse their fleet and book a vehicle today.`;
 
-  return {
-    title,
-    description,
-    alternates: {
-      canonical: `${BASE_URL}/companies/${companyId}`,
-      languages: {
-        "en-KE": `${BASE_URL}/companies/${companyId}`,
-      },
-    },
-    openGraph: {
+    return {
       title,
       description,
-      url: `${BASE_URL}/companies/${companyId}`,
-      images: company.logoUrl
-        ? [{ url: company.logoUrl, width: 200, height: 200, alt: company.name }]
-        : [],
-    },
-    twitter: {
-      card: "summary",
-      title,
-      description: description.slice(0, 200),
-      images: company.logoUrl ? [company.logoUrl] : [],
-    },
-  };
+      alternates: {
+        canonical: `${BASE_URL}/companies/${companyId}`,
+        languages: {
+          "en-KE": `${BASE_URL}/companies/${companyId}`,
+        },
+      },
+      openGraph: {
+        title,
+        description,
+        url: `${BASE_URL}/companies/${companyId}`,
+        images: company.logoUrl
+          ? [{ url: company.logoUrl, width: 200, height: 200, alt: company.name }]
+          : [],
+      },
+      twitter: {
+        card: "summary",
+        title,
+        description: description.slice(0, 200),
+        images: company.logoUrl ? [company.logoUrl] : [],
+      },
+    };
+  } catch {
+    return {};
+  }
 }
 
 export default async function CompanyDetailPage({ params }: Props) {

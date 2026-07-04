@@ -245,7 +245,10 @@ service cloud.firestore {
       // Admins can create any profile
       // Also allow company owners (role car_hire) to create user documents for company staff.
       allow create: if isSignedIn() && (
-        isOwner(userId) || 
+        (isOwner(userId) && 
+         request.resource.data.role in ['customer', 'driver', 'car_hire'] &&
+         (!request.resource.data.keys().hasAny(['suspended']) || request.resource.data.suspended != true)
+        ) || 
         isAdmin() ||
         (
           (getUserData().role == 'car_hire' || request.auth.token.role == 'car_hire') &&
@@ -257,13 +260,16 @@ service cloud.firestore {
       // Users can update their own profile (email verification required, or basic info / push tokens if unverified during onboarding) or admins can update any.
       // Also allow company owners (role car_hire) to update their company assistants' permissions Map (strictly limited to company scope).
       allow update: if isSignedIn() && (
-        (isOwner(userId) && (
-          isEmailVerified() ||
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-            'name', 'phone', 'bio', 'yearsOfExperience', 'verification', 'emailVerified',
-            'verificationEmailSent', 'verificationEmailSentCount', 'pushToken', 'pushTokenUpdatedAt', 'companyId'
-          ])
-        )) || 
+        (isOwner(userId) && 
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'suspended']) &&
+          (
+            isEmailVerified() ||
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'name', 'phone', 'bio', 'yearsOfExperience', 'verification', 'emailVerified',
+              'verificationEmailSent', 'verificationEmailSentCount', 'pushToken', 'pushTokenUpdatedAt', 'companyId'
+            ])
+          )
+        ) || 
         isAdmin() ||
         (
           getUserData().role == 'assistant' && 

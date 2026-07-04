@@ -16,51 +16,59 @@ interface Props {
 }
 
 export async function generateStaticParams() {
-  const { vehicles } = await getVehiclesByLocation({ limitCount: 200 });
-  return vehicles.map((v) => ({ vehicleId: v.id }));
+  try {
+    const { vehicles } = await getVehiclesByLocation({ limitCount: 200 });
+    return vehicles.map((v) => ({ vehicleId: v.id }));
+  } catch {
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { vehicleId } = await params;
-  const vehicle = await getVehicleById(vehicleId);
-  if (!vehicle) return {};
+  try {
+    const { vehicleId } = await params;
+    const vehicle = await getVehicleById(vehicleId);
+    if (!vehicle) return {};
 
-  const company = vehicle.companyId
-    ? await getCompanyById(vehicle.companyId)
-    : null;
+    const company = vehicle.companyId
+      ? await getCompanyById(vehicle.companyId)
+      : null;
 
-  const title = `${vehicle.year} ${vehicle.make} ${vehicle.model} for Hire${company ? ` — ${company.name}` : ""}`;
-  const rawDescription = vehicle.description
-    ? vehicle.description
-    : `Hire a ${vehicle.year} ${vehicle.make} ${vehicle.model} in Kenya. KES ${vehicle.dailyRate.toLocaleString()}/day. ${vehicle.seats} seats. ${vehicle.transmission ?? "Automatic"}.`;
-  const description = rawDescription.length > 160
-    ? rawDescription.slice(0, rawDescription.lastIndexOf(" ", 157)) + "..."
-    : rawDescription;
+    const title = `${vehicle.year} ${vehicle.make} ${vehicle.model} for Hire${company ? ` — ${company.name}` : ""}`;
+    const rawDescription = vehicle.description
+      ? vehicle.description
+      : `Hire a ${vehicle.year} ${vehicle.make} ${vehicle.model} in Kenya. KES ${vehicle.dailyRate.toLocaleString()}/day. ${vehicle.seats} seats. ${vehicle.transmission ?? "Automatic"}.`;
+    const description = rawDescription.length > 160
+      ? rawDescription.slice(0, rawDescription.lastIndexOf(" ", 157)) + "..."
+      : rawDescription;
 
-  return {
-    title,
-    description,
-    alternates: {
-      canonical: `${BASE_URL}/hire/${vehicle.id}`,
-      languages: {
-        "en-KE": `${BASE_URL}/hire/${vehicle.id}`,
-      },
-    },
-    openGraph: {
+    return {
       title,
       description,
-      url: `${BASE_URL}/hire/${vehicle.id}`,
-      images: vehicle.images[0]
-        ? [{ url: vehicle.images[0], width: 800, height: 600, alt: `${vehicle.make} ${vehicle.model}` }]
-        : [],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description: description.slice(0, 200),
-      images: vehicle.images[0] ? [vehicle.images[0]] : [],
-    },
-  };
+      alternates: {
+        canonical: `${BASE_URL}/hire/${vehicle.id}`,
+        languages: {
+          "en-KE": `${BASE_URL}/hire/${vehicle.id}`,
+        },
+      },
+      openGraph: {
+        title,
+        description,
+        url: `${BASE_URL}/hire/${vehicle.id}`,
+        images: vehicle.images[0]
+          ? [{ url: vehicle.images[0], width: 800, height: 600, alt: `${vehicle.make} ${vehicle.model}` }]
+          : [],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title,
+        description: description.slice(0, 200),
+        images: vehicle.images[0] ? [vehicle.images[0]] : [],
+      },
+    };
+  } catch {
+    return {};
+  }
 }
 
 export default async function VehicleDetailPage({ params }: Props) {

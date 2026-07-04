@@ -58,7 +58,7 @@ function HireRequestContent() {
   const backHref = driverId
     ? `/hire/driver/${driverId}`
     : providerId
-      ? `/hire/${providerId}`
+      ? `/hire/partner/${providerId}`
       : "/hire/all";
 
   if (loading) {

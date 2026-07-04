@@ -62,6 +62,17 @@ import { logError } from "@/lib/logger";interface Company {
   };
   permitUrls?: string[];
   yardImageUrl?: string;
+  physicalAddress?: string;
+  bankDetails?: {
+    bankName?: string;
+    accountNumber?: string;
+    accountName?: string;
+  };
+  mpesaDetails?: {
+    tillNumber?: string;
+    paybillNumber?: string;
+    accountNumber?: string;
+  };
   paymentDetails?: {
     bankName?: string;
     accountNumber?: string;
@@ -353,13 +364,13 @@ export default function CompaniesTab() {
 
               <div className="space-y-4 mb-6">
                <div className="flex items-center gap-3 text-sm text-slate-600">
-                   <Mail size={16} className="text-slate-300" /> {company.contactEmail || "No email"}
+                   <Mail size={16} className="text-slate-300" /> {company.email || company.contactEmail || "No email"}
                </div>
                <div className="flex items-center gap-3 text-sm text-slate-600">
-                   <Phone size={16} className="text-slate-300" /> {company.contactPhone || "No phone"}
+                   <Phone size={16} className="text-slate-300" /> {company.phone || company.contactPhone || "No phone"}
                </div>
                 <div className="flex items-center gap-3 text-sm text-slate-600">
-                  <MapPin size={16} className="text-slate-300" /> {company.officeLocation?.address || company.location || "Location not set"}
+                  <MapPin size={16} className="text-slate-300" /> {company.physicalAddress || company.officeLocation?.address || company.location || "Location not set"}
                 </div>
               </div>
 
@@ -468,13 +479,13 @@ export default function CompaniesTab() {
                     <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Contact Details</h3>
                     <div className="space-y-3">
                        <div className="flex items-center gap-3 p-3 bg-white border border-slate-100 rounded-2xl text-sm text-slate-600">
-                         <Mail size={16} className="text-slate-300" /> {selectedCompany.contactEmail || "No email"}
+                         <Mail size={16} className="text-slate-300" /> {selectedCompany.email || selectedCompany.contactEmail || "No email"}
                        </div>
                       <div className="flex items-center gap-3 p-3 bg-white border border-slate-100 rounded-2xl text-sm text-slate-600">
                         <Phone size={16} className="text-slate-300" /> {selectedCompany.phone || selectedCompany.contactPhone || "No phone"}
                       </div>
                       <div className="flex items-center gap-3 p-3 bg-white border border-slate-100 rounded-2xl text-sm text-slate-600">
-                        <MapPin size={16} className="text-slate-300" /> {selectedCompany.officeLocation?.address || selectedCompany.location || "No address"}
+                        <MapPin size={16} className="text-slate-300" /> {selectedCompany.physicalAddress || selectedCompany.officeLocation?.address || selectedCompany.location || "No address"}
                       </div>
                     </div>
                   </section>
@@ -554,14 +565,14 @@ export default function CompaniesTab() {
                           <div className="w-8 h-8 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center"><Building2 size={16} /></div>
                           <div>
                             <p className="text-[9px] font-bold text-slate-400 uppercase">Bank Name</p>
-                            <p className="text-sm font-bold text-slate-800">{selectedCompany.paymentDetails?.bankName || "—"}</p>
+                            <p className="text-sm font-bold text-slate-800">{selectedCompany.bankDetails?.bankName || selectedCompany.paymentDetails?.bankName || "—"}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center"><Copy size={16} /></div>
                           <div>
                             <p className="text-[9px] font-bold text-slate-400 uppercase">Account</p>
-                            <p className="text-sm font-bold text-slate-800">{selectedCompany.paymentDetails?.accountNumber || "—"}</p>
+                            <p className="text-sm font-bold text-slate-800">{selectedCompany.bankDetails?.accountNumber || selectedCompany.paymentDetails?.accountNumber || "—"}</p>
                           </div>
                         </div>
                       </div>
@@ -573,14 +584,14 @@ export default function CompaniesTab() {
                           <div className="w-8 h-8 bg-primary-50 text-primary-600 rounded-xl flex items-center justify-center font-bold text-xs">T</div>
                           <div>
                             <p className="text-[9px] font-bold text-slate-400 uppercase">Till Number</p>
-                            <p className="text-sm font-bold text-slate-800">{selectedCompany.paymentDetails?.mpesaTill || "—"}</p>
+                            <p className="text-sm font-bold text-slate-800">{selectedCompany.mpesaDetails?.tillNumber || selectedCompany.paymentDetails?.mpesaTill || "—"}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 bg-primary-50 text-primary-600 rounded-xl flex items-center justify-center font-bold text-xs">P</div>
                           <div>
                             <p className="text-[9px] font-bold text-slate-400 uppercase">Paybill</p>
-                            <p className="text-sm font-bold text-slate-800">{selectedCompany.paymentDetails?.mpesaPaybill || "—"}</p>
+                            <p className="text-sm font-bold text-slate-800">{selectedCompany.mpesaDetails?.paybillNumber || selectedCompany.paymentDetails?.mpesaPaybill || "—"}</p>
                           </div>
                         </div>
                       </div>

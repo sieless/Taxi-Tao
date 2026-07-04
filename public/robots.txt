@@ -61,9 +61,6 @@ Allow: /contact
 
 # Sitemaps
 Sitemap: https://taxitao.co.ke/sitemap.xml
-Sitemap: https://taxitao.co.ke/sitemap-vehicles
-Sitemap: https://taxitao.co.ke/sitemap-services
-Sitemap: https://taxitao.co.ke/sitemap-locations
 
 # AI Bots - Same PII restrictions
 User-agent: GPTBot
