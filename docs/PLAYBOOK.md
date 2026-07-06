@@ -394,4 +394,12 @@ Layer 5: Firebase Admin SDK
 
 ---
 
-*Last updated: 2026-06-29*
+## 11. Text Input & Emoji Security
+
+→ See [WHAT_TO_CHECK_LATER.md](./WHAT_TO_CHECK_LATER.md)
+
+Covers: email template injection, Zod `max()` character vs byte mismatch, missing server-side max-length, no content sanitization on Firestore writes, `escapeXml()` Unicode gaps, Unicode normalization, storage bloat, and UI/layout breaking.
+
+---
+
+*Last updated: 2026-07-05*

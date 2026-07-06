@@ -101,6 +101,34 @@ export function calculateCompanyTierAndFee(vehicleCount: number) {
   }
 }
 
+// ── Subscription plan configs (aligned with mobile app) ──────────────────────
+
+type SubscriptionPlan = "daily" | "weekly" | "monthly";
+
+const SUBSCRIPTION_PLAN_CONFIG: Record<SubscriptionPlan, { amount: number; durationDays: number }> = {
+  daily:   { amount: 100, durationDays: 1 },
+  weekly:  { amount: 250, durationDays: 7 },
+  monthly: { amount: 500, durationDays: 30 },
+};
+
+const HIRE_SUBSCRIPTION_PLAN_CONFIG: Record<SubscriptionPlan, { amount: number; durationDays: number; label: string }> = {
+  daily:   { amount: 200,  durationDays: 1,  label: "Daily Hire Pass" },
+  weekly:  { amount: 500,  durationDays: 7,  label: "Weekly Hire Pass" },
+  monthly: { amount: 1000, durationDays: 30, label: "Monthly Hire Pass" },
+};
+
+function computeNextPaymentDueDate(
+  plan: SubscriptionPlan,
+  startAt: Date,
+  serviceType: "taxi" | "hire"
+): Date {
+  const config = serviceType === "hire"
+    ? HIRE_SUBSCRIPTION_PLAN_CONFIG[plan]
+    : SUBSCRIPTION_PLAN_CONFIG[plan];
+  const dueMs = startAt.getTime() + config.durationDays * 24 * 60 * 60 * 1000;
+  return new Date(dueMs);
+}
+
 // ── Subscription management ───────────────────────────────────────────────────
 
 export interface ActivateSubscriptionResult {
@@ -110,18 +138,25 @@ export interface ActivateSubscriptionResult {
 
 /**
  * Manually activates a driver's subscription via direct Firestore write.
+ * Aligned with mobile app's verifyPayment() — writes all fields the mobile expects.
  */
 export async function manuallyActivateSubscription(
   driverId: string,
   adminUid: string,
-  serviceType: "taxi" | "hire" = "taxi"
+  serviceType: "taxi" | "hire" = "taxi",
+  plan: SubscriptionPlan = "monthly",
+  durationDays?: number
 ): Promise<ActivateSubscriptionResult> {
   try {
     const driverRef = doc(db, "drivers", driverId);
-    
-    // Calculate next payment due (30 days from now)
-    const nextDue = new Date();
-    nextDue.setDate(nextDue.getDate() + 30);
+
+    const planConfig = serviceType === "hire"
+      ? HIRE_SUBSCRIPTION_PLAN_CONFIG[plan]
+      : SUBSCRIPTION_PLAN_CONFIG[plan];
+    const effectiveDuration = durationDays || planConfig.durationDays;
+
+    const activatedAt = new Date();
+    const nextPaymentDue = computeNextPaymentDueDate(plan, activatedAt, serviceType);
 
     const updateData: any = {
       updatedAt: serverTimestamp(),
@@ -129,24 +164,34 @@ export async function manuallyActivateSubscription(
 
     if (serviceType === "hire") {
       updateData.hireSubscriptionStatus = "active";
-      updateData.hireSubscriptionPlan = "monthly";
+      updateData.hireSubscriptionPlan = plan;
       updateData.hireLastPaymentDate = serverTimestamp();
-      updateData.hireNextPaymentDue = nextDue;
+      updateData.hireNextPaymentDue = nextPaymentDue;
     } else {
       updateData.subscriptionStatus = "active";
       updateData.isVisibleToPublic = true;
       updateData.active = true;
-      updateData.subscriptionPlan = "monthly";
-      updateData.subscriptionDurationDays = 30;
-      updateData.subscriptionActivatedAt = serverTimestamp(),
+      updateData.subscriptionPlan = plan;
+      updateData.subscriptionDurationDays = effectiveDuration;
+      updateData.subscriptionActivatedAt = serverTimestamp();
       updateData.lastPaymentDate = serverTimestamp();
-      updateData.nextPaymentDue = nextDue;
+      updateData.nextPaymentDue = nextPaymentDue;
     }
 
     await updateDoc(driverRef, updateData);
 
-    await logAdminAction(`manual_${serviceType}_activation`, driverId, { adminUid });
-    
+    // Refresh driver custom claims so they can immediately access features
+    try {
+      const refreshClaims = httpsCallable(functions, "refreshUserClaims");
+      await refreshClaims({ uid: driverId });
+    } catch (claimError: any) {
+      if (process.env.NODE_ENV === "development") {
+        console.warn("Claims sync skipped or failed:", claimError?.message);
+      }
+    }
+
+    await logAdminAction(`manual_${serviceType}_activation`, driverId, { adminUid, plan, effectiveDuration });
+
     return { success: true, message: `${serviceType.toUpperCase()} subscription activated successfully` };
   } catch (err: any) {
     logError("admin", err);
@@ -163,6 +208,8 @@ export interface PaymentActionResult {
 
 /**
  * Marks a payment verification as verified and activates subscription.
+ * Aligned with mobile app's verifyPayment() — reads plan/duration from verification,
+ * sends notification, refreshes claims.
  */
 export async function verifyDriverPayment(
   driverId: string,
@@ -173,9 +220,14 @@ export async function verifyDriverPayment(
     const verificationRef = doc(db, "paymentVerifications", verificationId);
     const verificationSnap = await getDoc(verificationRef);
     const verificationData = verificationSnap.data();
-    const serviceType = verificationData?.serviceType || "taxi";
-    
-    // 1. Update verification record
+    const serviceType = (verificationData?.serviceType || "taxi") as "taxi" | "hire";
+    const plan = (verificationData?.plan || "monthly") as SubscriptionPlan;
+    const durationDays = verificationData?.durationDays;
+
+    // 1. Activate driver subscription (with correct plan + duration + claims refresh)
+    await manuallyActivateSubscription(driverId, adminUid, serviceType, plan, durationDays);
+
+    // 2. Update verification record
     await updateDoc(verificationRef, {
       status: "verified",
       verifiedAt: serverTimestamp(),
@@ -183,10 +235,21 @@ export async function verifyDriverPayment(
       updatedAt: serverTimestamp(),
     });
 
-    // 2. Activate driver for the specific service
-    await manuallyActivateSubscription(driverId, adminUid, serviceType as "taxi" | "hire");
+    // 3. Send notification to driver
+    try {
+      await addDoc(collection(db, "driverNotifications"), {
+        driverId,
+        type: "system",
+        title: "Payment Verified",
+        message: "Thank you. Your subscription payment has been verified. You can go online and accept rides now.",
+        read: false,
+        createdAt: serverTimestamp(),
+      });
+    } catch {
+      // Non-blocking — don't fail the verification if notification fails
+    }
 
-    await logAdminAction(`${serviceType}_payment_verified`, verificationId, { driverId, adminUid });
+    await logAdminAction(`${serviceType}_payment_verified`, verificationId, { driverId, adminUid, plan });
 
     return { success: true, message: `${serviceType.toUpperCase()} payment verified and subscription activated` };
   } catch (err: any) {

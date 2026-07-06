@@ -34,6 +34,9 @@ This folder contains all project documentation for the TaxiTao platform.
 - **[PHASE3_TESTING_PLAN.md](./PHASE3_TESTING_PLAN.md)** - Testing plan for Phase 3
 - **[PHASE3_VERIFICATION_SUMMARY.md](./PHASE3_VERIFICATION_SUMMARY.md)** - Verification summary for Phase 3
 
+## 🔤 Text Input & Security
+- **[WHAT_TO_CHECK_LATER.md](./WHAT_TO_CHECK_LATER.md)** - Text input security audit, emoji issues, missing validation
+
 ## Quick Links
 - **Admin Setup:** See [ADMIN_SETUP.md](./ADMIN_SETUP.md)
 - **Authentication:** See [AUTHENTICATION_GUIDE.md](./AUTHENTICATION_GUIDE.md)
