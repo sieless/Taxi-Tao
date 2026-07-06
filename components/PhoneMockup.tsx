@@ -48,7 +48,7 @@ export default function PhoneMockup() {
 
               {/* Logo and Tagline */}
               <div className="absolute inset-0 flex flex-col items-center justify-center z-10 mt-6">
-                <h1 className="text-xl font-bold text-primary-600 mb-0.5">TaxiTao</h1>
+                <span className="text-xl font-bold text-primary-600 mb-0.5">TaxiTao</span>
                 <p className="text-[10px] text-white font-medium">find a service anywhere you are</p>
               </div>
             </div>

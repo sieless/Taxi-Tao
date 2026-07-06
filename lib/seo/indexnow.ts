@@ -2,6 +2,7 @@ const INDEXNOW_KEY = process.env.INDEXNOW_KEY ?? "";
 const INDEXNOW_ENDPOINTS = [
   "https://api.indexnow.org/indexnow",
   "https://www.bing.com/indexnow",
+  "https://api.search.brave.com/indexnow",
 ];
 
 export async function submitUrls(urls: string[]): Promise<void> {
