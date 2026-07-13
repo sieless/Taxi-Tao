@@ -130,7 +130,7 @@ export default function PaymentsTab() {
 
       const raw = pageDocs.map(d => ({ id: d.id, ...d.data() } as PaymentVerification));
 
-      const driverIds = [...new Set(raw.map(p => p.driverId).filter(Boolean))];
+      const driverIds = [...new Set(raw.map(p => p.driverId).filter(Boolean))] as string[];
       const driverMap = new Map<string, { name: string | null; phone: string | null }>();
       await Promise.all(driverIds.map(async (id) => {
         const data = await resolveDriverData(id);
