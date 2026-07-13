@@ -11,10 +11,10 @@ import {
   doc, 
   updateDoc, 
   setDoc,
+  getDoc,
   addDoc, 
   collection, 
   serverTimestamp, 
-  getDoc,
   query,
   where,
   getDocs,
@@ -23,6 +23,7 @@ import {
 } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import { db, functions, auth } from "@/lib/firebase";
+import { computeSubscriptionExtension } from "@/lib/subscription-utils";
 
 
 import { logError } from "@/lib/logger";// ── Token helpers ─────────────────────────────────────────────────────────────
@@ -150,6 +151,10 @@ export async function manuallyActivateSubscription(
   try {
     const driverRef = doc(db, "drivers", driverId);
 
+    // Check if driver document exists, create if needed
+    const driverSnap = await getDoc(driverRef);
+    const driverExists = driverSnap.exists();
+
     const planConfig = serviceType === "hire"
       ? HIRE_SUBSCRIPTION_PLAN_CONFIG[plan]
       : SUBSCRIPTION_PLAN_CONFIG[plan];
@@ -178,7 +183,19 @@ export async function manuallyActivateSubscription(
       updateData.nextPaymentDue = nextPaymentDue;
     }
 
-    await updateDoc(driverRef, updateData);
+    if (driverExists) {
+      await updateDoc(driverRef, updateData);
+    } else {
+      // Create driver document with minimal required fields + subscription data
+      await setDoc(driverRef, {
+        ...updateData,
+        userId: driverId,
+        createdAt: serverTimestamp(),
+        kycStatus: "pending",
+        status: "offline",
+        isVisibleToPublic: serviceType === "taxi",
+      });
+    }
 
     // Refresh driver custom claims so they can immediately access features
     try {
@@ -290,6 +307,8 @@ export async function rejectDriverPayment(
 
 /**
  * Approves driver KYC status.
+ * Updates both the 'drivers' collection and the 'users' collection (verification object)
+ * to stay in sync with the mobile app.
  */
 export async function approveDriverKYC(
   driverId: string,
@@ -298,13 +317,26 @@ export async function approveDriverKYC(
 ): Promise<void> {
   try {
     const driverRef = doc(db, "drivers", driverId);
+    const userRef = doc(db, "users", driverId);
+    const timestamp = serverTimestamp();
     
+    // 1. Update Drivers Collection
     await updateDoc(driverRef, {
       kycStatus: "approved",
-      kycVerifiedAt: serverTimestamp(),
+      kycVerifiedAt: timestamp,
       kycVerifiedBy: adminUid,
       kycNotes: notes || "",
-      updatedAt: serverTimestamp(),
+      updatedAt: timestamp,
+    });
+
+    // 2. Update Users Collection (Verification object)
+    // The mobile app reads verification.driverKyc from the users collection.
+    await updateDoc(userRef, {
+      "verification.driverKyc": "approved",
+      "verification.kycVerifiedAt": timestamp,
+      "verification.kycVerifiedBy": adminUid,
+      "verification.kycNotes": notes || "",
+      updatedAt: timestamp,
     });
 
     await logAdminAction("kyc_approved", driverId, { adminUid, notes });
@@ -439,13 +471,13 @@ export async function approveCompany(
   try {
     const companyRef = doc(db, "companies", companyId);
     
-    // Set initial payment due date (30 days from now)
-    const nextDue = new Date();
-    nextDue.setDate(nextDue.getDate() + 30);
+    // Set initial payment due date (1 month from now)
+    const nextDue = computeSubscriptionExtension(null, 1);
 
     await updateDoc(companyRef, {
       status: "active",
       subscriptionStatus: "active", // Start as active upon initial approval
+      subscriptionMonths: 1,
       nextPaymentDue: nextDue,
       approvedAt: serverTimestamp(),
       approvedBy: adminUid,
@@ -668,13 +700,16 @@ export async function syncCompanySubscriptionAndInvoice(
 }
 
 /**
- * Records a company payment and extends their subscription by 30 days.
+ * Records a company payment and extends their subscription.
+ * @param months Number of months to extend (defaults to 1). Supports
+ *   multi-month subscriptions (e.g. clients paying 3 or 6 months ahead).
  */
 export async function recordCompanyPayment(
   companyId: string,
   amount: number,
   reference: string,
-  adminUid: string
+  adminUid: string,
+  months: number = 1
 ): Promise<void> {
   try {
     const companyRef = doc(db, "companies", companyId);
@@ -682,15 +717,19 @@ export async function recordCompanyPayment(
     if (!snap.exists()) throw new Error("Company not found");
 
     const data = snap.data();
-    const currentDue = data.nextPaymentDue?.toDate() || new Date();
-    
-    // Add 30 days to the PREVIOUS due date to ensure they don't lose days
-    const newDue = new Date(currentDue);
-    newDue.setDate(newDue.getDate() + 30);
+
+    // NEW BEHAVIOUR: if the company is already expired (due date in the past),
+    // anchor the new due date on NOW so the payment makes them active again.
+    // Otherwise extend from the existing due date so no days are lost.
+    // Supports multi-month subscriptions via the `months` argument.
+    const newDue = computeSubscriptionExtension(data.nextPaymentDue, months);
+
+    const prevMonths = data.subscriptionMonths || 0;
 
     // 1. Update Company Status and Date
     await updateDoc(companyRef, {
       subscriptionStatus: "active",
+      subscriptionMonths: prevMonths + Math.max(1, Math.floor(months || 1)),
       lastPaymentDate: serverTimestamp(),
       nextPaymentDue: newDue,
       updatedAt: serverTimestamp(),

@@ -17,6 +17,7 @@ const HireTab = dynamic(() => import("@/components/admin/tabs/HireTab"), { loadi
 const IssuesTab = dynamic(() => import("@/components/admin/tabs/IssuesTab"), { loading: () => <div className="animate-pulse bg-gray-100 rounded-lg h-64" /> });
 const ShareLinksTab = dynamic(() => import("@/components/admin/tabs/ShareLinksTab"), { loading: () => <div className="animate-pulse bg-gray-100 rounded-lg h-64" /> });
 const CrashesTab = dynamic(() => import("@/components/admin/tabs/CrashesTab"), { loading: () => <div className="animate-pulse bg-gray-100 rounded-lg h-64" /> });
+const CrashlyticsTab = dynamic(() => import("@/components/admin/tabs/CrashlyticsTab"), { loading: () => <div className="animate-pulse bg-gray-100 rounded-lg h-64" /> });
 const AnalyticsTab = dynamic(() => import("@/components/admin/tabs/AnalyticsTab"), { loading: () => <div className="animate-pulse bg-gray-100 rounded-lg h-64" /> });
 const AuditLogsTab = dynamic(() => import("@/components/admin/tabs/AuditLogsTab"), { loading: () => <div className="animate-pulse bg-gray-100 rounded-lg h-64" /> });
 const SettingsTab = dynamic(() => import("@/components/admin/tabs/SettingsTab"), { loading: () => <div className="animate-pulse bg-gray-100 rounded-lg h-64" /> });
@@ -48,6 +49,7 @@ export default function AdminDashboard() {
       case "analytics": return <AnalyticsTab />;
       case "audit": return <AuditLogsTab />;
       case "crashes": return <CrashesTab />;
+      case "crashlytics": return <CrashlyticsTab />;
       case "settings": return <SettingsTab />;
       case "db-diagnostics": return <DbDiagnosticsTab />;
       default: return <DashboardOverview />;

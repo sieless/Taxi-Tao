@@ -8,7 +8,7 @@ export const typeDefs = /* GraphQL */ `
     vendorDashboard: VendorDashboard!
     hireRequests(status: String, limit: Int, offset: Int): HireRequestConnection!
     adminCompanies: [Company!]!
-    appCrashes: [AppCrash!]!
+    appCrashes(platform: String, severity: String, status: String): [AppCrash!]!
     shareLinks: [ShareLink!]!
     auditLogs(category: String, severity: String, limit: Int, cursor: String): AuditLogConnection!
     customerDashboard: CustomerDashboard!
@@ -118,14 +118,27 @@ export const typeDefs = /* GraphQL */ `
     id: ID!
     message: String
     stack: String
+    errorType: String
+    errorName: String
     userId: String
+    userRole: String
     platform: String
     appVersion: String
+    osVersion: String
+    deviceModel: String
+    buildNumber: String
+    screen: String
+    userAction: String
+    componentStack: String
+    sessionId: String
     severity: String
+    isFatal: Boolean
     resolved: Boolean
     resolvedBy: String
+    resolvedAt: DateTime
     timestamp: DateTime
     count: Int
+    category: String
   }
 
   type ShareLink {

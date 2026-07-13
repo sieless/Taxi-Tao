@@ -560,6 +560,7 @@ export interface Company {
   // Subscription Ecosystem
   subscriptionStatus?: "pending" | "active" | "expired" | "grace_period";
   subscriptionTier?: 1 | 2 | 3;
+  subscriptionMonths?: number;
   lastPaymentDate?: any;
   nextPaymentDue?: any;
 

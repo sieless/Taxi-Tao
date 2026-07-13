@@ -14,6 +14,7 @@ import { auth, db } from "@/lib/firebase";
 import { User as AppUser, Driver as AppDriver } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import { sanitizeAuthError } from "@/lib/error-utils";
+import { setUser as setCrashAnalyticsUser } from "@/lib/crash-reporter";
 
 interface AuthContextType {
   user: FirebaseUser | null;
@@ -91,6 +92,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         setUserProfile(profileData);
+        setCrashAnalyticsUser(targetUser.uid, profileData.role || null, targetUser.email || undefined);
 
         if (profileData.role === "driver" && profileData.driverId) {
           try {
@@ -373,6 +375,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(null);
       setUserProfile(null);
       setDriverProfile(null);
+      setCrashAnalyticsUser(null, null);
       await clearSessionCookies();
       try {
         router.replace("/");

@@ -1,6 +1,7 @@
 "use client";
 
 import { Component, ReactNode } from "react";
+import { reportCrash } from "@/lib/crash-reporter";
 
 interface Props {
   children: ReactNode;
@@ -16,6 +17,14 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   static getDerivedStateFromError(): State {
     return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    reportCrash(error, {
+      componentStack: errorInfo.componentStack || undefined,
+      isFatal: true,
+      severity: "critical",
+    });
   }
 
   render() {

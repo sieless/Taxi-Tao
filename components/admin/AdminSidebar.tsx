@@ -16,6 +16,7 @@ import {
   BarChart3, 
   History, 
   Bug, 
+  Activity,
   Settings, 
   Database,
   ChevronLeft,
@@ -50,6 +51,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "analytics", label: "Analytics", icon: <BarChart3 size={20} />, permission: "viewAnalytics" },
   { id: "audit", label: "Audit Logs", icon: <History size={20} />, permission: "viewAnalytics" },
   { id: "crashes", label: "Crash Reports", icon: <Bug size={20} /> },
+  { id: "crashlytics", label: "Firebase Crashlytics", icon: <Activity size={20} />, adminOnly: true },
   { id: "settings", label: "Settings", icon: <Settings size={20} />, adminOnly: true },
   { id: "db-diagnostics", label: "Diagnostics", icon: <Database size={20} />, adminOnly: true },
 ];

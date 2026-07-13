@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { 
   collection, 
-  getDocs, 
+  onSnapshot, 
   query, 
   orderBy, 
   limit, 
@@ -73,23 +73,32 @@ export default function KycTab() {
   const [acting, setActing] = useState<string | null>(null);
   
   const canManage = hasAdminPermission(userProfile, "manageDrivers");
+  const unsubscribeRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
-    loadDrivers();
+    subscribeDrivers();
+    return () => {
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
+      }
+    };
   }, [filter]);
 
-  async function loadDrivers() {
+  function subscribeDrivers() {
+    if (unsubscribeRef.current) {
+      unsubscribeRef.current();
+    }
     setLoading(true);
-    try {
-      // If filtering by pending, we fetch all and filter in memory to catch drivers with missing kycStatus field
-      const fetchAll = filter === "pending" || filter === "all";
-      
-      let q = query(collection(db, "drivers"), orderBy("createdAt", "desc"), limit(100));
-      if (!fetchAll) {
-        q = query(collection(db, "drivers"), where("kycStatus", "==", filter), orderBy("createdAt", "desc"), limit(100));
-      }
-      
-      const snap = await getDocs(q);
+
+    // Fetch all for "pending" to catch drivers with missing kycStatus field
+    const fetchAll = filter === "pending";
+    
+    let q = query(collection(db, "drivers"), orderBy("createdAt", "desc"), limit(100));
+    if (!fetchAll) {
+      q = query(collection(db, "drivers"), where("kycStatus", "==", filter), orderBy("createdAt", "desc"), limit(100));
+    }
+    
+    unsubscribeRef.current = onSnapshot(q, (snap) => {
       let list = snap.docs.map(d => ({ id: d.id, ...d.data() } as DriverKyc));
       
       // Memory filter for "pending" to catch missing fields
@@ -101,11 +110,11 @@ export default function KycTab() {
       const idSeen: Record<string, number> = {};
       list.forEach(d => { if (d.idNumber) idSeen[d.idNumber] = (idSeen[d.idNumber] || 0) + 1; });
       setDrivers(list.map(d => ({ ...d, isDuplicate: d.idNumber ? idSeen[d.idNumber] > 1 : false })));
-    } catch (err) {
-      logError("KycTab", err);
-    } finally {
       setLoading(false);
-    }
+    }, (err) => {
+      logError("KycTab", err);
+      setLoading(false);
+    });
   }
 
   async function handleApprove(driverId: string) {
@@ -158,7 +167,7 @@ export default function KycTab() {
       {/* Toolbar */}
       <div className="flex flex-col lg:flex-row gap-4 items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
         <div className="flex gap-2 p-1 bg-slate-50 rounded-xl border border-slate-100">
-          {["all", "approved", "pending", "rejected"].map((f) => (
+          {["pending", "approved", "rejected"].map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}

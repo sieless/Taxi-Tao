@@ -1,6 +1,7 @@
 "use client";
 
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { reportCrash } from "@/lib/crash-reporter";
 
 export default function HireError({
   error,
@@ -9,6 +10,12 @@ export default function HireError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  reportCrash(error, {
+    isFatal: true,
+    severity: "high",
+    screen: "hire",
+  });
+
   return (
     <ErrorBoundary>
       <div className="min-h-[40vh] flex flex-col items-center justify-center p-8 text-center">

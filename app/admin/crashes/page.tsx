@@ -2,27 +2,41 @@
 
 import { useEffect, useState } from "react";
 import { useModal } from "@/lib/admin-modal-context";
-import { Bug, CheckCircle, AlertTriangle, Search, RefreshCw } from "lucide-react";
+import { Bug, CheckCircle, Search, RefreshCw, ChevronRight, Globe, Smartphone, Monitor, MapPin, User, Clock, Layers } from "lucide-react";
 import { graphqlClient } from "@/lib/graphql/client";
 import { APP_CRASHES_QUERY, RESOLVE_CRASH_MUTATION } from "@/lib/graphql/queries";
-
 import { logError } from "@/lib/logger";
 
 type SeverityFilter = "all" | "low" | "medium" | "high" | "critical";
 type ResolvedFilter = "open" | "resolved" | "all";
+type PlatformFilter = "all" | "web" | "android" | "ios";
+type CategoryFilter = "all" | "payment" | "booking" | "auth" | "network" | "ui";
 
 interface AppCrash {
   id: string;
   message?: string;
   stack?: string;
+  errorType?: string;
+  errorName?: string;
   userId?: string;
+  userRole?: string;
   platform?: "android" | "ios" | "web";
   appVersion?: string;
+  osVersion?: string;
+  deviceModel?: string;
+  buildNumber?: string;
+  screen?: string;
+  userAction?: string;
+  componentStack?: string;
+  sessionId?: string;
   severity?: "low" | "medium" | "high" | "critical";
+  isFatal?: boolean;
   resolved?: boolean;
   resolvedBy?: string;
+  resolvedAt?: any;
   timestamp: any;
   count?: number;
+  category?: string;
 }
 
 const SEV_BADGE: Record<string, string> = {
@@ -30,6 +44,22 @@ const SEV_BADGE: Record<string, string> = {
   medium: "bg-amber-100 text-amber-700",
   high: "bg-orange-100 text-orange-700",
   critical: "bg-red-100 text-red-800",
+};
+
+const CATEGORY_STYLES: Record<string, string> = {
+  payment: "bg-rose-100 text-rose-700",
+  booking: "bg-blue-100 text-blue-700",
+  auth: "bg-purple-100 text-purple-700",
+  network: "bg-orange-100 text-orange-700",
+  ui: "bg-gray-100 text-gray-600",
+};
+
+const CATEGORY_LABELS: Record<string, string> = {
+  payment: "Payment",
+  booking: "Booking/Ride",
+  auth: "Auth",
+  network: "Network",
+  ui: "UI/Other",
 };
 
 function formatDate(ts: any) {
@@ -43,6 +73,8 @@ export default function CrashesPage() {
   const [crashes, setCrashes] = useState<AppCrash[]>([]);
   const [loading, setLoading] = useState(true);
   const [severity, setSeverity] = useState<SeverityFilter>("all");
+  const [platform, setPlatform] = useState<PlatformFilter>("all");
+  const [category, setCategory] = useState<CategoryFilter>("all");
   const [resolved, setResolved] = useState<ResolvedFilter>("open");
   const [search, setSearch] = useState("");
   const [resolving, setResolving] = useState<string | null>(null);
@@ -70,14 +102,24 @@ export default function CrashesPage() {
   const filtered = crashes.filter((c) => {
     const matchSev = severity === "all" || c.severity === severity;
     const matchRes = resolved === "all" || (resolved === "open" ? !c.resolved : !!c.resolved);
-    const matchSearch = !search || c.message?.toLowerCase().includes(search.toLowerCase()) || c.userId?.includes(search) || c.appVersion?.includes(search);
-    return matchSev && matchRes && matchSearch;
+    const matchPlat = platform === "all" || c.platform === platform;
+    const matchCat = category === "all" || (c.category || "ui") === category;
+    const matchSearch = !search ||
+      c.message?.toLowerCase().includes(search.toLowerCase()) ||
+      c.userId?.includes(search) ||
+      c.appVersion?.includes(search) ||
+      c.screen?.toLowerCase().includes(search.toLowerCase()) ||
+      c.userAction?.toLowerCase().includes(search.toLowerCase()) ||
+      c.deviceModel?.toLowerCase().includes(search.toLowerCase());
+    return matchSev && matchRes && matchPlat && matchCat && matchSearch;
   });
 
   const counts = {
     open: crashes.filter((c) => !c.resolved).length,
     critical: crashes.filter((c) => c.severity === "critical" && !c.resolved).length,
     resolved: crashes.filter((c) => c.resolved).length,
+    web: crashes.filter((c) => c.platform === "web").length,
+    mobile: crashes.filter((c) => c.platform === "android" || c.platform === "ios").length,
   };
 
   return (
@@ -85,17 +127,19 @@ export default function CrashesPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2"><Bug size={24} className="text-primary-600" />Crash Reports</h1>
-          <p className="text-gray-500 text-sm mt-1">Monitor and resolve app errors</p>
+          <p className="text-gray-500 text-sm mt-1">Monitor and resolve app errors across web and mobile</p>
         </div>
         <button onClick={loadCrashes} disabled={loading} className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-xl transition"><RefreshCw size={15} className={loading ? "animate-spin" : ""} />Refresh</button>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
         {[
           { label: "Open Crashes", value: counts.open, color: "text-red-600 bg-red-50" },
           { label: "Critical (open)", value: counts.critical, color: "text-orange-600 bg-orange-50" },
           { label: "Resolved", value: counts.resolved, color: "text-primary-600 bg-primary-50" },
+          { label: "Web", value: counts.web, color: "text-blue-600 bg-blue-50" },
+          { label: "Mobile", value: counts.mobile, color: "text-violet-600 bg-violet-50" },
         ].map((s) => (
           <div key={s.label} className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
             <p className={`text-2xl font-bold ${s.color.split(" ")[0]}`}>{s.value}</p>
@@ -106,6 +150,7 @@ export default function CrashesPage() {
 
       {/* Filters */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6 space-y-3">
+        {/* Row 1: Status + Severity */}
         <div className="flex gap-2 flex-wrap">
           {(["open", "all", "resolved"] as ResolvedFilter[]).map((r) => (
             <button key={r} onClick={() => setResolved(r)} className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${resolved === r ? "bg-primary-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>{r.charAt(0).toUpperCase() + r.slice(1)}</button>
@@ -115,9 +160,35 @@ export default function CrashesPage() {
             <button key={s} onClick={() => setSeverity(s)} className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${severity === s ? "bg-primary-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>{s.charAt(0).toUpperCase() + s.slice(1)}</button>
           ))}
         </div>
+
+        {/* Row 2: Platform */}
+        <div className="flex gap-2 flex-wrap items-center">
+          <span className="text-xs font-medium text-gray-400 mr-1">Platform:</span>
+          {(["all", "web", "android", "ios"] as PlatformFilter[]).map((p) => (
+            <button key={p} onClick={() => setPlatform(p)} className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition ${platform === p ? "bg-primary-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+              {p === "web" && <Globe size={12} />}
+              {p === "android" && <Smartphone size={12} />}
+              {p === "ios" && <Smartphone size={12} />}
+              {p === "all" && <Layers size={12} />}
+              {p.charAt(0).toUpperCase() + p.slice(1)}
+            </button>
+          ))}
+        </div>
+
+        {/* Row 3: Category */}
+        <div className="flex gap-2 flex-wrap items-center">
+          <span className="text-xs font-medium text-gray-400 mr-1">Category:</span>
+          {(["all", "payment", "booking", "auth", "network", "ui"] as CategoryFilter[]).map((cat) => (
+            <button key={cat} onClick={() => setCategory(cat)} className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${category === cat ? "bg-primary-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+              {cat === "all" ? "All" : CATEGORY_LABELS[cat] || cat}
+            </button>
+          ))}
+        </div>
+
+        {/* Row 4: Search */}
         <div className="relative">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search error message, user ID, version…" className="w-full border border-gray-200 rounded-xl pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search error message, screen, user action, device..." className="w-full border border-gray-200 rounded-xl pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
         </div>
       </div>
 
@@ -131,25 +202,38 @@ export default function CrashesPage() {
             <div key={crash.id} className={`bg-white rounded-xl shadow-sm border p-4 ${crash.severity === "critical" && !crash.resolved ? "border-red-300" : "border-gray-100"}`}>
               <div className="flex items-start gap-4">
                 <div className={`p-2 rounded-lg mt-0.5 ${crash.resolved ? "bg-primary-50" : crash.severity === "critical" ? "bg-red-50" : "bg-gray-50"}`}>
-                  {crash.resolved ? <CheckCircle size={18} className="text-primary-600" /> : <AlertTriangle size={18} className={crash.severity === "critical" ? "text-red-600" : "text-amber-600"} />}
+                  {crash.resolved ? <CheckCircle size={18} className="text-primary-600" /> : <Bug size={18} className={crash.severity === "critical" ? "text-red-600" : "text-amber-600"} />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
-                    {crash.severity && <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${SEV_BADGE[crash.severity]}`}>{crash.severity.toUpperCase()}</span>}
-                    {crash.platform && <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-100 text-blue-700">{crash.platform}</span>}
+                    {crash.severity && <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${SEV_BADGE[crash.severity]}`}>{crash.severity.toUpperCase()}{crash.isFatal ? " / FATAL" : ""}</span>}
+                    {crash.platform && <span className="flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-100 text-blue-700">{crash.platform === "web" ? <Globe size={10} /> : <Smartphone size={10} />}{crash.platform}</span>}
+                    {crash.category && <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${CATEGORY_STYLES[crash.category] || CATEGORY_STYLES.ui}`}>{CATEGORY_LABELS[crash.category] || crash.category}</span>}
                     {crash.appVersion && <span className="text-xs text-gray-400">v{crash.appVersion}</span>}
-                    {crash.count && crash.count > 1 && <span className="text-xs text-gray-500">×{crash.count} occurrences</span>}
+                    {crash.count && crash.count > 1 && <span className="text-xs text-gray-500">x{crash.count} occurrences</span>}
                     {crash.resolved && <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-primary-100 text-primary-700">RESOLVED</span>}
                   </div>
                   <p className="text-sm font-medium text-gray-800 mb-1 line-clamp-2">{crash.message || "Unknown error"}</p>
-                  <div className="flex items-center gap-3 text-xs text-gray-400">
-                    {crash.userId && <span>User: {crash.userId}</span>}
-                    <span>{formatDate(crash.timestamp)}</span>
+                  <div className="flex items-center gap-3 text-xs text-gray-400 flex-wrap">
+                    {crash.userId && <span className="flex items-center gap-1"><User size={11} />{crash.userId.slice(0, 12)}...</span>}
+                    {crash.userRole && <span className="capitalize">{crash.userRole}</span>}
+                    {crash.screen && <span className="flex items-center gap-1"><MapPin size={11} />{crash.screen}</span>}
+                    {crash.deviceModel && crash.deviceModel !== "unknown" && <span className="flex items-center gap-1"><Monitor size={11} />{crash.deviceModel}{crash.osVersion && crash.osVersion !== "unknown" ? ` (${crash.osVersion})` : ""}</span>}
+                    <span className="flex items-center gap-1"><Clock size={11} />{formatDate(crash.timestamp)}</span>
                   </div>
+                  {crash.userAction && (
+                    <div className="mt-1 text-[11px] text-gray-500 bg-gray-50 rounded px-2 py-0.5 inline-block">Action: {crash.userAction}</div>
+                  )}
                   {crash.stack && (
                     <details className="mt-2">
                       <summary className="text-xs text-primary-600 cursor-pointer hover:underline">Show stack trace</summary>
-                      <pre className="text-[10px] text-gray-600 bg-gray-50 rounded-lg p-3 mt-1 overflow-x-auto whitespace-pre-wrap">{crash.stack}</pre>
+                      <pre className="text-[10px] text-gray-600 bg-gray-50 rounded-lg p-3 mt-1 overflow-x-auto whitespace-pre-wrap max-h-64">{crash.stack}</pre>
+                    </details>
+                  )}
+                  {crash.componentStack && (
+                    <details className="mt-1">
+                      <summary className="text-xs text-gray-400 cursor-pointer hover:underline">Show component stack</summary>
+                      <pre className="text-[10px] text-gray-500 bg-gray-50 rounded-lg p-3 mt-1 overflow-x-auto whitespace-pre-wrap max-h-48">{crash.componentStack}</pre>
                     </details>
                   )}
                 </div>

@@ -160,12 +160,91 @@ export const resolvers = {
       return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     },
 
-    appCrashes: async (_: unknown, __: unknown, ctx: GraphQLContext) => {
+    appCrashes: async (
+      _: unknown,
+      args: { platform?: string; severity?: string; status?: string },
+      ctx: GraphQLContext
+    ) => {
       requireAdmin(ctx);
-      const snap = await getDocs(
-        query(collection(db, COLLECTIONS.APP_CRASHES), orderBy("timestamp", "desc"))
-      );
-      return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+      const constraints: unknown[] = [
+        orderBy("timestamp", "desc"),
+        firestoreLimit(200),
+      ];
+
+      if (args.platform && args.platform !== "all") {
+        constraints.unshift(where("platform", "==", args.platform));
+      }
+      if (args.severity && args.severity !== "all") {
+        constraints.unshift(where("severity", "==", args.severity));
+      }
+      if (args.status === "open") {
+        constraints.unshift(where("resolved", "==", false));
+      } else if (args.status === "resolved") {
+        constraints.unshift(where("resolved", "==", true));
+      }
+
+      const q = query(collection(db, COLLECTIONS.APP_CRASHES), ...constraints);
+      const snap = await getDocs(q);
+
+      return snap.docs.map((d) => {
+        const data = d.data();
+        const errorMessage: string = data.errorMessage || data.message || "";
+        const screen: string = data.screen || "";
+        const userAction: string = data.userAction || "";
+
+        let category = "ui";
+        const lower = errorMessage.toLowerCase();
+        const lowerScreen = screen.toLowerCase();
+        const lowerAction = userAction.toLowerCase();
+        if (
+          lower.includes("payment") || lower.includes("mpesa") || lower.includes("transaction") ||
+          lowerScreen.includes("payment") || lowerAction.includes("payment")
+        ) {
+          category = "payment";
+        } else if (
+          lower.includes("booking") || lower.includes("ride") || lower.includes("driver") ||
+          lowerScreen.includes("book") || lowerScreen.includes("ride") ||
+          lowerAction.includes("booking") || lowerAction.includes("ride")
+        ) {
+          category = "booking";
+        } else if (
+          lower.includes("auth") || lower.includes("session") || lower.includes("login") || lower.includes("signup")
+        ) {
+          category = "auth";
+        } else if (
+          lower.includes("network") || lower.includes("fetch") || lower.includes("timeout") || lower.includes("connection")
+        ) {
+          category = "network";
+        }
+
+        return {
+          id: d.id,
+          message: data.errorMessage || data.message || null,
+          stack: data.errorStack || data.stack || null,
+          errorType: data.errorType || null,
+          errorName: data.errorName || null,
+          userId: data.userId || null,
+          userRole: data.userRole || null,
+          platform: data.platform || "unknown",
+          appVersion: data.appVersion || null,
+          osVersion: data.osVersion || null,
+          deviceModel: data.deviceModel || null,
+          buildNumber: data.buildNumber || null,
+          screen: data.screen || null,
+          userAction: data.userAction || null,
+          componentStack: data.componentStack || null,
+          sessionId: data.sessionId || null,
+          severity: data.severity || "low",
+          isFatal: data.isFatal ?? false,
+          resolved: data.resolved ?? false,
+          resolvedBy: data.resolvedBy || null,
+          resolvedAt: data.resolvedAt || null,
+          timestamp: data.timestamp,
+          count: data.count || 1,
+          category,
+        };
+      });
     },
 
     shareLinks: async (_: unknown, __: unknown, ctx: GraphQLContext) => {

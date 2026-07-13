@@ -1,16 +1,78 @@
 import { Timestamp } from "firebase/firestore";
 
 /**
+ * Add calendar months to a date (handles month-boundary drift correctly).
+ */
+export function addMonths(date: Date, months: number): Date {
+  const result = new Date(date);
+  const targetMonth = result.getMonth() + months;
+  result.setMonth(targetMonth);
+  return result;
+}
+
+/**
+ * Convert a Firestore Timestamp / Date / ISO string / number into a Date.
+ * Returns null if the value is missing or invalid.
+ */
+export function toDate(
+  value: Timestamp | Date | string | number | null | undefined
+): Date | null {
+  if (!value) return null;
+  if (value instanceof Timestamp) return value.toDate();
+  if (value instanceof Date) return value;
+  const parsed = new Date(value as any);
+  return isNaN(parsed.getTime()) ? null : parsed;
+}
+
+/**
  * Calculate if a driver's subscription is expired based on nextPaymentDue
  */
-export function isSubscriptionExpired(nextPaymentDue: Timestamp | Date | undefined): boolean {
-  if (!nextPaymentDue) return true;
-  
-  const dueDate = nextPaymentDue instanceof Timestamp 
-    ? nextPaymentDue.toDate() 
-    : nextPaymentDue instanceof Date ? nextPaymentDue : new Date(nextPaymentDue);
-  
+export function isSubscriptionExpired(nextPaymentDue: Timestamp | Date | string | number | undefined): boolean {
+  const dueDate = toDate(nextPaymentDue);
+  if (!dueDate) return true;
   return new Date() > dueDate;
+}
+
+/**
+ * Compute the new subscription due date.
+ *
+ * IMPORTANT: If the current due date is already in the past (company is
+ * expired), we anchor the extension on NOW so the company immediately
+ * returns to an active state instead of staying expired. Otherwise we add
+ * the purchased months to the existing due date so no days are lost.
+ */
+export function computeSubscriptionExtension(
+  currentDue: Timestamp | Date | string | number | null | undefined,
+  months: number
+): Date {
+  const safeMonths = Math.max(1, Math.floor(months || 1));
+  const base = toDate(currentDue);
+
+  // Anchor on now if expired or missing, otherwise extend from current due.
+  const anchor = base && base.getTime() > Date.now() ? base : new Date();
+  return addMonths(anchor, safeMonths);
+}
+
+export interface CountdownInfo {
+  isExpired: boolean;
+  daysRemaining: number;
+  label: string;
+}
+
+/**
+ * Friendly countdown for the subscription tab.
+ */
+export function getCountdown(nextPaymentDue: Timestamp | Date | string | number | undefined): CountdownInfo {
+  const dueDate = toDate(nextPaymentDue);
+  if (!dueDate) {
+    return { isExpired: true, daysRemaining: 0, label: "No due date set" };
+  }
+  const diffMs = dueDate.getTime() - Date.now();
+  const daysRemaining = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  if (diffMs <= 0) {
+    return { isExpired: true, daysRemaining, label: `Expired ${Math.abs(daysRemaining)} day(s) ago` };
+  }
+  return { isExpired: false, daysRemaining, label: `${daysRemaining} day(s) remaining` };
 }
 
 /**

@@ -35,10 +35,12 @@ interface AdminStats {
   totalDrivers: number;
   activeDrivers: number;
   pendingKYC: number;
-  pendingPayments: number;
   activeBookings: number;
-  recentCrashes: number;
-  openIssues: number;
+  pendingDrivers: number;
+  totalVehicles: number;
+  totalRevenue: number;
+  pendingPayments?: number;
+  openIssues?: number;
 }
 
 export default function DashboardOverview() {
@@ -152,7 +154,7 @@ export default function DashboardOverview() {
         <StatCard label="Total Users" value={stats?.totalUsers} icon={<Users size={20} />} color="indigo" loading={loading} />
         <StatCard label="Active Drivers" value={stats?.activeDrivers} icon={<Car size={20} />} color="blue" loading={loading} />
         <StatCard label="Live Bookings" value={stats?.activeBookings} icon={<CalendarCheck size={20} />} color="emerald" loading={loading} />
-        <StatCard label="Open Issues" value={stats?.openIssues} icon={<MessageSquare size={20} />} color="rose" loading={loading} />
+        <StatCard label="Pending Drivers" value={stats?.pendingDrivers} icon={<MessageSquare size={20} />} color="rose" loading={loading} />
       </div>
 
       {/* Unified Navigation Grid */}

@@ -1,5 +1,7 @@
 "use client";
 
+import { reportCrash } from "@/lib/crash-reporter";
+
 export default function GlobalError({
   error,
   reset,
@@ -7,6 +9,12 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  reportCrash(error, {
+    isFatal: true,
+    severity: "critical",
+    screen: "global-error",
+  });
+
   return (
     <html>
       <body>

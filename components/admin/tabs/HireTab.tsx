@@ -10,7 +10,11 @@ import {
   where,
   serverTimestamp,
   updateDoc,
-  doc
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  startAfter
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { 
@@ -33,7 +37,8 @@ import {
   CreditCard,
   Wallet,
   MapPin,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Trash2
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useModal } from "@/lib/admin-modal-context";
@@ -77,6 +82,10 @@ export default function HireTab() {
   const [payments, setPayments] = useState<any[]>([]);
   const [hires, setHires] = useState<any[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<any | null>(null);
+  const [hireStatusFilter, setHireStatusFilter] = useState<string>("active");
+  const [hirePage, setHirePage] = useState(0);
+  const [hireHasMore, setHireHasMore] = useState(false);
+  const [hireCursors, setHireCursors] = useState<any[]>([]);
 
   useEffect(() => {
     let unsub: () => void = () => {};
@@ -134,6 +143,8 @@ export default function HireTab() {
           logError("HireTab", err);
           setLoading(false);
         });
+      } else if (activeSubTab === "active-hires") {
+        setLoading(false);
       }
     } catch (err: any) {
       logError("HireTab", err);
@@ -143,6 +154,76 @@ export default function HireTab() {
 
     return () => unsub();
   }, [activeSubTab, paymentFilter]);
+
+  const PAGE_SIZE = 20;
+
+  const enrichHires = async (raw: any[]) => {
+    return Promise.all(raw.map(async (h: any) => {
+      let customerName = h.customerName || null;
+      let vehicleType = h.vehicleType || null;
+      let vehiclePlate = h.vehiclePlateNumber || null;
+      try {
+        if (!customerName && h.customerId) {
+          const userSnap = await getDoc(doc(db, "users", h.customerId));
+          if (userSnap.exists()) {
+            const ud = userSnap.data();
+            customerName = ud.fullName || ud.displayName || ud.name || null;
+          }
+        }
+        if ((!vehicleType || !vehiclePlate) && h.vehicleId) {
+          const vSnap = await getDoc(doc(db, "vehicles", h.vehicleId));
+          if (vSnap.exists()) {
+            const vd = vSnap.data();
+            vehicleType = vehicleType || vd.type || vd.vehicleType || null;
+            vehiclePlate = vehiclePlate || vd.plateNumber || null;
+          }
+        }
+      } catch {}
+      return { ...h, customerName, vehicleType, vehiclePlateNumber: vehiclePlate };
+    }));
+  };
+
+  const fetchHires = async (page: number, status: string, cursors: any[]) => {
+    setLoading(true);
+    try {
+      let q = query(
+        collection(db, "hireRequests"),
+        where("status", "==", status),
+        orderBy("createdAt", "desc"),
+        limit(PAGE_SIZE + 1)
+      );
+      if (page > 0 && cursors[page - 1]) {
+        q = query(
+          collection(db, "hireRequests"),
+          where("status", "==", status),
+          orderBy("createdAt", "desc"),
+          startAfter(cursors[page - 1]),
+          limit(PAGE_SIZE + 1)
+        );
+      }
+      const snap = await getDocs(q);
+      const docs = snap.docs;
+      const hasMore = docs.length > PAGE_SIZE;
+      const pageDocs = docs.slice(0, PAGE_SIZE);
+      const enriched = await enrichHires(pageDocs.map(d => ({ id: d.id, ...d.data() })));
+      setHires(enriched);
+      setHireHasMore(hasMore);
+      if (hasMore && page >= cursors.length) {
+        setHireCursors(prev => [...prev, docs[PAGE_SIZE - 1]]);
+      }
+    } catch (err: any) {
+      logError("HireTab", err);
+      modal.showAlert(`Failed to load hires: ${err.message}`, "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeSubTab === "active-hires") {
+      fetchHires(hirePage, hireStatusFilter, hireCursors);
+    }
+  }, [activeSubTab, hireStatusFilter, hirePage]);
 
   // ── Actions ───────────────────────────────────────────────────────────────
 
@@ -169,6 +250,25 @@ export default function HireTab() {
       await forceReleaseVehicle(vehicle.id, user?.uid || "admin");
       modal.showAlert("Vehicle released", "success");
       setVehicles(prev => prev.map(v => v.id === vehicle.id ? { ...v, status: "available" } : v));
+    } catch (err: any) {
+      modal.showAlert(err.message, "error");
+    } finally {
+      setActing(null);
+    }
+  };
+
+  const handleDeleteHire = async (hire: any) => {
+    const ok = await modal.showConfirm(
+      `Delete hire request ${hire.id.slice(0, 8)}? This cannot be undone.`,
+      "Delete Hire Request",
+      "Delete"
+    );
+    if (!ok) return;
+    setActing(hire.id);
+    try {
+      await deleteDoc(doc(db, "hireRequests", hire.id));
+      modal.showAlert("Hire request deleted", "success");
+      setHires(prev => prev.filter(h => h.id !== hire.id));
     } catch (err: any) {
       modal.showAlert(err.message, "error");
     } finally {
@@ -549,7 +649,7 @@ export default function HireTab() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {payments.filter(p => 
                 p.driverName?.toLowerCase().includes(search.toLowerCase()) ||
-                p.mpesaCode?.toLowerCase().includes(search.toLowerCase())
+                p.transactionCode?.toLowerCase().includes(search.toLowerCase())
               ).map(p => (
                 <PaymentCard key={p.id} p={p} acting={acting} onVerify={handleVerify} onReject={handleReject} />
               ))}
@@ -627,27 +727,69 @@ export default function HireTab() {
               </div>
             </div>
           )}
-          {activeSubTab === "active-hires" && (
+           {activeSubTab === "active-hires" && (
             <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
+               <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                 <div className="flex items-center gap-2">
+                   {["pending", "approved", "active", "completed"].map(s => (
+                     <button
+                       key={s}
+                       onClick={() => { setHireStatusFilter(s); setHirePage(0); setHireCursors([]); }}
+                       className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition ${
+                         hireStatusFilter === s
+                           ? "bg-slate-900 text-white"
+                           : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                       }`}
+                     >
+                       {s}
+                     </button>
+                   ))}
+                 </div>
+                 <div className="flex items-center gap-2">
+                   <button
+                     onClick={() => { setHirePage(p => Math.max(0, p - 1)); }}
+                     disabled={hirePage === 0}
+                     className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                   >
+                     Prev
+                   </button>
+                   <span className="text-xs text-slate-400 font-mono">Page {hirePage + 1}</span>
+                   <button
+                     onClick={() => { setHirePage(p => p + 1); }}
+                     disabled={!hireHasMore}
+                     className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                   >
+                     Next
+                   </button>
+                 </div>
+               </div>
                <table className="w-full text-left">
                  <thead className="bg-slate-50 border-b border-slate-200">
                    <tr>
                      <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Hire ID</th>
+                     <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Customer</th>
                      <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Vehicle</th>
                      <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Duration</th>
                      <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Amount</th>
                      <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                     <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Actions</th>
                    </tr>
                  </thead>
                  <tbody className="divide-y divide-slate-100">
                    {hires.filter(h => 
                      h.vehiclePlateNumber?.toLowerCase().includes(search.toLowerCase()) ||
+                     h.customerName?.toLowerCase().includes(search.toLowerCase()) ||
                      h.id?.toLowerCase().includes(search.toLowerCase())
                    ).map(h => (
                      <tr key={h.id} className="hover:bg-slate-50 transition-colors">
                        <td className="px-6 py-4 text-xs font-mono font-bold text-slate-400">{h.id.slice(0, 8)}...</td>
                        <td className="px-6 py-4">
-                         <p className="text-xs font-bold text-slate-900">{h.vehiclePlateNumber || "Unknown"}</p>
+                         <p className="text-xs font-bold text-slate-900">{h.customerName || "Unknown"}</p>
+                         <p className="text-[10px] text-slate-400 font-mono">{h.customerId?.slice(0, 10)}...</p>
+                       </td>
+                       <td className="px-6 py-4">
+                         <p className="text-xs font-bold text-slate-900">{h.vehicleType || "Unknown"}</p>
+                         <p className="text-[10px] text-slate-400 font-mono">{h.vehiclePlateNumber || "—"}</p>
                        </td>
                        <td className="px-6 py-4 text-xs text-slate-600 font-medium">
                          {h.startDate?.toDate?.().toLocaleDateString()} - {h.endDate?.toDate?.().toLocaleDateString()}
@@ -655,13 +797,28 @@ export default function HireTab() {
                        <td className="px-6 py-4 font-bold text-indigo-600 text-sm">KSH {h.totalAmount?.toLocaleString()}</td>
                        <td className="px-6 py-4">
                          <span className={`px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-widest
-                           ${h.status === "active" ? "bg-primary-50 text-primary-600" : "bg-amber-50 text-amber-600"}
+                           ${h.status === "active" ? "bg-primary-50 text-primary-600" : h.status === "approved" ? "bg-blue-50 text-blue-600" : h.status === "completed" ? "bg-green-50 text-green-600" : "bg-amber-50 text-amber-600"}
                          `}>
                            {h.status}
                          </span>
                        </td>
+                       <td className="px-6 py-4">
+                         <button
+                           onClick={() => handleDeleteHire(h)}
+                           disabled={acting === h.id}
+                           className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition disabled:opacity-50"
+                           title="Delete hire request"
+                         >
+                           {acting === h.id ? <RefreshCw size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                         </button>
+                       </td>
                      </tr>
                    ))}
+                   {hires.length === 0 && !loading && (
+                     <tr>
+                       <td colSpan={7} className="px-6 py-12 text-center text-sm text-slate-400">No {hireStatusFilter} hire requests found</td>
+                     </tr>
+                   )}
                  </tbody>
                </table>
             </div>
@@ -884,7 +1041,7 @@ function PaymentCard({ p, acting, onVerify, onReject }: PaymentCardProps) {
            </div>
            <div>
              <h4 className="font-bold text-slate-900">{p.driverName || "Driver"}</h4>
-             <p className="text-[10px] text-slate-400 font-bold uppercase">{p.mpesaCode}</p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase">{p.transactionCode}</p>
            </div>
          </div>
          <div className="px-3 py-1 bg-amber-50 text-amber-700 rounded-lg text-[9px] font-black uppercase border border-amber-100">

@@ -121,19 +121,32 @@ export const TOGGLE_CORPORATE_MUTATION = `
 `;
 
 export const APP_CRASHES_QUERY = `
-  query AppCrashes {
-    appCrashes {
+  query AppCrashes($platform: String, $severity: String, $status: String) {
+    appCrashes(platform: $platform, severity: $severity, status: $status) {
       id
       message
       stack
+      errorType
+      errorName
       userId
+      userRole
       platform
       appVersion
+      osVersion
+      deviceModel
+      buildNumber
+      screen
+      userAction
+      componentStack
+      sessionId
       severity
+      isFatal
       resolved
       resolvedBy
+      resolvedAt
       timestamp
       count
+      category
     }
   }
 `;

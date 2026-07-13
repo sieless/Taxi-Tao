@@ -33,6 +33,7 @@ import { logError } from "@/lib/logger";const TAB_LABELS: Record<string, string>
   analytics: "Analytics Dashboard",
   audit: "Audit Logs",
   crashes: "Crash Reports",
+  crashlytics: "Firebase Crashlytics",
   settings: "Admin Settings",
   "db-diagnostics": "Database Diagnostics",
 };
