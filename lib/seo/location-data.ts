@@ -294,7 +294,7 @@ export function getCountiesWithLocations(): string[] {
 export function getLocationPageMeta(location: LocationInfo) {
   return {
     title: `Taxi & Car Hire in ${location.town}, ${location.county} | TaxiTao`,
-    description: `Book reliable taxi and car hire services in ${location.town}, ${location.county}. Professional drivers, well-maintained vehicles, 24/7 support. Call +254 710 450 640.`,
+    description: `Book reliable taxi and car hire services in ${location.town}, ${location.county}. Professional drivers, well-maintained vehicles, 24/7 support. Call +254 708 674 665.`,
     keywords: location.keywords.join(", "),
   };
 }

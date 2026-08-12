@@ -112,8 +112,8 @@ const MOCK_DRIVERS: { driver: Driver; vehicle: Vehicle }[] = [
       name: "Ann Wanjiru",
       slug: "ann-wanjiru",
       bio: "Executive service specialist.",
-      phone: "+254723456789",
-      whatsapp: "254723456789",
+      phone: "+254743942883",
+      whatsapp: "254743942883",
       email: "ann@taxitao.co.ke",
       active: true,
       rating: 4.8,
@@ -831,7 +831,7 @@ export default function Home() {
                     </p>
                     <p className="text-gray-600">
                       <a
-                        href="tel:+254723456789"
+                        href="tel:+254743942883"
                         className="hover:text-gray-900"
                       >
                         +254 743 942 883

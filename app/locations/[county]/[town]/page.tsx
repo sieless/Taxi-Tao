@@ -141,7 +141,7 @@ export default async function TownPage({ params }: Props) {
                   Contact & Booking
                 </h2>
                 <div className="space-y-3 text-gray-600">
-                  <p><strong>Phone:</strong> <a href="tel:+254710450640" className="text-primary-600 hover:underline">+254 710 450 640</a></p>
+                  <p><strong>Phone:</strong> <a href="tel:+254708674665" className="text-primary-600 hover:underline">+254 708 674 665</a></p>
                   <p><strong>Email:</strong> <a href="mailto:info@taxitao.co.ke" className="text-primary-600 hover:underline">info@taxitao.co.ke</a></p>
                   <p><strong>Hours:</strong> 24 hours a day, 7 days a week</p>
                 </div>

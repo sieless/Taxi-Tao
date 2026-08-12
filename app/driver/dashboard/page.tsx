@@ -1144,7 +1144,7 @@ import { logError } from "@/lib/logger";export default function DriverDashboard(
               </span>
             </button>
             <a
-              href="https://wa.me/254710450640"
+              href="https://wa.me/254708674665"
               target="_blank"
               rel="noopener noreferrer"
               className="flex flex-col items-center gap-2 p-4 bg-primary-50 hover:bg-primary-100 rounded-lg transition"
@@ -1353,7 +1353,7 @@ import { logError } from "@/lib/logger";export default function DriverDashboard(
                 </p>
               </div>
               <a
-                href="https://wa.me/254710450640"
+                href="https://wa.me/254708674665"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors text-sm"
