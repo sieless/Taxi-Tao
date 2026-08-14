@@ -93,6 +93,20 @@ function getDeviceInfo() {
   return { osVersion, deviceModel };
 }
 
+function sanitizeFirestoreData<T extends Record<string, any>>(obj: T): Record<string, any> {
+  const sanitized: Record<string, any> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== undefined) {
+      if (value && typeof value === "object" && !Array.isArray(value) && !(value instanceof Date) && typeof value.toMillis !== "function") {
+        sanitized[key] = sanitizeFirestoreData(value);
+      } else {
+        sanitized[key] = value;
+      }
+    }
+  }
+  return sanitized;
+}
+
 class CrashAnalytics {
   private sessionId: string;
   private currentScreen: string = "unknown";
@@ -134,14 +148,14 @@ class CrashAnalytics {
 
       const { osVersion, deviceModel } = getDeviceInfo();
 
-      const crashReport: Record<string, any> = {
-        errorMessage: error.message || "Unknown error",
-        errorStack: error.stack,
-        errorType: error.name,
-        errorName: error.constructor?.name,
+      const rawCrashReport: Record<string, any> = {
+        errorMessage: error?.message || "Unknown error",
+        errorStack: error?.stack || null,
+        errorType: error?.name || "Error",
+        errorName: error?.constructor?.name || "Error",
         screen: options?.screen || this.currentScreen || (typeof window !== "undefined" ? window.location.pathname : "unknown"),
-        userAction: options?.userAction,
-        componentStack: options?.componentStack,
+        userAction: options?.userAction || null,
+        componentStack: options?.componentStack || null,
         platform: "web",
         osVersion,
         deviceModel,
@@ -153,9 +167,11 @@ class CrashAnalytics {
         resolved: false,
       };
 
-      if (this.userId) crashReport.userId = this.userId;
-      if (this.userRole) crashReport.userRole = this.userRole;
-      if (this.userEmail) crashReport.userEmail = this.userEmail;
+      if (this.userId) rawCrashReport.userId = this.userId;
+      if (this.userRole) rawCrashReport.userRole = this.userRole;
+      if (this.userEmail) rawCrashReport.userEmail = this.userEmail;
+
+      const crashReport = sanitizeFirestoreData(rawCrashReport);
 
       await addDoc(collection(db, "app_crashes"), crashReport);
     } catch (logError) {
@@ -184,7 +200,7 @@ class CrashAnalytics {
 
   async logEvent(eventName: string, eventData?: Record<string, any>): Promise<void> {
     try {
-      const event: Record<string, any> = {
+      const rawEvent: Record<string, any> = {
         eventName,
         eventData: {
           ...eventData,
@@ -194,8 +210,10 @@ class CrashAnalytics {
         timestamp: serverTimestamp(),
       };
 
-      if (this.userId) event.userId = this.userId;
-      if (this.userRole) event.userRole = this.userRole;
+      if (this.userId) rawEvent.userId = this.userId;
+      if (this.userRole) rawEvent.userRole = this.userRole;
+
+      const event = sanitizeFirestoreData(rawEvent);
 
       await addDoc(collection(db, "app_events"), event);
     } catch (error: any) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, Component, ReactNode } from "react";
 import {
   User as FirebaseUser,
   signInWithEmailAndPassword,
@@ -15,6 +15,25 @@ import { User as AppUser, Driver as AppDriver } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import { sanitizeAuthError } from "@/lib/error-utils";
 import { setUser as setCrashAnalyticsUser } from "@/lib/crash-reporter";
+
+class SafeBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch() {}
+  render() {
+    return this.state.hasError ? null : this.props.children;
+  }
+}
+
+function RouterReceiver({ setRouter }: { setRouter: (r: ReturnType<typeof useRouter> | null) => void }) {
+  const router = useRouter();
+  useEffect(() => {
+    setRouter(router);
+  }, [router, setRouter]);
+  return null;
+}
 
 interface AuthContextType {
   user: FirebaseUser | null;
@@ -54,7 +73,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [driverProfile, setDriverProfile] = useState<AppDriver | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
+  const [routerInstance, setRouterInstance] = useState<ReturnType<typeof useRouter> | null>(null);
+
+  const safeNavigate = (url: string, replace = false) => {
+    try {
+      if (routerInstance) {
+        if (replace) routerInstance.replace(url);
+        else routerInstance.push(url);
+        return;
+      }
+    } catch {}
+
+    if (typeof window !== "undefined") {
+      if (replace) window.location.replace(url);
+      else window.location.href = url;
+    }
+  };
 
 
 
@@ -87,7 +121,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setUserProfile(null);
           setDriverProfile(null);
           setError("Your account has been suspended. Please contact support.");
-          router.replace("/login");
+          safeNavigate("/login", true);
           return;
         }
 
@@ -167,7 +201,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Check email verification - redirect to verification page if not verified
         // (except on verification page itself to avoid redirect loops)
         if (!firebaseUser.emailVerified && !window.location.pathname.includes('/verify-email') && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/signup') && !window.location.pathname.includes('/driver/register')) {
-          router.push('/verify-email');
+          safeNavigate('/verify-email');
           setLoading(false);
           return;
         }
@@ -185,7 +219,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, [router]);
+  }, []);
 
   // Periodic session refresh (every 4 hours)
   // This keeps the session cookie alive and ensures custom claims are fresh
@@ -377,11 +411,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setDriverProfile(null);
       setCrashAnalyticsUser(null, null);
       await clearSessionCookies();
-      try {
-        router.replace("/");
-      } catch {
-        window.location.href = "/";
-      }
+      safeNavigate("/", true);
     }
   };
 
@@ -415,6 +445,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         resetPassword,
       }}
     >
+      <SafeBoundary>
+        <RouterReceiver setRouter={setRouterInstance} />
+      </SafeBoundary>
       {children}
     </AuthContext.Provider>
   );

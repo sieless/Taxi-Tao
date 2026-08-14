@@ -77,14 +77,26 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   // Auth guard
   useEffect(() => {
     if (!loading && (!user || !isAdminOrAssistant(userProfile))) {
-      router.replace("/login");
+      try {
+        router.replace("/login");
+      } catch {
+        if (typeof window !== "undefined") {
+          window.location.replace("/login");
+        }
+      }
     }
   }, [loading, user, userProfile, router]);
 
   const handleLogout = useCallback(async () => {
     setSessionWarning(false);
     await logout();
-    router.push("/");
+    try {
+      router.push("/");
+    } catch {
+      if (typeof window !== "undefined") {
+        window.location.href = "/";
+      }
+    }
   }, [logout, router]);
 
   // Session idle timeout — warns at 19 min, logs out at 20 min

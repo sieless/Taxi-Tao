@@ -23,6 +23,7 @@ import { logError } from "@/lib/logger";const TAB_LABELS: Record<string, string>
   dashboard: "Overview",
   users: "User Management",
   drivers: "Driver Management",
+  expired: "Expired Subscriptions",
   kyc: "KYC Verification",
   companies: "Corporate Fleets",
   hire: "Car Hire Control",

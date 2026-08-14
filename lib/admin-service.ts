@@ -161,7 +161,9 @@ export async function manuallyActivateSubscription(
     const effectiveDuration = durationDays || planConfig.durationDays;
 
     const activatedAt = new Date();
-    const nextPaymentDue = computeNextPaymentDueDate(plan, activatedAt, serviceType);
+    const nextPaymentDue = durationDays
+      ? new Date(activatedAt.getTime() + effectiveDuration * 24 * 60 * 60 * 1000)
+      : computeNextPaymentDueDate(plan, activatedAt, serviceType);
 
     const updateData: any = {
       updatedAt: serverTimestamp(),
@@ -197,6 +199,36 @@ export async function manuallyActivateSubscription(
       });
     }
 
+    // Sync to user profile for mobile phone status guards
+    try {
+      const userRef = doc(db, "users", driverId);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        await updateDoc(userRef, {
+          subscriptionStatus: "active",
+          active: true,
+          nextPaymentDue,
+          updatedAt: serverTimestamp(),
+        });
+      }
+    } catch (userSyncErr) {
+      logError("admin_user_sync", userSyncErr);
+    }
+
+    // Write in-app notification so mobile phone gets instant notification
+    try {
+      await addDoc(collection(db, "driverNotifications"), {
+        driverId,
+        type: "system",
+        title: "Subscription Activated",
+        message: `Your ${serviceType.toUpperCase()} subscription (${effectiveDuration} day pass) has been activated. You are now active and visible to customers.`,
+        read: false,
+        createdAt: serverTimestamp(),
+      });
+    } catch (notifErr) {
+      logError("admin_driver_notif", notifErr);
+    }
+
     // Refresh driver custom claims so they can immediately access features
     try {
       const refreshClaims = httpsCallable(functions, "refreshUserClaims");
@@ -209,7 +241,7 @@ export async function manuallyActivateSubscription(
 
     await logAdminAction(`manual_${serviceType}_activation`, driverId, { adminUid, plan, effectiveDuration });
 
-    return { success: true, message: `${serviceType.toUpperCase()} subscription activated successfully` };
+    return { success: true, message: `${serviceType.toUpperCase()} subscription (${effectiveDuration} days) activated successfully` };
   } catch (err: any) {
     logError("admin", err);
     throw new Error(err.message || "Failed to activate subscription");

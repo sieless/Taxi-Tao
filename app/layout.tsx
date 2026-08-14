@@ -8,7 +8,6 @@ import { AuthProvider } from "@/lib/auth-context";
 import NonceProvider from "@/lib/nonce-context";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import ErrorBoundary from "@/components/ErrorBoundary";
 import NetworkStatus from "@/components/NetworkStatus";
 import { ScreenTracker, GlobalErrorHandler } from "@/components/CrashAnalyticsProviders";
 import JsonLd from "@/components/seo/JsonLd";
@@ -122,18 +121,16 @@ export default async function RootLayout({
   return (
     <html lang="en" className="scroll-smooth" data-scroll-behavior="smooth">
       <body className={`${inter.className} font-sans bg-gray-50 text-gray-900`}>
-        <ErrorBoundary>
-          <NonceProvider nonce={nonce}>
-            <AuthProvider>
-              <ScreenTracker />
-              <GlobalErrorHandler />
-              <Navbar />
-              <main className="min-h-screen pt-16 md:pt-20">{children}</main>
-              <Footer />
-            </AuthProvider>
-          </NonceProvider>
-          <NetworkStatus />
-        </ErrorBoundary>
+        <NonceProvider nonce={nonce}>
+          <AuthProvider>
+            <ScreenTracker />
+            <GlobalErrorHandler />
+            <Navbar />
+            <main className="min-h-screen pt-16 md:pt-20">{children}</main>
+            <Footer />
+          </AuthProvider>
+        </NonceProvider>
+        <NetworkStatus />
         <Analytics />
         <SpeedInsights />
         <JsonLd data={organizationJsonLd} />

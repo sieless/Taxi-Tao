@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { 
   collection, 
   query, 
@@ -59,6 +60,7 @@ import { hasAdminPermission } from "@/lib/admin-permission-helper";
 
 import { logError } from "@/lib/logger";export default function DriversTab() {
   const { user, userProfile } = useAuth();
+  const router = useRouter();
   const modal = useModal();
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [loading, setLoading] = useState(true);
@@ -308,20 +310,37 @@ async function handleUpdateVehicleStatus(driverId: string, vehicle: any, newStat
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 text-amber-500">Pending</p>
             <p className="text-xl font-bold text-slate-900">{drivers.filter(d => d.subscriptionStatus === "pending").length}</p>
           </div>
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 text-rose-500">Expired</p>
+          <div 
+            onClick={() => router.push("/admin/expired")}
+            className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm hover:border-rose-300 hover:shadow-md transition cursor-pointer group"
+            title="Click to view & activate expired driver subscriptions"
+          >
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 text-rose-500">Expired</p>
+              <Zap size={12} className="text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
             <p className="text-xl font-bold text-slate-900">{drivers.filter(d => d.subscriptionStatus === "expired").length}</p>
           </div>
         </div>
 
         <div className="flex gap-2">
+          {canManage && (
+            <button
+              onClick={() => router.push("/admin/expired")}
+              className="bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-xs font-bold rounded-xl px-4 py-2.5 flex items-center gap-2 transition shadow-sm"
+              title="Open Expired Subscriptions Dashboard to activate drivers"
+            >
+              <Clock size={14} />
+              Manage Expired Subscriptions
+            </button>
+          )}
           <select 
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             className="bg-white border border-slate-200 text-slate-700 text-sm rounded-xl px-4 py-2.5 outline-none focus:ring-4 focus:ring-indigo-500/10 cursor-pointer shadow-sm"
           >
             <option value="all">Filter by Status</option>
-            <option value="approved">Approved</option>
+            <option value="active">Active</option>
             <option value="pending">Pending</option>
             <option value="expired">Expired</option>
             <option value="suspended">Suspended</option>

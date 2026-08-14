@@ -6,6 +6,7 @@ import {
   LayoutDashboard, 
   Users, 
   Car, 
+  Clock,
   ShieldCheck, 
   Briefcase,
   Building2, 
@@ -41,6 +42,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "dashboard", label: "Overview", icon: <LayoutDashboard size={20} /> },
   { id: "users", label: "Users", icon: <Users size={20} />, permission: "manageUsers" },
   { id: "drivers", label: "Drivers", icon: <Car size={20} />, permission: "manageDrivers" },
+  { id: "expired", label: "Expired Subs", icon: <Clock size={20} />, permission: "manageDrivers" },
   { id: "kyc", label: "KYC Review", icon: <ShieldCheck size={20} />, permission: "manageDrivers" },
   { id: "companies", label: "Corporate", icon: <Building2 size={20} /> },
   { id: "hire", label: "Car Hire", icon: <Briefcase size={20} />, permission: "managePayments" },
@@ -73,7 +75,11 @@ export default function AdminSidebar() {
   };
 
   const handleNav = (id: string) => {
-    router.push(`/admin/dashboard?tab=${id}`);
+    if (id === "expired") {
+      router.push("/admin/expired");
+    } else {
+      router.push(`/admin/dashboard?tab=${id}`);
+    }
     setIsMobileOpen(false);
   };
 
