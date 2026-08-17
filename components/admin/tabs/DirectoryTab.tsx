@@ -6,7 +6,6 @@ import { db } from "@/lib/firebase";
 import { Driver } from "@/lib/types";
 import { toast } from "sonner";
 import { Search, Plus, Trash2, Edit2, Phone, MapPin, Car } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getAllLocations } from "@/lib/seo/location-data";
 
 export default function DirectoryTab() {
