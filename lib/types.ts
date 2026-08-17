@@ -55,6 +55,11 @@ export interface Driver {
   idBackUrl?: string;
   licenseUrl?: string;
 
+  // Public Directory Fields
+  isPublicDirectory?: boolean;
+  addedBy?: "admin" | "system" | "driver" | "owner" | "staff";
+  serviceTowns?: string[];
+
   mpesaDetails?: {
     accountName?: string;
     phoneNumber?: string;

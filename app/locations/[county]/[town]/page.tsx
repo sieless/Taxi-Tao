@@ -4,6 +4,9 @@ import type { Metadata } from "next";
 import { getAllLocations, getLocationBySlug, getLocationsByCounty } from "@/lib/seo/location-data";
 import { getLocationKeywords } from "@/lib/seo/keywords";
 import JsonLd from "@/components/seo/JsonLd";
+import { adminDb } from "@/lib/firebase-admin";
+import DriverDirectoryCard from "@/components/DriverDirectoryCard";
+import { Driver } from "@/lib/types";
 
 const BASE_URL = "https://taxitao.co.ke";
 
@@ -56,6 +59,37 @@ export default async function TownPage({ params }: Props) {
 
   const keywords = getLocationKeywords(location.county, location.town);
   const countyLocations = getLocationsByCounty(location.county);
+
+  // Fetch public directory drivers for this town
+  // We use a single where clause to avoid Firestore composite index errors
+  let directoryDrivers: Driver[] = [];
+  try {
+    const snapshot = await adminDb
+      .collection("drivers")
+      .where("isPublicDirectory", "==", true)
+      .get();
+    
+    directoryDrivers = snapshot.docs
+      .map(doc => {
+        const data = doc.data();
+        
+        // Production-Ready Serialization: 
+        // Explicitly extract and convert Firestore Timestamps into standard ISO strings
+        // so Client Components receive standard predictable Date strings.
+        const serializedDriver = {
+          ...data,
+          id: doc.id,
+          createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : null,
+          updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : null,
+        };
+        
+        return serializedDriver as unknown as Driver;
+      })
+      .filter(d => d.active === true && d.serviceTowns?.includes(town))
+      .slice(0, 10);
+  } catch (error) {
+    console.error("Error fetching directory drivers:", error);
+  }
 
   const localBusinessSchema = {
     "@context": "https://schema.org",
@@ -135,6 +169,20 @@ export default async function TownPage({ params }: Props) {
                   </div>
                 </div>
               </div>
+
+              {directoryDrivers.length > 0 && (
+                <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-8">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                    Local Drivers in {location.town}
+                  </h2>
+                  <p className="text-gray-600 mb-6">Contact our registered drivers operating in your area directly.</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {directoryDrivers.map((driver) => (
+                      <DriverDirectoryCard key={driver.id} driver={driver} />
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-8">
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">

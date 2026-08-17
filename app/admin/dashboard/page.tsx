@@ -22,6 +22,7 @@ const AnalyticsTab = dynamic(() => import("@/components/admin/tabs/AnalyticsTab"
 const AuditLogsTab = dynamic(() => import("@/components/admin/tabs/AuditLogsTab"), { loading: () => <div className="animate-pulse bg-gray-100 rounded-lg h-64" /> });
 const SettingsTab = dynamic(() => import("@/components/admin/tabs/SettingsTab"), { loading: () => <div className="animate-pulse bg-gray-100 rounded-lg h-64" /> });
 const DbDiagnosticsTab = dynamic(() => import("@/components/admin/tabs/DbDiagnosticsTab"), { loading: () => <div className="animate-pulse bg-gray-100 rounded-lg h-64" /> });
+const DirectoryTab = dynamic(() => import("@/components/admin/tabs/DirectoryTab"), { loading: () => <div className="animate-pulse bg-gray-100 rounded-lg h-64" /> });
 const ExpiredSubscriptionsPage = dynamic(() => import("@/app/admin/expired/page"), { loading: () => <div className="animate-pulse bg-gray-100 rounded-lg h-64" /> });
 
 // Placeholder for other tabs (will be implemented in next steps)
@@ -43,6 +44,7 @@ export default function AdminDashboard() {
       case "users": return <UsersTab />;
       case "payments": return <PaymentsTab />;
       case "drivers": return <DriversTab />;
+      case "directory": return <DirectoryTab />;
       case "expired": return <ExpiredSubscriptionsPage />;
       case "kyc": return <KycTab />;
       case "companies": return <CompaniesTab />;
