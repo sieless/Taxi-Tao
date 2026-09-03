@@ -228,7 +228,7 @@ export default function MarketingTab() {
 
       await new Promise<void>((resolve, reject) => {
         img.onload = () => resolve();
-        img.onerror = () => reject(new Error("Image load failed"));
+        img.onerror = () => reject(new Error("SVG image rasterization failed"));
         setTimeout(() => reject(new Error("Timeout loading SVG")), 10000);
       });
 
@@ -252,10 +252,9 @@ export default function MarketingTab() {
       setDownloadedPng(true);
       setTimeout(() => setDownloadedPng(false), 2000);
     } catch (e: any) {
-      // Hypothesis 1 mitigation: Safari canvas tainting — catch SecurityError and guide user to SVG
       setError(
         e?.name === "SecurityError"
-          ? "PNG export blocked by browser security (Safari). Please use the SVG download instead — it is equally high quality."
+          ? "PNG export blocked by browser security. Please use the SVG download instead — it is high quality."
           : `PNG export failed: ${e?.message ?? "unknown error"}. Try downloading the SVG instead.`
       );
     } finally {

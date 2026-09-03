@@ -106,55 +106,102 @@ export interface CrashlyticsApp {
   projectId: string;
 }
 
+function parseDate(input: any): Date | null {
+  if (!input) return null;
+  try {
+    const d = typeof input.toDate === "function" ? input.toDate() : new Date(input);
+    if (d instanceof Date && !isNaN(d.getTime())) {
+      return d;
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+function parseDateToIso(input: any): string {
+  const d = parseDate(input);
+  return d ? d.toISOString() : new Date().toISOString();
+}
+
+function parseDateToIsoOrUndefined(input: any): string | undefined {
+  const d = parseDate(input);
+  return d ? d.toISOString() : undefined;
+}
+
 export async function listApps(): Promise<CrashlyticsApp[]> {
   const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
-
-  const { GoogleAuth } = await import("google-auth-library");
-  const auth = new GoogleAuth({
-    credentials: {
-      project_id: process.env.FIREBASE_ADMIN_PROJECT_ID,
-      client_email: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
-      private_key: process.env.FIREBASE_ADMIN_PRIVATE_KEY
-        ?.replace(/\\n/g, "\n")
-        ?.replace(/\r\n/g, "\n")
-        ?.replace(/\r/g, "\n")
-        ?.replace(/^"|"$/g, ""),
-    },
-    scopes: ["https://www.googleapis.com/auth/cloud-platform"],
-  });
-  const tokenResponse = await auth.getAccessToken();
-  if (!tokenResponse) throw new Error("Failed to obtain access token");
-  const token = tokenResponse;
-
-  const [androidRes, iosRes, webRes] = await Promise.all([
-    fetch(`https://firebase.googleapis.com/v1beta1/projects/${projectId}/androidApps`, {
-      headers: { Authorization: `Bearer ${token}` },
-    }),
-    fetch(`https://firebase.googleapis.com/v1beta1/projects/${projectId}/iosApps`, {
-      headers: { Authorization: `Bearer ${token}` },
-    }),
-    fetch(`https://firebase.googleapis.com/v1beta1/projects/${projectId}/webApps`, {
-      headers: { Authorization: `Bearer ${token}` },
-    }),
-  ]);
-
-  const apps: CrashlyticsApp[] = [];
-
-  for (const res of [androidRes, iosRes, webRes]) {
-    if (res.ok) {
-      const data = await res.json();
-      for (const app of data.apps || []) {
-        apps.push({
-          name: app.name,
-          appId: app.appId,
-          displayName: app.displayName,
-          projectId: projectId!,
-        });
-      }
-    }
+  if (!projectId) {
+    return [{ name: "Taxi-Tao Web", appId: "taxitao-web", displayName: "Taxi-Tao Web", projectId: "unknown" }];
   }
 
-  return apps;
+  try {
+    const { GoogleAuth } = await import("google-auth-library");
+    const auth = new GoogleAuth({
+      credentials: {
+        project_id: process.env.FIREBASE_ADMIN_PROJECT_ID,
+        client_email: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
+        private_key: process.env.FIREBASE_ADMIN_PRIVATE_KEY
+          ?.replace(/\\n/g, "\n")
+          ?.replace(/\r\n/g, "\n")
+          ?.replace(/\r/g, "\n")
+          ?.replace(/^"|"$/g, ""),
+      },
+      scopes: ["https://www.googleapis.com/auth/cloud-platform"],
+    });
+
+    const tokenResponse = await auth.getAccessToken();
+    if (!tokenResponse) {
+      return [{ name: "Taxi-Tao Web", appId: "taxitao-web", displayName: "Taxi-Tao Web", projectId }];
+    }
+    const token = tokenResponse;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+    const [androidRes, iosRes, webRes] = await Promise.allSettled([
+      fetch(`https://firebase.googleapis.com/v1beta1/projects/${projectId}/androidApps`, {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
+      }),
+      fetch(`https://firebase.googleapis.com/v1beta1/projects/${projectId}/iosApps`, {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
+      }),
+      fetch(`https://firebase.googleapis.com/v1beta1/projects/${projectId}/webApps`, {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
+      }),
+    ]);
+    clearTimeout(timeoutId);
+
+    const apps: CrashlyticsApp[] = [];
+
+    for (const res of [androidRes, iosRes, webRes]) {
+      if (res.status === "fulfilled" && res.value.ok) {
+        const data = await res.value.json();
+        for (const app of data.apps || []) {
+          apps.push({
+            name: app.name,
+            appId: app.appId,
+            displayName: app.displayName || app.appId,
+            projectId: projectId!,
+          });
+        }
+      }
+    }
+
+    if (apps.length === 0) {
+      apps.push({ name: "Taxi-Tao Web", appId: "taxitao-web", displayName: "Taxi-Tao Web", projectId });
+    }
+
+    return apps;
+  } catch (err) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("listApps fallback:", err);
+    }
+    return [{ name: "Taxi-Tao Web", appId: "taxitao-web", displayName: "Taxi-Tao Web", projectId }];
+  }
 }
 
 export async function listIssues(
@@ -171,13 +218,20 @@ export async function listIssues(
   let query = db.collection("app_crashes") as any;
 
   if (options?.startTime) {
-    query = query.where("timestamp", ">=", new Date(options.startTime));
+    const startDate = parseDate(options.startTime);
+    if (startDate) query = query.where("timestamp", ">=", startDate);
   }
   if (options?.endTime) {
-    query = query.where("timestamp", "<=", new Date(options.endTime));
+    const endDate = parseDate(options.endTime);
+    if (endDate) query = query.where("timestamp", "<=", endDate);
   }
 
-  const snapshot = await query.orderBy("timestamp", "desc").limit(500).get();
+  let snapshot;
+  try {
+    snapshot = await query.orderBy("timestamp", "desc").limit(500).get();
+  } catch {
+    snapshot = await query.limit(500).get();
+  }
 
   const issueMap = new Map<string, CrashlyticsIssue>();
 
@@ -186,8 +240,7 @@ export async function listIssues(
     const errorKey = data.errorMessage || data.errorType || "Unknown";
     const existing = issueMap.get(errorKey);
 
-    const ts = data.timestamp?.toDate?.() || new Date(data.timestamp || Date.now());
-    const tsIso = ts.toISOString();
+    const tsIso = parseDateToIso(data.timestamp);
 
     if (existing) {
       existing.eventCount = String(parseInt(existing.eventCount) + 1);
@@ -221,7 +274,7 @@ export async function listIssues(
         buildNumber: data.buildNumber || undefined,
         resolved: data.resolved || false,
         resolvedBy: data.resolvedBy || undefined,
-        resolvedAt: data.resolvedAt?.toDate?.()?.toISOString(),
+        resolvedAt: parseDateToIsoOrUndefined(data.resolvedAt),
       });
     }
   }
@@ -244,14 +297,14 @@ export async function getIssue(
   const doc = await db.collection("app_crashes").doc(issueId).get();
   if (!doc.exists) return null;
   const data = doc.data()!;
-  const ts = data.timestamp?.toDate?.() || new Date(data.timestamp || Date.now());
+  const tsIso = parseDateToIso(data.timestamp);
   return {
     name: doc.id,
     title: data.errorMessage || "Unknown Issue",
     subtitle: data.errorStack || "",
     appVersion: data.appVersion || "",
-    firstOccurrenceTime: ts.toISOString(),
-    latestOccurrenceTime: ts.toISOString(),
+    firstOccurrenceTime: tsIso,
+    latestOccurrenceTime: tsIso,
     state: data.resolved ? "closed" : "open",
     type: data.errorType || "",
     userCount: "1",
@@ -271,7 +324,7 @@ export async function getIssue(
     buildNumber: data.buildNumber || undefined,
     resolved: data.resolved || false,
     resolvedBy: data.resolvedBy || undefined,
-    resolvedAt: data.resolvedAt?.toDate?.()?.toISOString(),
+    resolvedAt: parseDateToIsoOrUndefined(data.resolvedAt),
   };
 }
 
@@ -281,7 +334,7 @@ export async function getCrashDetails(issueId: string): Promise<CrashDetails | n
   const doc = await db.collection("app_crashes").doc(issueId).get();
   if (!doc.exists) return null;
   const data = doc.data()!;
-  const ts = data.timestamp?.toDate?.() || new Date(data.timestamp || Date.now());
+  const tsIso = parseDateToIso(data.timestamp);
   return {
     id: doc.id,
     errorMessage: data.errorMessage,
@@ -300,12 +353,12 @@ export async function getCrashDetails(issueId: string): Promise<CrashDetails | n
     appVersion: data.appVersion,
     buildNumber: data.buildNumber,
     sessionId: data.sessionId,
-    timestamp: ts.toISOString(),
+    timestamp: tsIso,
     isFatal: data.isFatal,
     severity: data.severity,
     resolved: data.resolved,
     resolvedBy: data.resolvedBy,
-    resolvedAt: data.resolvedAt?.toDate?.()?.toISOString(),
+    resolvedAt: parseDateToIsoOrUndefined(data.resolvedAt),
   };
 }
 
@@ -325,21 +378,28 @@ export async function listEvents(
   let query = db.collection("app_events") as any;
 
   if (options?.startTime) {
-    query = query.where("timestamp", ">=", new Date(options.startTime));
+    const startDate = parseDate(options.startTime);
+    if (startDate) query = query.where("timestamp", ">=", startDate);
   }
   if (options?.endTime) {
-    query = query.where("timestamp", "<=", new Date(options.endTime));
+    const endDate = parseDate(options.endTime);
+    if (endDate) query = query.where("timestamp", "<=", endDate);
   }
 
-  const snapshot = await query.orderBy("timestamp", "desc").limit(200).get();
+  let snapshot;
+  try {
+    snapshot = await query.orderBy("timestamp", "desc").limit(200).get();
+  } catch {
+    snapshot = await query.limit(200).get();
+  }
 
   return snapshot.docs.map((doc: any) => {
     const data = doc.data();
-    const ts = data.timestamp?.toDate?.() || new Date(data.timestamp || Date.now());
+    const tsIso = parseDateToIso(data.timestamp);
     return {
       name: doc.id,
       issueId: options?.issueId || "",
-      eventTime: ts.toISOString(),
+      eventTime: tsIso,
       appVersion: data.appVersion || "",
       os: data.osVersion || "",
       osVersion: data.osVersion || "",
@@ -350,3 +410,4 @@ export async function listEvents(
     };
   });
 }
+

@@ -87,14 +87,32 @@ function downloadBlob(blob: Blob, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-// Convert image URL to base64 with multi-tier CORS & HTML Image element fallbacks
+// Convert image URL to base64 with Server Proxy, CORS & HTML Image fallbacks
 async function urlToBase64(url: string): Promise<string> {
   if (!url) return "";
   if (url.startsWith("data:")) return url;
 
-  // Tier 1: Try fetch with CORS mode
+  // Tier 1: Next.js API Server Proxy (bypasses browser CORS restrictions completely)
   try {
-    const response = await fetch(url, { mode: "cors", credentials: "omit" });
+    const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(url)}`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+    const res = await fetch(proxyUrl, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (res.ok) {
+      const data = await res.json();
+      if (data?.base64) return data.base64;
+    }
+  } catch (err) {
+    // Proceed to Tier 2
+  }
+
+  // Tier 2: Direct CORS fetch
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2500);
+    const response = await fetch(url, { mode: "cors", credentials: "omit", signal: controller.signal });
+    clearTimeout(timeoutId);
     if (response.ok) {
       const blob = await response.blob();
       const base64 = await new Promise<string>((resolve) => {
@@ -106,10 +124,10 @@ async function urlToBase64(url: string): Promise<string> {
       if (base64) return base64;
     }
   } catch (error) {
-    // Proceed to Tier 2
+    // Proceed to Tier 3
   }
 
-  // Tier 2: Try HTML Image Element + Canvas
+  // Tier 3: HTML Image Element + Canvas
   try {
     const img = new Image();
     img.crossOrigin = "anonymous";
@@ -117,7 +135,7 @@ async function urlToBase64(url: string): Promise<string> {
     await new Promise<void>((resolve, reject) => {
       img.onload = () => resolve();
       img.onerror = () => reject();
-      setTimeout(reject, 3500);
+      setTimeout(reject, 2500);
     });
 
     const canvas = document.createElement("canvas");
@@ -130,10 +148,10 @@ async function urlToBase64(url: string): Promise<string> {
       if (dataUrl && dataUrl.length > 100) return dataUrl;
     }
   } catch (error) {
-    // Proceed to Tier 3
+    // Proceed to Tier 4
   }
 
-  // Tier 3: Direct URL fallback (SVG <image xlink:href="..."> can attempt direct render)
+  // Tier 4: Direct URL passthrough (guarantees image displays in SVG preview even if base64 conversion fails)
   return url;
 }
 
@@ -775,8 +793,8 @@ export default function DriverMarketingPosterPage() {
       
       await new Promise<void>((resolve, reject) => {
         img.onload = () => resolve();
-        img.onerror = () => reject(new Error("Image load failed"));
-        setTimeout(() => reject(new Error("Timeout")), 10000);
+        img.onerror = () => reject(new Error("SVG image rasterization failed"));
+        setTimeout(() => reject(new Error("Timeout rasterizing PNG")), 10000);
       });
       
       // Sticker uses a fixed 1200×1200 canvas; all other templates use the selected size
@@ -787,7 +805,7 @@ export default function DriverMarketingPosterPage() {
       canvas.width = exportW;
       canvas.height = exportH;
       const ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("Canvas not supported");
+      if (!ctx) throw new Error("Canvas context unavailable");
       
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, exportW, exportH);
@@ -798,12 +816,12 @@ export default function DriverMarketingPosterPage() {
         canvas.toBlob(resolve, "image/png", 1)
       );
       
-      if (!pngBlob) throw new Error("PNG export failed");
+      if (!pngBlob) throw new Error("PNG conversion failed");
       const sizeLabel = template === "sticker" ? "1200x1200" : size;
       downloadBlob(pngBlob, `taxitao-poster-${template}-${sizeLabel}.png`);
     } catch (e: any) {
       logError("page", e);
-      setExportError(`Export failed: ${e.message}. Try SVG instead.`);
+      setExportError(`PNG export failed: ${e?.message || "unknown error"}. Please download SVG instead.`);
     } finally {
       setExportingPng(false);
     }
