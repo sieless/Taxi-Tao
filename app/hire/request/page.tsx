@@ -30,7 +30,7 @@ function HireRequestContent() {
   const vehicleId = searchParams.get("vehicleId");
   const providerId = searchParams.get("providerId");
   const driverId = searchParams.get("driverId");
-  const googlePlayLink = "https://play.google.com/apps/internaltest/4701167634066348442";
+  const googlePlayLink = "https://play.google.com/store/apps/details?id=com.taxitao.mobile";
 
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [loading, setLoading] = useState(true);

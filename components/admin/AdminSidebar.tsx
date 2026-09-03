@@ -25,7 +25,8 @@ import {
   LogOut,
   Menu,
   X,
-  MapPin
+  MapPin,
+  QrCode
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
@@ -44,6 +45,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "users", label: "Users", icon: <Users size={20} />, permission: "manageUsers" },
   { id: "drivers", label: "Drivers", icon: <Car size={20} />, permission: "manageDrivers" },
   { id: "directory", label: "Directory", icon: <MapPin size={20} />, permission: "manageDrivers" },
+  { id: "marketing", label: "Marketing QR", icon: <QrCode size={20} />, permission: "manageDrivers" },
   { id: "expired", label: "Expired Subs", icon: <Clock size={20} />, permission: "manageDrivers" },
   { id: "kyc", label: "KYC Review", icon: <ShieldCheck size={20} />, permission: "manageDrivers" },
   { id: "companies", label: "Corporate", icon: <Building2 size={20} /> },

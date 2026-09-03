@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Driver, Vehicle } from "@/lib/types";
 import { Star, Car, MapPin, Briefcase, Loader2, Search, Navigation } from "lucide-react";
@@ -42,54 +42,51 @@ export default function AllDriversPage() {
   // Count online drivers
   const onlineCount = drivers.filter(d => d.status === "available").length;
 
-  // Fetch all drivers on mount
+  // Real-time listener for all public active drivers
   useEffect(() => {
-    fetchAllDrivers();
-  }, []);
+    const q = query(
+      collection(db, "drivers"),
+      where("active", "==", true),
+      where("subscriptionStatus", "==", "active"),
+      where("isVisibleToPublic", "==", true)
+    );
 
-  // Apply filters whenever dependencies change
-  useEffect(() => {
-    filterAndSortDrivers();
-  }, [drivers, searchTerm, selectedLocation, selectedType, sortBy, routeFrom, routeTo]);
+    const unsubscribe = onSnapshot(
+      q,
+      async (snapshot) => {
+        const driverPromises = snapshot.docs.map(async (docSnap) => {
+          const data = docSnap.data() as Driver;
+          const driver = { ...data, id: docSnap.id };
 
-  async function fetchAllDrivers() {
-    try {
-      const q = query(
-        collection(db, "drivers"),
-        where("active", "==", true),
-        where("subscriptionStatus", "==", "active"),
-        where("isVisibleToPublic", "==", true)
-      );
-      const snapshot = await getDocs(q);
-      
-      // Use Promise.all to fetch vehicles for drivers that don't have them in the main doc
-      const driverPromises = snapshot.docs.map(async (docSnap) => {
-        const data = docSnap.data() as Driver;
-        const driver = { ...data, id: docSnap.id };
-        
-        // If vehicles array is missing or empty, try fetching from subcollection
-        if (!driver.vehicles || driver.vehicles.length === 0) {
-          try {
-            const vQ = query(collection(db, "drivers", driver.id, "vehicles"));
-            const vSnapshot = await getDocs(vQ);
-            driver.vehicles = vSnapshot.docs.map(vDoc => ({ ...vDoc.data(), id: vDoc.id } as Vehicle));
-          } catch (vErr) {
-            logWarn("AllDriversPage", `Failed to fetch vehicles for driver`, { driverId: driver.id });
+          if (!driver.vehicles || driver.vehicles.length === 0) {
+            try {
+              const vQ = query(collection(db, "drivers", driver.id, "vehicles"));
+              const vSnapshot = await getDocs(vQ);
+              driver.vehicles = vSnapshot.docs.map(
+                (vDoc) => ({ ...vDoc.data(), id: vDoc.id } as Vehicle)
+              );
+            } catch (vErr) {
+              logWarn("AllDriversPage", `Failed to fetch vehicles for driver`, {
+                driverId: driver.id,
+              });
+            }
           }
-        }
-        
-        return driver;
-      });
 
-      const resolvedDrivers = await Promise.all(driverPromises);
-      setDrivers(resolvedDrivers);
-      setFilteredDrivers(resolvedDrivers);
-      setLoading(false);
-    } catch (error) {
-      logError("page", error);
-      setLoading(false);
-    }
-  }
+          return driver;
+        });
+
+        const resolvedDrivers = await Promise.all(driverPromises);
+        setDrivers(resolvedDrivers);
+        setLoading(false);
+      },
+      (error) => {
+        logError("AllDriversPage", error);
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
 
   async function filterAndSortDrivers() {
     let filtered = [...drivers];

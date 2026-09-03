@@ -4,7 +4,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import DOMPurify from "dompurify";
+// DOMPurify removed: our SVG is fully server-generated with escapeXml() on all user input.
+// DOMPurify incorrectly strips valid SVG elements (<image xlink:href>, <clipPath>, <filter>,
+// <linearGradient>) causing broken images, QR codes, and missing styles in the poster renderer.
 import { getDriverPricing } from "@/lib/pricing-service";
 
 import { logError } from "@/lib/logger";
@@ -20,7 +22,7 @@ import {
 } from "lucide-react";
 
 type PosterSize = "instagram_portrait" | "square" | "story";
-type PosterTemplate = "transformation" | "bold" | "minimal";
+type PosterTemplate = "transformation" | "bold" | "minimal" | "sticker";
 
 const SIZES: Record<PosterSize, { w: number; h: number; label: string }> = {
   instagram_portrait: { w: 1080, h: 1350, label: "Instagram Portrait (1080×1350)" },
@@ -28,10 +30,14 @@ const SIZES: Record<PosterSize, { w: number; h: number; label: string }> = {
   story: { w: 1080, h: 1920, label: "Instagram Story (1080×1920)" },
 };
 
+// Sticker is always 1200×1200 — fixed dimension regardless of size selector
+const STICKER_DIMENSION = { w: 1200, h: 1200 };
+
 const TEMPLATES: Record<PosterTemplate, { name: string; description: string }> = {
   transformation: { name: "Transformation", description: "Bold & Creative" },
   bold: { name: "Bold Impact", description: "High Visibility" },
   minimal: { name: "Clean Modern", description: "Professional" },
+  sticker: { name: "🚗 Car Window Sticker", description: "Print-Ready • 1200×1200" },
 };
 
 // Default Avatar SVG as base64
@@ -81,51 +87,118 @@ function downloadBlob(blob: Blob, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-// Convert image URL to base64 with CORS handling
+// Convert image URL to base64 with multi-tier CORS & HTML Image element fallbacks
 async function urlToBase64(url: string): Promise<string> {
+  if (!url) return "";
+  if (url.startsWith("data:")) return url;
+
+  // Tier 1: Try fetch with CORS mode
   try {
-    // For Firebase Storage URLs, we can fetch directly
-    const response = await fetch(url, {
-      mode: 'cors',
-      credentials: 'omit',
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    const response = await fetch(url, { mode: "cors", credentials: "omit" });
+    if (response.ok) {
+      const blob = await response.blob();
+      const base64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve((reader.result as string) || "");
+        reader.onerror = () => resolve("");
+        reader.readAsDataURL(blob);
+      });
+      if (base64) return base64;
     }
-    
-    const blob = await response.blob();
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
+  } catch (error) {
+    // Proceed to Tier 2
+  }
+
+  // Tier 2: Try HTML Image Element + Canvas
+  try {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.src = url;
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject();
+      setTimeout(reject, 3500);
     });
+
+    const canvas = document.createElement("canvas");
+    canvas.width = img.naturalWidth || 400;
+    canvas.height = img.naturalHeight || 400;
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      ctx.drawImage(img, 0, 0);
+      const dataUrl = canvas.toDataURL("image/png");
+      if (dataUrl && dataUrl.length > 100) return dataUrl;
+    }
+  } catch (error) {
+    // Proceed to Tier 3
+  }
+
+  // Tier 3: Direct URL fallback (SVG <image xlink:href="..."> can attempt direct render)
+  return url;
+}
+
+// Generate QR Code as base64 with TaxiTao logo embedded in the center
+async function generateQRCodeBase64(text: string, logoUrl = "/icon.png"): Promise<string> {
+  try {
+    const QRCode = await import("qrcode");
+    const canvas = document.createElement("canvas");
+    canvas.width = 600;
+    canvas.height = 600;
+
+    await QRCode.toCanvas(canvas, text, {
+      width: 600,
+      margin: 2,
+      color: { dark: "#000000", light: "#ffffff" },
+      errorCorrectionLevel: "H", // High error correction (30%) allows clean center logo badge
+    });
+
+    const ctx = canvas.getContext("2d");
+    if (ctx && logoUrl) {
+      try {
+        const logoImg = new Image();
+        logoImg.crossOrigin = "anonymous";
+        logoImg.src = logoUrl;
+        await new Promise<void>((resolve) => {
+          logoImg.onload = () => resolve();
+          logoImg.onerror = () => resolve();
+          setTimeout(resolve, 2000);
+        });
+
+        if (logoImg.complete && logoImg.naturalWidth > 0) {
+          const logoSize = 120; // 20% of canvas width
+          const x = (600 - logoSize) / 2;
+          const y = (600 - logoSize) / 2;
+
+          // Clean rounded white badge behind logo
+          ctx.fillStyle = "#ffffff";
+          ctx.beginPath();
+          if (typeof (ctx as any).roundRect === "function") {
+            (ctx as any).roundRect(x - 8, y - 8, logoSize + 16, logoSize + 16, 16);
+          } else {
+            ctx.rect(x - 8, y - 8, logoSize + 16, logoSize + 16);
+          }
+          ctx.fill();
+
+          ctx.strokeStyle = "#16a34a";
+          ctx.lineWidth = 4;
+          ctx.stroke();
+
+          ctx.drawImage(logoImg, x, y, logoSize, logoSize);
+        }
+      } catch (err) {
+        logError("page", err);
+      }
+    }
+
+    return canvas.toDataURL("image/png");
   } catch (error) {
     logError("page", error);
     return "";
   }
 }
 
-// Generate QR Code as base64 using qrcode library
-async function generateQRCodeBase64(text: string): Promise<string> {
-  try {
-    const QRCode = await import("qrcode");
-    const qrDataUrl = await QRCode.toDataURL(text, {
-      width: 400,
-      margin: 2,
-      color: {
-        dark: '#000000',
-        light: '#ffffff',
-      },
-      errorCorrectionLevel: 'M',
-    });
-    return qrDataUrl;
-  } catch (error) {
-    logError("page", error);
-    return "";
-  }
-}
+// Play Store direct app URL
+const APP_DOWNLOAD_LINK = "https://play.google.com/store/apps/details?id=com.taxitao.mobile";
 
 export default function DriverMarketingPosterPage() {
   const { user, driverProfile, loading } = useAuth();
@@ -133,8 +206,6 @@ export default function DriverMarketingPosterPage() {
   const [size, setSize] = useState<PosterSize>("instagram_portrait");
   const [template, setTemplate] = useState<PosterTemplate>("transformation");
   const [qrDestination, setQrDestination] = useState<"profile" | "app">("profile");
-  // TODO: Replace with actual App Store link provided by user
-  const APP_DOWNLOAD_LINK = "https://play.google.com/apps/internaltest/4701167634066348442";
 
   const [exportingPng, setExportingPng] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
@@ -190,7 +261,10 @@ export default function DriverMarketingPosterPage() {
     const phone = safeText(driverProfile.phone, "");
     const whatsapp = safeText(driverProfile.whatsapp, "") || (phone ? formatPhoneForWhatsApp(phone) : "");
     const bio = safeText(driverProfile.bio, "Safe, reliable rides — book anytime.");
-    const photoUrl = safeText(driverProfile.profilePhotoUrl, "");
+    const photoUrl = safeText(
+      driverProfile.profilePhotoUrl || (driverProfile as any).photoUrl || user?.photoURL,
+      ""
+    );
     const vehicleImageUrl = safeText(vehicle?.images?.[0], "");
     const vehicleLine = vehicle
       ? `${safeText(vehicle.make)} ${safeText(vehicle.model)}${vehicle.year ? ` • ${vehicle.year}` : ""}`
@@ -297,33 +371,34 @@ export default function DriverMarketingPosterPage() {
     const isSquare = h === 1080;
     const isStory = h === 1920;
     
-    // Limit routes based on available space
-    const maxRoutes = isSquare ? 3 : 4;
-    const displayRoutes = routePrices.slice(0, maxRoutes);
-    
-    // Calculate section heights
-    const headerHeight = 160;
-    const ctaHeight = isSquare ? 200 : 280;
-    const driverCardHeight = isSquare ? 280 : 320;
-    const vehicleCardHeight = isSquare ? 220 : 250;
-    const routeRowHeight = isSquare ? 45 : 50;
-    const routeCardHeight = displayRoutes.length > 0 ? (displayRoutes.length * routeRowHeight + 80) : 0;
-    const bottomBarHeight = 180;
-    
-    // Calculate Y positions
-    const ctaY = headerHeight + 80;
-    const driverCardY = ctaY + ctaHeight + 40;
-    const vehicleCardY = driverCardY + driverCardHeight + 30;
-    const routeCardY = vehicleCardY + vehicleCardHeight + 30;
+    // Header & bottom bar heights
+    const headerHeight = isSquare ? 120 : isStory ? 180 : 150;
+    const bottomBarHeight = isSquare ? 120 : isStory ? 180 : 150;
     const bottomBarY = h - bottomBarHeight;
     
-    // Adjust font sizes for square
-    const titleSize = isSquare ? 48 : 56;
-    const ctaSize = isSquare ? 72 : 88;
-    const nameSize = isSquare ? 40 : 48;
-    const ratingSize = isSquare ? 24 : 28;
-    const locationSize = isSquare ? 20 : 24;
-    const phoneSize = isSquare ? 22 : 26;
+    // Section heights & Y positions
+    const ctaY = headerHeight + (isSquare ? 15 : isStory ? 60 : 35);
+    const ctaHeight = isSquare ? 130 : isStory ? 240 : 180;
+    
+    const driverCardY = ctaY + ctaHeight + (isSquare ? 15 : isStory ? 40 : 25);
+    const driverCardHeight = isSquare ? 210 : isStory ? 320 : 260;
+
+    const vehicleCardY = driverCardY + driverCardHeight + (isSquare ? 15 : isStory ? 35 : 25);
+    const vehicleCardHeight = isSquare ? 180 : isStory ? 260 : 210;
+
+    const maxRoutes = isSquare ? 2 : isStory ? 4 : 3;
+    const displayRoutes = routePrices.slice(0, maxRoutes);
+    const routeRowHeight = isSquare ? 35 : isStory ? 55 : 45;
+    const routeCardY = vehicleCardY + vehicleCardHeight + (isSquare ? 15 : isStory ? 35 : 25);
+    const routeCardHeight = displayRoutes.length > 0 ? (displayRoutes.length * routeRowHeight + (isSquare ? 50 : 65)) : 0;
+    
+    // Font sizes
+    const titleSize = isSquare ? 40 : isStory ? 64 : 52;
+    const ctaSize = isSquare ? 60 : isStory ? 96 : 80;
+    const nameSize = isSquare ? 34 : isStory ? 52 : 44;
+    const ratingSize = isSquare ? 20 : isStory ? 30 : 24;
+    const locationSize = isSquare ? 18 : isStory ? 26 : 22;
+    const phoneSize = isSquare ? 20 : isStory ? 28 : 24;
 
     return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
@@ -333,13 +408,13 @@ export default function DriverMarketingPosterPage() {
       <stop offset="100%" stop-color="#F59E0B"/>
     </linearGradient>
     <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-      <feDropShadow dx="0" dy="10" stdDeviation="20" flood-color="#000000" flood-opacity="0.2"/>
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#000000" flood-opacity="0.18"/>
     </filter>
     <clipPath id="photoClip">
-      <circle cx="240" cy="${driverCardY + 160}" r="80"/>
+      <circle cx="230" cy="${driverCardY + (driverCardHeight / 2)}" r="${isSquare ? 60 : 75}"/>
     </clipPath>
     <clipPath id="vehicleClip">
-      <rect x="180" y="${vehicleCardY + 65}" width="160" height="120" rx="15"/>
+      <rect x="170" y="${vehicleCardY + (isSquare ? 35 : 45)}" width="${isSquare ? 130 : 150}" height="${isSquare ? 100 : 120}" rx="12"/>
     </clipPath>
   </defs>
 
@@ -352,66 +427,65 @@ export default function DriverMarketingPosterPage() {
   
   <!-- Top Branding -->
   <rect x="0" y="0" width="${w}" height="${headerHeight}" fill="#16a34a"/>
-  <text x="60" y="100" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="900" fill="#ffffff">TaxiTao</text>
-  <text x="${w - 60}" y="100" text-anchor="end" font-family="system-ui, sans-serif" font-size="32" font-weight="600" fill="#dcfce7">#RideWithTrust</text>
+  <text x="60" y="${headerHeight * 0.65}" font-family="system-ui, -apple-system, sans-serif" font-size="${isSquare ? 52 : 68}" font-weight="900" fill="#ffffff">TaxiTao</text>
+  <text x="${w - 60}" y="${headerHeight * 0.65}" text-anchor="end" font-family="system-ui, sans-serif" font-size="${isSquare ? 24 : 30}" font-weight="600" fill="#dcfce7">#RideWithTrust</text>
 
   <!-- Main Content Area -->
-  <text x="540" y="${ctaY + 60}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="${titleSize}" font-weight="900" fill="#1f2937">Need a Reliable Ride?</text>
-  <text x="540" y="${ctaY + 160}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="${ctaSize}" font-weight="900" fill="#16a34a">BOOK NOW</text>
+  <text x="540" y="${ctaY + (isSquare ? 45 : 60)}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="${titleSize}" font-weight="900" fill="#1f2937">Need a Reliable Ride?</text>
+  <text x="540" y="${ctaY + (isSquare ? 105 : 140)}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="${ctaSize}" font-weight="900" fill="#16a34a">BOOK NOW</text>
 
   <!-- === UPPER CONTAINER: DRIVER DETAILS === -->
-  <rect x="140" y="${driverCardY}" width="800" height="${driverCardHeight}" rx="30" fill="#ffffff" filter="url(#shadow)"/>
+  <rect x="140" y="${driverCardY}" width="800" height="${driverCardHeight}" rx="24" fill="#ffffff" filter="url(#shadow)"/>
   
   <!-- Profile Photo -->
-  <circle cx="240" cy="${driverCardY + 160}" r="85" fill="#16a34a"/>
-  <image xlink:href="${profileImg}" x="160" y="${driverCardY + 80}" width="160" height="160" clip-path="url(#photoClip)" preserveAspectRatio="xMidYMid slice"/>
+  <circle cx="230" cy="${driverCardY + (driverCardHeight / 2)}" r="${isSquare ? 64 : 79}" fill="#16a34a"/>
+  <image xlink:href="${profileImg}" x="${230 - (isSquare ? 60 : 75)}" y="${driverCardY + (driverCardHeight / 2) - (isSquare ? 60 : 75)}" width="${isSquare ? 120 : 150}" height="${isSquare ? 120 : 150}" clip-path="url(#photoClip)" preserveAspectRatio="xMidYMid slice"/>
   
   <!-- Driver Info Text -->
-  <text x="360" y="${driverCardY + 110}" font-family="system-ui, sans-serif" font-size="${nameSize}" font-weight="900" fill="#1f2937">${safeName}</text>
-  <text x="360" y="${driverCardY + 160}" font-family="system-ui, sans-serif" font-size="${ratingSize}" font-weight="700" fill="#16a34a">★★★★★ ${posterData.rating.toFixed(1)}</text>
-  <text x="360" y="${driverCardY + 210}" font-family="system-ui, sans-serif" font-size="${locationSize}" font-weight="600" fill="#6b7280">📍 ${safeLoc}</text>
-  <text x="360" y="${driverCardY + 260}" font-family="system-ui, sans-serif" font-size="${phoneSize}" font-weight="700" fill="#1f2937">📞 ${safePhone}</text>
+  <text x="${isSquare ? 320 : 340}" y="${driverCardY + (isSquare ? 55 : 70)}" font-family="system-ui, sans-serif" font-size="${nameSize}" font-weight="900" fill="#1f2937">${safeName}</text>
+  <text x="${isSquare ? 320 : 340}" y="${driverCardY + (isSquare ? 95 : 120)}" font-family="system-ui, sans-serif" font-size="${ratingSize}" font-weight="700" fill="#16a34a">★★★★★ ${posterData.rating.toFixed(1)}</text>
+  <text x="${isSquare ? 320 : 340}" y="${driverCardY + (isSquare ? 135 : 165)}" font-family="system-ui, sans-serif" font-size="${locationSize}" font-weight="600" fill="#6b7280">📍 ${safeLoc}</text>
+  <text x="${isSquare ? 320 : 340}" y="${driverCardY + (isSquare ? 175 : 210)}" font-family="system-ui, sans-serif" font-size="${phoneSize}" font-weight="700" fill="#1f2937">📞 ${safePhone}</text>
 
   <!-- === LOWER CONTAINER: VEHICLE & QR === -->
-  <rect x="140" y="${vehicleCardY}" width="800" height="${vehicleCardHeight}" rx="30" fill="#ffffff" filter="url(#shadow)"/>
+  <rect x="140" y="${vehicleCardY}" width="800" height="${vehicleCardHeight}" rx="24" fill="#ffffff" filter="url(#shadow)"/>
   
   <!-- Vehicle Image -->
   ${vehicleImg ? `
-    <rect x="180" y="${vehicleCardY + 65}" width="160" height="120" rx="15" fill="#f3f4f6"/>
-    <image xlink:href="${vehicleImg}" x="180" y="${vehicleCardY + 65}" width="160" height="120" clip-path="url(#vehicleClip)" preserveAspectRatio="xMidYMid slice"/>
+    <rect x="170" y="${vehicleCardY + (isSquare ? 35 : 45)}" width="${isSquare ? 130 : 150}" height="${isSquare ? 100 : 120}" rx="12" fill="#f3f4f6"/>
+    <image xlink:href="${vehicleImg}" x="170" y="${vehicleCardY + (isSquare ? 35 : 45)}" width="${isSquare ? 130 : 150}" height="${isSquare ? 100 : 120}" clip-path="url(#vehicleClip)" preserveAspectRatio="xMidYMid slice"/>
   ` : `
-    <rect x="180" y="${vehicleCardY + 65}" width="160" height="120" rx="15" fill="#f3f4f6"/>
-    <text x="260" y="${vehicleCardY + 135}" text-anchor="middle" font-size="40">🚗</text>
+    <rect x="170" y="${vehicleCardY + (isSquare ? 35 : 45)}" width="${isSquare ? 130 : 150}" height="${isSquare ? 100 : 120}" rx="12" fill="#f3f4f6"/>
+    <text x="${170 + (isSquare ? 65 : 75)}" y="${vehicleCardY + (isSquare ? 95 : 115)}" text-anchor="middle" font-size="${isSquare ? 36 : 44}">🚗</text>
   `}
 
   <!-- Vehicle Details -->
-  <text x="370" y="${vehicleCardY + 110}" font-family="system-ui, sans-serif" font-size="${ratingSize}" font-weight="700" fill="#1f2937">🚗 ${safeVehicle}</text>
-  <text x="370" y="${vehicleCardY + 150}" font-family="system-ui, sans-serif" font-size="${locationSize}" font-weight="600" fill="#6b7280">${safePlate}</text>
+  <text x="${isSquare ? 320 : 340}" y="${vehicleCardY + (isSquare ? 80 : 100)}" font-family="system-ui, sans-serif" font-size="${ratingSize}" font-weight="700" fill="#1f2937">🚗 ${safeVehicle}</text>
+  <text x="${isSquare ? 320 : 340}" y="${vehicleCardY + (isSquare ? 120 : 145)}" font-family="system-ui, sans-serif" font-size="${locationSize}" font-weight="600" fill="#6b7280">${safePlate}</text>
 
   <!-- QR Code (Right Side) -->
-  <rect x="730" y="${vehicleCardY + 45}" width="160" height="160" rx="15" fill="#ffffff" stroke="#e5e7eb" stroke-width="2"/>
-  <image xlink:href="${qrImg}" x="740" y="${vehicleCardY + 55}" width="140" height="140" preserveAspectRatio="xMidYMid meet"/>
-  <text x="810" y="${vehicleCardY + 220}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" font-weight="700" fill="#16a34a">SCAN ME</text>
+  <rect x="${isSquare ? 740 : 730}" y="${vehicleCardY + (isSquare ? 25 : 35)}" width="${isSquare ? 130 : 150}" height="${isSquare ? 130 : 150}" rx="12" fill="#ffffff" stroke="#e5e7eb" stroke-width="2"/>
+  <image xlink:href="${qrImg}" x="${isSquare ? 745 : 735}" y="${vehicleCardY + (isSquare ? 30 : 40)}" width="${isSquare ? 120 : 140}" height="${isSquare ? 120 : 140}" preserveAspectRatio="xMidYMid meet"/>
 
   ${displayRoutes.length > 0 ? `
   <!-- === ROUTE PRICES SECTION === -->
-  <rect x="140" y="${routeCardY}" width="800" height="${routeCardHeight}" rx="30" fill="#ffffff" filter="url(#shadow)"/>
+  <rect x="140" y="${routeCardY}" width="800" height="${routeCardHeight}" rx="24" fill="#ffffff" filter="url(#shadow)"/>
   
-  <text x="540" y="${routeCardY + 50}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="${isSquare ? 28 : 32}" font-weight="900" fill="#16a34a">💰 Popular Routes</text>
+  <text x="540" y="${routeCardY + (isSquare ? 38 : 45)}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="${isSquare ? 22 : 28}" font-weight="900" fill="#16a34a">💰 Popular Routes</text>
   
   ${displayRoutes.map((rp, idx) => `
     <g>
-      <rect x="180" y="${routeCardY + 80 + idx * routeRowHeight}" width="720" height="${routeRowHeight - 5}" rx="8" fill="${idx % 2 === 0 ? '#f9fafb' : '#ffffff'}"/>
-      <text x="200" y="${routeCardY + 108 + idx * routeRowHeight}" font-family="system-ui, sans-serif" font-size="${isSquare ? 18 : 20}" font-weight="600" fill="#374151">${escapeXml(rp.route)}</text>
-      <text x="880" y="${routeCardY + 108 + idx * routeRowHeight}" text-anchor="end" font-family="system-ui, sans-serif" font-size="${isSquare ? 20 : 24}" font-weight="900" fill="#16a34a">KES ${rp.price.toLocaleString()}</text>
+      <rect x="170" y="${routeCardY + (isSquare ? 50 : 60) + idx * routeRowHeight}" width="740" height="${routeRowHeight - 4}" rx="6" fill="${idx % 2 === 0 ? '#f9fafb' : '#ffffff'}"/>
+      <text x="190" y="${routeCardY + (isSquare ? 72 : 88) + idx * routeRowHeight}" font-family="system-ui, sans-serif" font-size="${isSquare ? 16 : 19}" font-weight="600" fill="#374151">${escapeXml(rp.route)}</text>
+      <text x="890" y="${routeCardY + (isSquare ? 72 : 88) + idx * routeRowHeight}" text-anchor="end" font-family="system-ui, sans-serif" font-size="${isSquare ? 18 : 22}" font-weight="900" fill="#16a34a">KES ${rp.price.toLocaleString()}</text>
     </g>
   `).join('')}
   ` : ''}
 
   <!-- Bottom Bar -->
   <rect x="0" y="${bottomBarY}" width="${w}" height="${bottomBarHeight}" fill="#1f2937"/>
-  <text x="540" y="${bottomBarY + 70}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="36" font-weight="900" fill="#ffffff">💬 WhatsApp: wa.me/${safeWa}</text>
-  <text x="540" y="${bottomBarY + 120}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" font-weight="600" fill="#10b981">Scan QR or Visit: taxitao.co.ke</text>
+  <text x="540" y="${bottomBarY + (isSquare ? 50 : 65)}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="${isSquare ? 28 : 34}" font-weight="900" fill="#ffffff">💬 WhatsApp: wa.me/${safeWa}</text>
+  <text x="540" y="${bottomBarY + (isSquare ? 90 : 115)}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="${isSquare ? 22 : 26}" font-weight="600" fill="#10b981">Scan QR or Visit: taxitao.co.ke</text>
 </svg>`;
   };
 
@@ -423,24 +497,24 @@ export default function DriverMarketingPosterPage() {
 
     // Dynamic layout calculations
     const isSquare = h === 1080;
-    const maxRoutes = isSquare ? 2 : 4;
-    const displayRoutes = routePrices.slice(0, maxRoutes);
-    
-    // Calculate heights
-    const headerHeight = 290;
-    const contentCardHeight = isSquare ? 600 : 700;
-    const routeRowHeight = 45;
-    const routeCardHeight = displayRoutes.length > 0 ? (displayRoutes.length * routeRowHeight + 70) : 0;
-    const bottomBarHeight = 150;
-    
-    // Calculate Y positions
-    const contentCardY = isSquare ? 320 : 400;
-    const routeCardY = contentCardY + contentCardHeight + 30;
+    const isStory = h === 1920;
+
+    const headerHeight = isSquare ? 200 : isStory ? 320 : 260;
+    const bottomBarHeight = isSquare ? 120 : isStory ? 180 : 150;
     const bottomBarY = h - bottomBarHeight;
+
+    const contentCardY = isSquare ? 220 : isStory ? 350 : 280;
+    const contentCardHeight = isSquare ? 540 : isStory ? 1000 : 700;
+
+    const maxRoutes = isSquare ? 2 : isStory ? 4 : 3;
+    const displayRoutes = routePrices.slice(0, maxRoutes);
+    const routeRowHeight = 40;
+    const routeCardY = contentCardY + contentCardHeight + (isSquare ? 15 : 30);
+    const routeCardHeight = displayRoutes.length > 0 ? (displayRoutes.length * routeRowHeight + 60) : 0;
     
     // Font sizes
-    const nameSize = isSquare ? 60 : 72;
-    const titleSize = isSquare ? 44 : 52;
+    const nameSize = isSquare ? 52 : isStory ? 76 : 64;
+    const titleSize = isSquare ? 38 : isStory ? 54 : 46;
 
     return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
@@ -458,44 +532,44 @@ export default function DriverMarketingPosterPage() {
   <circle cx="200" cy="${h - 300}" r="300" fill="#ffffff" opacity="0.05"/>
   
   <!-- TaxiTao Branding -->
-  <text x="540" y="220" text-anchor="middle" font-family="system-ui, sans-serif" font-size="96" font-weight="900" fill="#ffffff">TaxiTao</text>
-  <text x="540" y="290" text-anchor="middle" font-family="system-ui, sans-serif" font-size="32" font-weight="700" fill="#d1fae5">YOUR TRUSTED RIDE PARTNER</text>
+  <text x="540" y="${isSquare ? 130 : 180}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="${isSquare ? 72 : 92}" font-weight="900" fill="#ffffff">TaxiTao</text>
+  <text x="540" y="${isSquare ? 180 : 240}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="${isSquare ? 24 : 30}" font-weight="700" fill="#d1fae5">YOUR TRUSTED RIDE PARTNER</text>
 
   <!-- Main Message -->
-  <rect x="100" y="${contentCardY}" width="880" height="${contentCardHeight}" rx="40" fill="#ffffff" opacity="0.98"/>
+  <rect x="100" y="${contentCardY}" width="880" height="${contentCardHeight}" rx="32" fill="#ffffff" opacity="0.98"/>
   
-  <text x="540" y="${contentCardY + 120}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="${titleSize}" font-weight="900" fill="#1f2937">BOOK YOUR RIDE</text>
-  <text x="540" y="${contentCardY + 200}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="${nameSize}" font-weight="900" fill="#059669">${safeName}</text>
+  <text x="540" y="${contentCardY + (isSquare ? 80 : 110)}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="${titleSize}" font-weight="900" fill="#1f2937">BOOK YOUR RIDE</text>
+  <text x="540" y="${contentCardY + (isSquare ? 145 : 190)}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="${nameSize}" font-weight="900" fill="#059669">${safeName}</text>
   
-  <text x="540" y="${contentCardY + 300}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="36" font-weight="700" fill="#4b5563">⭐ ${posterData.rating.toFixed(1)} Rating • 📍 ${escapeXml(posterData.baseLocation)}</text>
+  <text x="540" y="${contentCardY + (isSquare ? 205 : 270)}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="${isSquare ? 26 : 34}" font-weight="700" fill="#4b5563">⭐ ${posterData.rating.toFixed(1)} Rating • 📍 ${escapeXml(posterData.baseLocation)}</text>
   
   ${vehicleImg ? `
-    <image xlink:href="${vehicleImg}" x="390" y="${contentCardY + 330}" width="100" height="75" rx="8" preserveAspectRatio="xMidYMid slice"/>
-    <text x="500" y="${contentCardY + 360}" text-anchor="start" font-family="system-ui, sans-serif" font-size="32" font-weight="600" fill="#6b7280">🚗 ${escapeXml(posterData.vehicleLine)}</text>
-    <text x="500" y="${contentCardY + 400}" text-anchor="start" font-family="system-ui, sans-serif" font-size="28" font-weight="600" fill="#9ca3af">${escapeXml(posterData.plate)}</text>
+    <image xlink:href="${vehicleImg}" x="390" y="${contentCardY + (isSquare ? 230 : 310)}" width="100" height="75" rx="8" preserveAspectRatio="xMidYMid slice"/>
+    <text x="500" y="${contentCardY + (isSquare ? 265 : 345)}" text-anchor="start" font-family="system-ui, sans-serif" font-size="${isSquare ? 26 : 30}" font-weight="600" fill="#6b7280">🚗 ${escapeXml(posterData.vehicleLine)}</text>
+    <text x="500" y="${contentCardY + (isSquare ? 295 : 385)}" text-anchor="start" font-family="system-ui, sans-serif" font-size="${isSquare ? 22 : 26}" font-weight="600" fill="#9ca3af">${escapeXml(posterData.plate)}</text>
   ` : `
-    <text x="540" y="${contentCardY + 380}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="32" font-weight="600" fill="#6b7280">🚗 ${escapeXml(posterData.vehicleLine)} • ${escapeXml(posterData.plate)}</text>
+    <text x="540" y="${contentCardY + (isSquare ? 260 : 340)}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="${isSquare ? 26 : 30}" font-weight="600" fill="#6b7280">🚗 ${escapeXml(posterData.vehicleLine)} • ${escapeXml(posterData.plate)}</text>
   `}
 
-  <rect x="340" y="${contentCardY + 440}" width="400" height="180" rx="20" fill="#f0fdf4" stroke="#16a34a" stroke-width="4"/>
-  <image xlink:href="${qrImg}" x="380" y="${contentCardY + 470}" width="120" height="120" preserveAspectRatio="xMidYMid meet"/>
-  <text x="530" y="${contentCardY + 520}" font-family="system-ui, sans-serif" font-size="26" font-weight="800" fill="#1f2937">SCAN TO</text>
-  <text x="530" y="${contentCardY + 560}" font-family="system-ui, sans-serif" font-size="26" font-weight="800" fill="#059669">BOOK NOW</text>
+  <rect x="340" y="${contentCardY + (isSquare ? 330 : 430)}" width="400" height="${isSquare ? 140 : 170}" rx="16" fill="#f0fdf4" stroke="#16a34a" stroke-width="3"/>
+  <image xlink:href="${qrImg}" x="375" y="${contentCardY + (isSquare ? 340 : 445)}" width="${isSquare ? 120 : 140}" height="${isSquare ? 120 : 140}" preserveAspectRatio="xMidYMid meet"/>
+  <text x="530" y="${contentCardY + (isSquare ? 400 : 510)}" font-family="system-ui, sans-serif" font-size="24" font-weight="800" fill="#1f2937">SCAN TO</text>
+  <text x="530" y="${contentCardY + (isSquare ? 435 : 550)}" font-family="system-ui, sans-serif" font-size="24" font-weight="800" fill="#059669">BOOK NOW</text>
 
-  <text x="540" y="${contentCardY + 650}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" font-weight="700" fill="#1f2937">📞 ${escapeXml(posterData.phone)}</text>
+  <text x="540" y="${contentCardY + (isSquare ? 500 : 640)}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="${isSquare ? 24 : 28}" font-weight="700" fill="#1f2937">📞 ${escapeXml(posterData.phone)}</text>
 
   ${displayRoutes.length > 0 ? `
   <!-- Route Prices Section -->
-  <rect x="150" y="${routeCardY}" width="780" height="${routeCardHeight}" rx="20" fill="#f0fdf4" stroke="#16a34a" stroke-width="3"/>
-  <text x="540" y="${routeCardY + 45}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" font-weight="900" fill="#059669">💰 POPULAR ROUTES</text>
+  <rect x="150" y="${routeCardY}" width="780" height="${routeCardHeight}" rx="16" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+  <text x="540" y="${routeCardY + 40}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="24" font-weight="900" fill="#059669">💰 POPULAR ROUTES</text>
   ${displayRoutes.map((rp, idx) => `
-    <text x="180" y="${routeCardY + 85 + idx * routeRowHeight}" font-family="system-ui, sans-serif" font-size="20" font-weight="600" fill="#1f2937">${escapeXml(rp.route)}</text>
-    <text x="900" y="${routeCardY + 85 + idx * routeRowHeight}" text-anchor="end" font-family="system-ui, sans-serif" font-size="24" font-weight="900" fill="#059669">KES ${rp.price.toLocaleString()}</text>
+    <text x="180" y="${routeCardY + 75 + idx * routeRowHeight}" font-family="system-ui, sans-serif" font-size="18" font-weight="600" fill="#1f2937">${escapeXml(rp.route)}</text>
+    <text x="900" y="${routeCardY + 75 + idx * routeRowHeight}" text-anchor="end" font-family="system-ui, sans-serif" font-size="22" font-weight="900" fill="#059669">KES ${rp.price.toLocaleString()}</text>
   `).join('')}
   ` : ''}
 
   <rect x="0" y="${bottomBarY}" width="${w}" height="${bottomBarHeight}" fill="#1f2937"/>
-  <text x="540" y="${bottomBarY + 75}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="32" font-weight="700" fill="#10b981">💬 wa.me/${escapeXml(posterData.whatsapp)}</text>
+  <text x="540" y="${bottomBarY + (isSquare ? 65 : 75)}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="${isSquare ? 26 : 32}" font-weight="700" fill="#10b981">💬 wa.me/${escapeXml(posterData.whatsapp)}</text>
 </svg>`;
   };
 
@@ -507,81 +581,159 @@ export default function DriverMarketingPosterPage() {
 
     // Dynamic layout calculations
     const isSquare = h === 1080;
-    const maxRoutes = isSquare ? 3 : 4;
-    const displayRoutes = routePrices.slice(0, maxRoutes);
-    
-    // Calculate heights and positions
-    const headerHeight = 200;
-    const contentCardHeight = isSquare ? 700 : 900;
-    const routeRowHeight = 45;
-    const routeCardHeight = displayRoutes.length > 0 ? (displayRoutes.length * routeRowHeight + 70) : 0;
-    const bottomBarHeight = 100;
-    
-    // Y positions
-    const contentCardY = 280;
-    const photoY = contentCardY + 60;
-    const nameY = photoY + (isSquare ? 280 : 300) + 80;
-    const vehicleY = nameY + 140;
-    const phoneY = vehicleY + 100;
-    const qrY = phoneY + 60;
-    const routeCardY = contentCardY + contentCardHeight + 30;
+    const isStory = h === 1920;
+
+    const headerHeight = isSquare ? 130 : isStory ? 240 : 180;
+    const bottomBarHeight = isSquare ? 100 : isStory ? 160 : 120;
     const bottomBarY = h - bottomBarHeight;
+
+    const contentCardY = isSquare ? 150 : isStory ? 270 : 200;
+    const contentCardHeight = isSquare ? 600 : isStory ? 1100 : 800;
+
+    const maxRoutes = isSquare ? 2 : isStory ? 4 : 3;
+    const displayRoutes = routePrices.slice(0, maxRoutes);
+    const routeRowHeight = 40;
+    const routeCardY = contentCardY + contentCardHeight + (isSquare ? 15 : 30);
+    const routeCardHeight = displayRoutes.length > 0 ? (displayRoutes.length * routeRowHeight + 60) : 0;
     
+    // Y positions inside content card
+    const photoY = contentCardY + (isSquare ? 30 : 50);
+    const photoSize = isSquare ? 200 : 260;
+    const photoX = (1080 - photoSize) / 2;
+
+    const nameY = photoY + photoSize + (isSquare ? 45 : 65);
+    const vehicleY = nameY + (isSquare ? 70 : 100);
+    const phoneY = vehicleY + (isSquare ? 60 : 90);
+    const qrY = phoneY + (isSquare ? 30 : 50);
+    const qrSize = isSquare ? 150 : 180;
+    const qrX = (1080 - qrSize) / 2;
+
     // Font sizes
-    const nameSize = isSquare ? 44 : 52;
-    const ratingSize = isSquare ? 28 : 32;
+    const nameSize = isSquare ? 38 : isStory ? 54 : 46;
+    const ratingSize = isSquare ? 22 : isStory ? 30 : 26;
 
     return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
   <defs>
-    <clipPath id="minPhoto"><rect x="390" y="${photoY}" width="${isSquare ? 280 : 300}" height="${isSquare ? 280 : 300}" rx="20"/></clipPath>
+    <clipPath id="minPhoto"><rect x="${photoX}" y="${photoY}" width="${photoSize}" height="${photoSize}" rx="20"/></clipPath>
   </defs>
   
   <rect fill="#f8fafc" width="${w}" height="${h}"/>
   
   <!-- Header -->
   <rect x="0" y="0" width="${w}" height="${headerHeight}" fill="#16a34a"/>
-  <text x="540" y="130" text-anchor="middle" font-family="system-ui, sans-serif" font-size="84" font-weight="900" fill="#ffffff">TaxiTao</text>
+  <text x="540" y="${headerHeight * 0.65}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="${isSquare ? 60 : 80}" font-weight="900" fill="#ffffff">TaxiTao</text>
 
   <!-- Content Card -->
-  <rect x="120" y="${contentCardY}" width="840" height="${contentCardHeight}" rx="30" fill="#ffffff" stroke="#e2e8f0" stroke-width="3"/>
+  <rect x="120" y="${contentCardY}" width="840" height="${contentCardHeight}" rx="24" fill="#ffffff" stroke="#e2e8f0" stroke-width="2"/>
   
-  <!-- Driver Photo (EMBEDDED) -->
-  <image xlink:href="${profileImg}" x="390" y="${photoY}" width="${isSquare ? 280 : 300}" height="${isSquare ? 280 : 300}" clip-path="url(#minPhoto)" preserveAspectRatio="xMidYMid slice"/>
+  <!-- Driver Photo -->
+  <image xlink:href="${profileImg}" x="${photoX}" y="${photoY}" width="${photoSize}" height="${photoSize}" clip-path="url(#minPhoto)" preserveAspectRatio="xMidYMid slice"/>
   
   <text x="540" y="${nameY}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="${nameSize}" font-weight="900" fill="#1f2937">${escapeXml(posterData.name)}</text>
-  <text x="540" y="${nameY + 60}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="${ratingSize}" font-weight="600" fill="#16a34a">★ ${posterData.rating.toFixed(1)} • ${escapeXml(posterData.baseLocation)}</text>
+  <text x="540" y="${nameY + (isSquare ? 35 : 45)}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="${ratingSize}" font-weight="600" fill="#16a34a">★ ${posterData.rating.toFixed(1)} • ${escapeXml(posterData.baseLocation)}</text>
   
   <line x1="220" y1="${vehicleY - 20}" x2="860" y2="${vehicleY - 20}" stroke="#e5e7eb" stroke-width="2"/>
   
   ${vehicleImg ? `
-    <image xlink:href="${vehicleImg}" x="220" y="${vehicleY + 20}" width="120" height="90" rx="8" preserveAspectRatio="xMidYMid slice"/>
-    <text x="360" y="${vehicleY + 60}" font-family="system-ui, sans-serif" font-size="28" font-weight="700" fill="#4b5563">🚗 ${escapeXml(posterData.vehicleLine)}</text>
-    <text x="360" y="${vehicleY + 100}" font-family="system-ui, sans-serif" font-size="24" font-weight="600" fill="#9ca3af">${escapeXml(posterData.plate)}</text>
+    <image xlink:href="${vehicleImg}" x="220" y="${vehicleY}" width="100" height="75" rx="8" preserveAspectRatio="xMidYMid slice"/>
+    <text x="340" y="${vehicleY + 35}" font-family="system-ui, sans-serif" font-size="${isSquare ? 22 : 26}" font-weight="700" fill="#4b5563">🚗 ${escapeXml(posterData.vehicleLine)}</text>
+    <text x="340" y="${vehicleY + 65}" font-family="system-ui, sans-serif" font-size="${isSquare ? 18 : 22}" font-weight="600" fill="#9ca3af">${escapeXml(posterData.plate)}</text>
   ` : `
-    <text x="540" y="${vehicleY + 60}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" font-weight="700" fill="#4b5563">🚗 ${escapeXml(posterData.vehicleLine)}</text>
+    <text x="540" y="${vehicleY + 35}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="${isSquare ? 24 : 28}" font-weight="700" fill="#4b5563">🚗 ${escapeXml(posterData.vehicleLine)}</text>
   `}
   
-  <text x="540" y="${phoneY}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" font-weight="700" fill="#16a34a">📞 ${escapeXml(posterData.phone)}</text>
+  <text x="540" y="${phoneY}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="${isSquare ? 24 : 28}" font-weight="700" fill="#16a34a">📞 ${escapeXml(posterData.phone)}</text>
 
-  <rect x="440" y="${qrY}" width="200" height="200" rx="15" fill="#ffffff" stroke="#16a34a" stroke-width="3"/>
-  <image xlink:href="${qrImg}" x="450" y="${qrY + 10}" width="180" height="180" preserveAspectRatio="xMidYMid meet"/>
+  <rect x="${qrX}" y="${qrY}" width="${qrSize}" height="${qrSize}" rx="12" fill="#ffffff" stroke="#16a34a" stroke-width="2"/>
+  <image xlink:href="${qrImg}" x="${qrX + 10}" y="${qrY + 10}" width="${qrSize - 20}" height="${qrSize - 20}" preserveAspectRatio="xMidYMid meet"/>
   
   ${displayRoutes.length > 0 ? `
   <!-- Route Prices Section -->
-  <rect x="180" y="${routeCardY}" width="720" height="${routeCardHeight}" rx="15" fill="#ffffff" stroke="#e5e7eb" stroke-width="2"/>
-  <text x="540" y="${routeCardY + 45}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="26" font-weight="900" fill="#16a34a">💰 Popular Routes</text>
+  <rect x="180" y="${routeCardY}" width="720" height="${routeCardHeight}" rx="16" fill="#ffffff" stroke="#e5e7eb" stroke-width="2"/>
+  <text x="540" y="${routeCardY + 40}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="24" font-weight="900" fill="#16a34a">💰 Popular Routes</text>
   ${displayRoutes.map((rp, idx) => `
     <g>
-      <line x1="200" y1="${routeCardY + 70 + idx * routeRowHeight}" x2="880" y2="${routeCardY + 70 + idx * routeRowHeight}" stroke="#f3f4f6" stroke-width="1"/>
-      <text x="200" y="${routeCardY + 95 + idx * routeRowHeight}" font-family="system-ui, sans-serif" font-size="18" font-weight="600" fill="#4b5563">${escapeXml(rp.route)}</text>
-      <text x="880" y="${routeCardY + 95 + idx * routeRowHeight}" text-anchor="end" font-family="system-ui, sans-serif" font-size="22" font-weight="900" fill="#16a34a">KES ${rp.price.toLocaleString()}</text>
+      <line x1="200" y1="${routeCardY + 65 + idx * routeRowHeight}" x2="880" y2="${routeCardY + 65 + idx * routeRowHeight}" stroke="#f3f4f6" stroke-width="1"/>
+      <text x="200" y="${routeCardY + 90 + idx * routeRowHeight}" font-family="system-ui, sans-serif" font-size="18" font-weight="600" fill="#4b5563">${escapeXml(rp.route)}</text>
+      <text x="880" y="${routeCardY + 90 + idx * routeRowHeight}" text-anchor="end" font-family="system-ui, sans-serif" font-size="22" font-weight="900" fill="#16a34a">KES ${rp.price.toLocaleString()}</text>
     </g>
   `).join('')}
   ` : ''}
   
   <rect x="0" y="${bottomBarY}" width="${w}" height="${bottomBarHeight}" fill="#1f2937"/>
-  <text x="540" y="${bottomBarY + 60}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" font-weight="700" fill="#10b981">taxitao.co.ke</text>
+  <text x="540" y="${bottomBarY + (isSquare ? 55 : 75)}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="${isSquare ? 24 : 28}" font-weight="700" fill="#10b981">taxitao.co.ke</text>
+</svg>`;
+  };
+
+  // ─── Car Window Sticker Generator ────────────────────────────────────────────
+  // Fixed 1200×1200. High-contrast dark green / white for crisp vinyl printing.
+  // Prominently features the QR code (customers scan to book — no phone needed).
+  const generateStickerSVG = () => {
+    if (!posterData) return "";
+    const safeName = escapeXml(posterData.name);
+    const safeVehicle = escapeXml(posterData.vehicleLine);
+    const safeLoc   = escapeXml(posterData.baseLocation);
+    const qrImg      = embeddedImages.qrCode;
+    const profileImg = embeddedImages.profilePhoto;
+
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1200" height="1200" viewBox="0 0 1200 1200">
+  <defs>
+    <linearGradient id="stkBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#064e3b"/>
+      <stop offset="100%" stop-color="#065f46"/>
+    </linearGradient>
+    <linearGradient id="stkAccent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"   stop-color="#FCD34D"/>
+      <stop offset="100%" stop-color="#FBBF24"/>
+    </linearGradient>
+    <clipPath id="stkAvatar">
+      <circle cx="600" cy="188" r="70"/>
+    </clipPath>
+    <filter id="stkShadow" x="-8%" y="-8%" width="116%" height="116%">
+      <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="1200" fill="url(#stkBg)"/>
+
+  <!-- Outer decorative ring -->
+  <circle cx="600" cy="600" r="570" fill="none" stroke="#ffffff" stroke-width="3" opacity="0.12"/>
+  <circle cx="600" cy="600" r="530" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.08"/>
+
+  <!-- Corner accent blobs -->
+  <circle cx="80"  cy="80"   r="120" fill="#ffffff" opacity="0.04"/>
+  <circle cx="1120" cy="1120" r="120" fill="#ffffff" opacity="0.04"/>
+
+  <!-- ── TOP BRAND BAR ── -->
+  <rect x="0" y="0" width="1200" height="110" fill="#000000" opacity="0.28"/>
+  <text x="600" y="72" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="64" font-weight="900" fill="#ffffff" letter-spacing="-1">TaxiTao</text>
+
+  <!-- ── DRIVER AVATAR ── -->
+  <circle cx="600" cy="188" r="76" fill="#16a34a" stroke="#FCD34D" stroke-width="5"/>
+  <image xlink:href="${profileImg}" x="530" y="118" width="140" height="140" clip-path="url(#stkAvatar)" preserveAspectRatio="xMidYMid slice"/>
+
+  <!-- ── DRIVER NAME ── -->
+  <text x="600" y="310" text-anchor="middle" font-family="system-ui,sans-serif" font-size="52" font-weight="900" fill="#ffffff">${safeName}</text>
+
+  <!-- ── VEHICLE LINE ── -->
+  <text x="600" y="365" text-anchor="middle" font-family="system-ui,sans-serif" font-size="28" font-weight="600" fill="#6ee7b7">🚗 ${safeVehicle}</text>
+
+  <!-- ── LOCATION ── -->
+  <text x="600" y="410" text-anchor="middle" font-family="system-ui,sans-serif" font-size="26" font-weight="500" fill="#a7f3d0">📍 ${safeLoc}</text>
+
+  <!-- ── QR CODE CARD ── -->
+  <rect x="175" y="440" width="850" height="580" rx="40" fill="#ffffff" filter="url(#stkShadow)"/>
+  <image xlink:href="${qrImg}" x="200" y="460" width="800" height="520" preserveAspectRatio="xMidYMid meet"/>
+
+  <!-- ── SCAN CTA BADGE ── -->
+  <rect x="330" y="1050" width="540" height="72" rx="36" fill="url(#stkAccent)"/>
+  <text x="600" y="1096" text-anchor="middle" font-family="system-ui,sans-serif" font-size="32" font-weight="900" fill="#1f2937">📱 SCAN TO BOOK A RIDE</text>
+
+  <!-- ── BOTTOM URL ── -->
+  <text x="600" y="1160" text-anchor="middle" font-family="system-ui,sans-serif" font-size="28" font-weight="700" fill="#a7f3d0">taxitao.co.ke</text>
 </svg>`;
   };
 
@@ -589,6 +741,7 @@ export default function DriverMarketingPosterPage() {
     if (loadingImages || !embeddedImages.qrCode) return "";
     if (template === "transformation") return generateTransformationSVG();
     if (template === "bold") return generateBoldSVG();
+    if (template === "sticker")  return generateStickerSVG();
     return generateMinimalSVG();
   }, [posterData, template, w, h, embeddedImages, loadingImages]);
 
@@ -626,15 +779,19 @@ export default function DriverMarketingPosterPage() {
         setTimeout(() => reject(new Error("Timeout")), 10000);
       });
       
+      // Sticker uses a fixed 1200×1200 canvas; all other templates use the selected size
+      const exportW = template === "sticker" ? STICKER_DIMENSION.w : w;
+      const exportH = template === "sticker" ? STICKER_DIMENSION.h : h;
+
       const canvas = document.createElement("canvas");
-      canvas.width = w;
-      canvas.height = h;
+      canvas.width = exportW;
+      canvas.height = exportH;
       const ctx = canvas.getContext("2d");
       if (!ctx) throw new Error("Canvas not supported");
       
       ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, w, h);
-      ctx.drawImage(img, 0, 0, w, h);
+      ctx.fillRect(0, 0, exportW, exportH);
+      ctx.drawImage(img, 0, 0, exportW, exportH);
       URL.revokeObjectURL(url);
       
       const pngBlob: Blob | null = await new Promise((resolve) => 
@@ -642,7 +799,8 @@ export default function DriverMarketingPosterPage() {
       );
       
       if (!pngBlob) throw new Error("PNG export failed");
-      downloadBlob(pngBlob, `taxitao-poster-${template}-${size}.png`);
+      const sizeLabel = template === "sticker" ? "1200x1200" : size;
+      downloadBlob(pngBlob, `taxitao-poster-${template}-${sizeLabel}.png`);
     } catch (e: any) {
       logError("page", e);
       setExportError(`Export failed: ${e.message}. Try SVG instead.`);
@@ -768,25 +926,36 @@ export default function DriverMarketingPosterPage() {
             </div>
           </div>
 
-          {/* Size Selection */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-            <h2 className="font-bold text-gray-900 mb-3">Poster Size</h2>
-            <div className="grid grid-cols-1 gap-2">
-              {(Object.keys(SIZES) as PosterSize[]).map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setSize(s)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
-                    size === s
-                      ? "bg-primary-50 border-primary-600 text-primary-700 shadow-sm"
-                      : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
-                  }`}
-                >
-                  {SIZES[s].label}
-                </button>
-              ))}
+          {/* Size Selection — hidden when Car Sticker template is active (fixed 1200×1200) */}
+          {template !== "sticker" && (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+              <h2 className="font-bold text-gray-900 mb-3">Poster Size</h2>
+              <div className="grid grid-cols-1 gap-2">
+                {(Object.keys(SIZES) as PosterSize[]).map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setSize(s)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
+                      size === s
+                        ? "bg-primary-50 border-primary-600 text-primary-700 shadow-sm"
+                        : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
+                    }`}
+                  >
+                    {SIZES[s].label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
+          {/* Sticker fixed-size notice */}
+          {template === "sticker" && (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-sm text-emerald-800">
+              <p className="font-bold mb-1">📐 Fixed Dimension</p>
+              <p className="text-xs text-emerald-700">
+                Car Window Stickers are always exported at <strong>1200×1200 px</strong> — the optimal square format for vinyl printing at any size.
+              </p>
+            </div>
+          )}
 
           {/* QR Destination Toggle */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
@@ -849,7 +1018,7 @@ export default function DriverMarketingPosterPage() {
         {/* Preview Area */}
         <div className="lg:col-span-3">
           <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden sticky top-24">
-            <div className="aspect-[4/5] w-full bg-gray-100 flex items-center justify-center p-4 md:p-8">
+            <div className="w-full bg-gray-100 flex items-center justify-center p-4 md:p-6 min-h-[500px]">
               {loadingImages ? (
                 <div className="text-center">
                   <Loader2 className="w-12 h-12 text-primary-600 animate-spin mx-auto mb-4" />
@@ -857,12 +1026,13 @@ export default function DriverMarketingPosterPage() {
                   <p className="text-sm text-gray-500 mt-2">Embedding images for offline use</p>
                 </div>
               ) : posterSvgString ? (
-                <div className="w-full h-full shadow-2xl bg-white relative overflow-hidden rounded-lg">
-                  <div
-                    className="absolute inset-0 flex items-center justify-center"
-                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(posterSvgString, { USE_PROFILES: { svg: true } }) }}
-                  />
-                </div>
+                <div
+                  className="w-full max-h-[75vh] flex items-center justify-center [&>svg]:w-full [&>svg]:h-auto [&>svg]:max-h-[72vh] [&>svg]:shadow-2xl [&>svg]:rounded-lg overflow-hidden"
+                  // SVG is safe: all user-supplied strings go through escapeXml() before
+                  // injection. DOMPurify was removed because it strips valid SVG attributes
+                  // (xlink:href on <image>, filter, clipPath) that are required for poster rendering.
+                  dangerouslySetInnerHTML={{ __html: posterSvgString }}
+                />
               ) : (
                 <div className="text-center">
                   <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />

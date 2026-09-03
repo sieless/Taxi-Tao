@@ -169,153 +169,164 @@ export default function AvailableDrivers() {
           </p>
         </div>
 
-        {/* Driver Cards Grid - 4 columns for narrower cards */}
+        {/* Driver Cards Grid - 4 columns, limited to a maximum of 2 rows per breakpoint */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-[1400px] mx-auto">
-          {drivers.map((driver) => (
-            <div
-              key={driver.id}
-              className="bg-white rounded-2xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 overflow-visible group relative"
-              style={{ boxShadow: "0 10px 40px rgba(0,0,0,0.1)" }}
-            >
-              {/* Profile Picture - Fully Visible at Top Left */}
-              <div className="absolute -top-6 left-4 z-20">
-                <div className="relative w-24 h-24 rounded-full border-4 border-white shadow-2xl overflow-hidden bg-white">
-                  {driver.profilePhotoUrl ? (
+          {drivers.slice(0, 8).map((driver, index) => {
+            let responsiveClass = "";
+            if (index >= 6) {
+              responsiveClass = "hidden xl:block";
+            } else if (index >= 4) {
+              responsiveClass = "hidden lg:block";
+            } else if (index >= 2) {
+              responsiveClass = "hidden md:block";
+            }
+
+            return (
+              <div
+                key={driver.id}
+                className={`bg-white rounded-2xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 overflow-visible group relative ${responsiveClass}`}
+                style={{ boxShadow: "0 10px 40px rgba(0,0,0,0.1)" }}
+              >
+                {/* Profile Picture - Fully Visible at Top Left */}
+                <div className="absolute -top-6 left-4 z-20">
+                  <div className="relative w-24 h-24 rounded-full border-4 border-white shadow-2xl overflow-hidden bg-white">
+                    {driver.profilePhotoUrl ? (
+                      <img
+                        src={driver.profilePhotoUrl}
+                        alt={driver.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center">
+                        <span className="text-2xl font-bold text-white">
+                          {driver.name.charAt(0)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  {/* Online status indicator on profile */}
+                  <div className="absolute bottom-1 right-1 w-5 h-5 bg-primary-500 rounded-full border-2 border-white shadow-lg"></div>
+                </div>
+
+                {/* Car Photo Header - Full Vehicle Visible */}
+                <div className="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden rounded-t-2xl mt-6">
+                  {driver.vehicles?.[0]?.images?.[0] ? (
                     <img
-                      src={driver.profilePhotoUrl}
-                      alt={driver.name}
-                      className="w-full h-full object-cover"
+                      src={driver.vehicles[0].images[0]}
+                      alt={`${driver.vehicles[0].make} ${driver.vehicles[0].model}`}
+                      className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-500 p-2"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center">
-                      <span className="text-2xl font-bold text-white">
-                        {driver.name.charAt(0)}
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-400 to-primary-600">
+                      <Car className="w-16 h-16 text-white/50" />
+                    </div>
+                  )}
+
+                  {/* Online Badge - Top Right */}
+                  <div className="absolute top-2 right-2 bg-primary-500 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
+                    <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
+                    ONLINE
+                  </div>
+
+                  {/* Registration Number Badge - Bottom Right */}
+                  {driver.vehicles?.[0]?.plate && (
+                    <div className="absolute bottom-2 right-2 bg-white/95 backdrop-blur-sm text-gray-800 px-2 py-1 rounded text-xs font-bold shadow-md border border-gray-200">
+                      🚗 {driver.vehicles[0].plate}
+                    </div>
+                  )}
+                </div>
+
+                {/* Driver Details - Maximized Space, No Extra Padding */}
+                <div className="p-4">
+                  <div className="flex justify-between items-start mb-1">
+                    <h3 className="text-lg font-bold text-gray-800">
+                      {driver.name}
+                    </h3>
+                    <button
+                      onClick={() => toggleSaveDriver(driver.id)}
+                      className="text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                      <Heart
+                        className={`w-5 h-5 ${
+                          savedDriverIds.includes(driver.id)
+                            ? "fill-red-500 text-red-500"
+                            : ""
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  {/* Rating - Compact */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center gap-0.5">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-3.5 h-3.5 ${
+                            i < Math.round(driver.averageRating || 0)
+                              ? "text-yellow-500 fill-yellow-500"
+                              : "text-gray-300"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-xs font-semibold text-gray-700">
+                      {driver.averageRating
+                        ? driver.averageRating.toFixed(1)
+                        : "New"}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      ({driver.totalRides || 0})
+                    </span>
+                  </div>
+
+                  {/* Vehicle Info - Compact */}
+                  {driver.vehicles?.[0] && (
+                    <div className="flex items-center gap-2 text-xs text-gray-700 mb-2 bg-gray-50 px-2 py-1.5 rounded">
+                      <Car className="w-3.5 h-3.5 text-primary-600" />
+                      <span className="font-semibold">
+                        {driver.vehicles[0].make} {driver.vehicles[0].model}
+                      </span>
+                      <span className="ml-auto text-xs bg-primary-100 text-primary-700 px-1.5 py-0.5 rounded-full capitalize font-medium">
+                        {driver.vehicles[0].type}
                       </span>
                     </div>
                   )}
-                </div>
-                {/* Online status indicator on profile */}
-                <div className="absolute bottom-1 right-1 w-5 h-5 bg-primary-500 rounded-full border-2 border-white shadow-lg"></div>
-              </div>
 
-              {/* Car Photo Header - Full Vehicle Visible */}
-              <div className="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden rounded-t-2xl mt-6">
-                {driver.vehicles?.[0]?.images?.[0] ? (
-                  <img
-                    src={driver.vehicles[0].images[0]}
-                    alt={`${driver.vehicles[0].make} ${driver.vehicles[0].model}`}
-                    className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-500 p-2"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-400 to-primary-600">
-                    <Car className="w-16 h-16 text-white/50" />
-                  </div>
-                )}
-
-                {/* Online Badge - Top Right */}
-                <div className="absolute top-2 right-2 bg-primary-500 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
-                  <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
-                  ONLINE
-                </div>
-
-                {/* Registration Number Badge - Bottom Right */}
-                {driver.vehicles?.[0]?.plate && (
-                  <div className="absolute bottom-2 right-2 bg-white/95 backdrop-blur-sm text-gray-800 px-2 py-1 rounded text-xs font-bold shadow-md border border-gray-200">
-                    🚗 {driver.vehicles[0].plate}
-                  </div>
-                )}
-              </div>
-
-              {/* Driver Details - Maximized Space, No Extra Padding */}
-              <div className="p-4">
-                <div className="flex justify-between items-start mb-1">
-                  <h3 className="text-lg font-bold text-gray-800">
-                    {driver.name}
-                  </h3>
-                  <button
-                    onClick={() => toggleSaveDriver(driver.id)}
-                    className="text-gray-400 hover:text-red-500 transition-colors"
-                  >
-                    <Heart
-                      className={`w-5 h-5 ${
-                        savedDriverIds.includes(driver.id)
-                          ? "fill-red-500 text-red-500"
-                          : ""
-                      }`}
-                    />
-                  </button>
-                </div>
-
-                {/* Rating - Compact */}
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="flex items-center gap-0.5">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-3.5 h-3.5 ${
-                          i < Math.round(driver.averageRating || 0)
-                            ? "text-yellow-500 fill-yellow-500"
-                            : "text-gray-300"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-xs font-semibold text-gray-700">
-                    {driver.averageRating
-                      ? driver.averageRating.toFixed(1)
-                      : "New"}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    ({driver.totalRides || 0})
-                  </span>
-                </div>
-
-                {/* Vehicle Info - Compact */}
-                {driver.vehicles?.[0] && (
-                  <div className="flex items-center gap-2 text-xs text-gray-700 mb-2 bg-gray-50 px-2 py-1.5 rounded">
-                    <Car className="w-3.5 h-3.5 text-primary-600" />
-                    <span className="font-semibold">
-                      {driver.vehicles[0].make} {driver.vehicles[0].model}
-                    </span>
-                    <span className="ml-auto text-xs bg-primary-100 text-primary-700 px-1.5 py-0.5 rounded-full capitalize font-medium">
-                      {driver.vehicles[0].type}
-                    </span>
-                  </div>
-                )}
-
-                {/* Experience & Location - Compact */}
-                <div className="space-y-1.5 mb-3">
-                  <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                    <Briefcase className="w-3.5 h-3.5 text-gray-400" />
-                    <span>{driver.experienceYears || 0} Yrs Exp</span>
-                  </div>
-                  {driver.businessLocation && (
+                  {/* Experience & Location - Compact */}
+                  <div className="space-y-1.5 mb-3">
                     <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                      <MapPin className="w-3.5 h-3.5 text-gray-400" />
-                      <span>{driver.businessLocation}</span>
+                      <Briefcase className="w-3.5 h-3.5 text-gray-400" />
+                      <span>{driver.experienceYears || 0} Yrs Exp</span>
                     </div>
-                  )}
-                </div>
+                    {driver.businessLocation && (
+                      <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                        <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                        <span>{driver.businessLocation}</span>
+                      </div>
+                    )}
+                  </div>
 
-                {/* Action Buttons */}
-                <div className="space-y-2">
-                  <a
-                    href={`tel:${driver.phone}`}
-                    className="block w-full bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold py-2.5 rounded-lg text-center transition-all border border-blue-200 flex items-center justify-center gap-2 text-sm"
-                  >
-                    <Phone className="w-4 h-4" />
-                    Call Driver
-                  </a>
-                  <Link
-                    href={`/d/${driver.id}`}
-                    className="block w-full bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 text-white font-bold py-2.5 rounded-lg text-center transition-all shadow-md hover:shadow-lg text-sm"
-                  >
-                    View Profile & Book
-                  </Link>
+                  {/* Action Buttons */}
+                  <div className="space-y-2">
+                    <a
+                      href={`tel:${driver.phone}`}
+                      className="block w-full bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold py-2.5 rounded-lg text-center transition-all border border-blue-200 flex items-center justify-center gap-2 text-sm"
+                    >
+                      <Phone className="w-4 h-4" />
+                      Call Driver
+                    </a>
+                    <Link
+                      href={`/d/${driver.id}`}
+                      className="block w-full bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 text-white font-bold py-2.5 rounded-lg text-center transition-all shadow-md hover:shadow-lg text-sm"
+                    >
+                      View Profile & Book
+                    </Link>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* View All Drivers Link */}
@@ -324,7 +335,7 @@ export default function AvailableDrivers() {
             href="/drivers"
             className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 font-semibold"
           >
-            View All Drivers
+            View All Drivers ({drivers.length})
             <svg
               className="w-5 h-5"
               fill="none"
