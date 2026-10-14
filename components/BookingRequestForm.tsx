@@ -163,7 +163,7 @@ const handleSubmit = async (e: React.FormEvent) => {
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white"
             required
           >
-            <option value="">Select your region...</option>
+            <option value="">Select service region (Nairobi, Machakos, Kericho, Kitui, Kajiado, Makueni)...</option>
             {KENYA_COUNTIES.map(county => (
               <option key={county} value={county}>{county}</option>
             ))}

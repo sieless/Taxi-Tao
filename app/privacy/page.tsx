@@ -51,7 +51,7 @@ export default function PrivacyPolicyPage() {
               <h1 className="text-xl font-bold">Privacy Policy</h1>
             </div>
             <p className="text-sm text-neutral-100">
-              Last Updated: June 24, 2026
+              Last Updated: October 12, 2026
             </p>
           </div>
 
@@ -290,6 +290,12 @@ export default function PrivacyPolicyPage() {
                     customers (to set accurate pickup points), when permission
                     is granted.
                   </li>
+                  <li>
+                    <strong>Mobile App Permissions:</strong> Our mobile apps
+                    request Location access (required for pickup, real-time
+                    navigation, and driver dispatch) and Phone/Call access
+                    (used strictly for direct customer-driver trip coordination).
+                  </li>
                 </ul>
               </div>
             </section>
@@ -448,13 +454,17 @@ export default function PrivacyPolicyPage() {
                 </p>
                 <ul className="list-disc pl-6 space-y-2">
                   <li>
-                    <strong>Trip and booking records:</strong> Retained for 7
-                    years from the date of the trip for regulatory compliance,
-                    tax reporting, dispute resolution, and safety investigations.
+                    <strong>Trip and booking records:</strong> In-app ride data,
+                    trip coordinates, and dispatch logs are retained for 90
+                    days for service delivery, customer support, and dispute
+                    resolution (matching automated platform archival cycles),
+                    after which operational trip logs are securely purged or
+                    anonymised.
                   </li>
                   <li>
-                    <strong>Payment and subscription records:</strong> Retained
-                    for 7 years for accounting, tax (KRA), and audit purposes.
+                    <strong>Payment, subscription, and tax records:</strong> Retained
+                    for 7 years for statutory accounting, audit, and Kenya
+                    Revenue Authority (KRA) tax compliance.
                   </li>
                   <li>
                     <strong>Driver verification documents:</strong> Retained for

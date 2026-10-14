@@ -1,34 +1,41 @@
 // lib/locations.ts
 
 /**
- * Standard locations used throughout the app for consistency
+ * Standard operational locations used throughout the app.
+ * STRICT SERVICE AREAS: Kericho, Machakos, Kitui, Kajiado, Nairobi, Makueni.
  */
 export const KENYA_LOCATIONS = [
   'Nairobi',
-  'Mombasa',
-  'Kisumu',
-  'Nakuru',
-  'Eldoret',
-  'Thika',
-  'Malindi',
-  'Kitui',
   'Machakos',
+  'Kericho',
+  'Kitui',
+  'Kajiado',
   'Makueni',
+  'Athi River',
+  'Mlolongo',
+  'Syokimau',
+  'Kitengela',
+  'Ngong',
+  'Ongata Rongai',
+  'Kiserian',
+  'Kapkatet',
+  'Litein',
+  'Kipkelion',
+  'Londiani',
   'Masii',
-  'Wote',
-  'Mtito Andei',
-  'Makindu',
-  'Sultan Hamud',
-  'Emali',
-  'Kibwezi',
-  'Salama',
+  'Kangundo',
+  'Tala',
   'Kathiani',
-  'Matuu',
-  'Kilifi',
-  'Nyeri',
-  'Meru',
-  'Kakamega',
-  'Bungoma',
+  'Mwingi',
+  'Wote',
+  'Makindu',
+  'Kibwezi',
+  'Mtito Andei',
+  'Emali',
+  'Sultan Hamud',
+  'Westlands',
+  'Kilimani',
+  'Karen',
 ].sort();
 
 /**

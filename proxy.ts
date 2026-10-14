@@ -9,12 +9,6 @@ const PROTECTED_ROUTES = [
   "/api/admin",
 ];
 
-const AUTH_ROUTES = [
-  "/login",
-  "/signup",
-  "/verify-email",
-];
-
 const PROTECTED_API_ROUTES = [
   "/api/vendor",
   "/api/admin",
@@ -36,7 +30,6 @@ export function proxy(request: NextRequest) {
 
   const isProtectedRoute = matchesRoute(pathname, PROTECTED_ROUTES);
   const isProtectedApi = matchesRoute(pathname, PROTECTED_API_ROUTES);
-  const isAuthRoute = matchesRoute(pathname, AUTH_ROUTES);
 
   const sessionCookie = request.cookies.get("session")?.value;
   const legacyCookie = request.cookies.get("firebase-auth-token")?.value;
@@ -57,9 +50,7 @@ export function proxy(request: NextRequest) {
     }
   }
 
-  if (isAuthRoute && isAuthenticated) {
-    return NextResponse.redirect(new URL("/", request.url));
-  }
+
 
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
   const isDev = process.env.NODE_ENV !== "production";

@@ -195,8 +195,8 @@ export default function PricedBookingPage() {
   const [selectedDriver, setSelectedDriver] = useState<DriverMatch | null>(null);
 
 
-  // Combine counties and common locations for dropdown
-  const allLocations = [...KENYA_COUNTIES, ...COMMON_LOCATIONS].sort();
+  // Combine operational counties and common locations for dropdown
+  const allLocations = Array.from(new Set([...KENYA_COUNTIES, ...COMMON_LOCATIONS])).sort();
 
   const handleFindDrivers = async () => {
     const from = useCustomLocations ? customFrom : fromLocation;

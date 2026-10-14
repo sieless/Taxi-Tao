@@ -19,6 +19,8 @@ export interface AdminPermissions {
   manageUsers: boolean;
   /** Approve/reject drivers, manage subscriptions */
   manageDrivers: boolean;
+  /** Review and approve/reject driver KYC submissions */
+  manageKyc: boolean;
   /** Verify / reject M-Pesa payments */
   managePayments: boolean;
   /** Delete bookings, create share links */
@@ -63,8 +65,8 @@ export function isSuperAdmin(uid: string, claims?: Record<string, unknown>): boo
  * Checks whether a user has a specific admin permission.
  *
  * - `admin` role → always returns true (all permissions implicitly granted).
- * - `assistant` role → returns true only if the flag is explicitly set to true
- *   in `userProfile.permissions`.
+ * - `assistant` role → returns true only if unsuspended and the flag is set in
+ *   `userProfile.adminPermissions` (canonical) or `userProfile.permissions` (legacy fallback).
  * - All other roles → always returns false.
  */
 export function hasAdminPermission(
@@ -74,7 +76,11 @@ export function hasAdminPermission(
   if (!userProfile) return false;
   if (userProfile.role === "admin") return true;
   if (userProfile.role === "assistant") {
-    return (userProfile as any).permissions?.[permission] === true;
+    if (userProfile.suspended) return false;
+    return (
+      userProfile.adminPermissions?.[permission] === true ||
+      (userProfile as any).permissions?.[permission] === true
+    );
   }
   return false;
 }

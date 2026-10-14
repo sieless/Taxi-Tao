@@ -45,6 +45,13 @@ export default function AvailableDrivers() {
   }, [userProfile]);
 
   useEffect(() => {
+    // Reading driver profiles requires authentication per Firestore security rules
+    if (!user) {
+      setDrivers([]);
+      setLoading(false);
+      return;
+    }
+
     // Real-time listener for available drivers
     const q = query(
       collection(db, "drivers"),
@@ -86,12 +93,14 @@ export default function AvailableDrivers() {
       setDrivers(resolvedDrivers);
       setLoading(false);
     }, (error) => {
-      logError("AvailableDrivers", error);
+      if ((error as any)?.code !== "permission-denied") {
+        logError("AvailableDrivers", error);
+      }
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [user]);
 
   const toggleSaveDriver = async (driverId: string) => {
     if (!user) {

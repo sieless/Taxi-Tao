@@ -2,8 +2,8 @@
 
 /**
  * Mapping of smaller towns (Spokes) to their nearest Major Hubs.
- * This allows the system to suggest drivers going to a major town
- * when a user requests a ride to a nearby smaller town.
+ * STRICT OPERATIONAL REGIONS ONLY:
+ * Kericho, Machakos, Kitui, Kajiado, Nairobi, Makueni.
  */
 export const LOCATION_HUBS: Record<string, string> = {
   // Machakos County
@@ -16,6 +16,7 @@ export const LOCATION_HUBS: Record<string, string> = {
   'mlolongo': 'Machakos Town',
   'athi river': 'Machakos Town',
   'syokimau': 'Machakos Town',
+  'machakos town': 'Machakos Town',
 
   // Makueni County
   'wote': 'Makueni',
@@ -23,20 +24,15 @@ export const LOCATION_HUBS: Record<string, string> = {
   'mtito andei': 'Makueni',
   'emali': 'Makueni',
   'sultan hamud': 'Makueni',
+  'makindu': 'Makueni',
+  'salama': 'Makueni',
 
   // Kitui County
   'kitui town': 'Kitui',
   'mwingi': 'Kitui',
   'mutomo': 'Kitui',
   'kwa vonza': 'Kitui',
-
-  // Kiambu County
-  'thika': 'Kiambu',
-  'ruiru': 'Kiambu',
-  'juja': 'Kiambu',
-  'kikuyu': 'Kiambu',
-  'limuru': 'Kiambu',
-  'kiambu town': 'Kiambu',
+  'kabati': 'Kitui',
 
   // Kajiado County
   'ngong': 'Kajiado',
@@ -44,16 +40,18 @@ export const LOCATION_HUBS: Record<string, string> = {
   'ongata rongai': 'Kajiado',
   'kiserian': 'Kajiado',
   'namanga': 'Kajiado',
+  'isinya': 'Kajiado',
+  'kajiado town': 'Kajiado',
 
-  // Mombasa & Coast
-  'mombasa cbd': 'Mombasa',
-  'nyali': 'Mombasa',
-  'bamburi': 'Mombasa',
-  'mtwapa': 'Mombasa',
-  'diani': 'Mombasa',
-  'ukunda': 'Mombasa',
-  'malindi': 'Mombasa',
-  'kilifi town': 'Mombasa',
+  // Kericho County
+  'kericho town': 'Kericho',
+  'kapkatet': 'Kericho',
+  'litein': 'Kericho',
+  'kipkelion': 'Kericho',
+  'londiani': 'Kericho',
+  'chepseon': 'Kericho',
+  'brooke': 'Kericho',
+  'kabianga': 'Kericho',
 
   // Nairobi Environs
   'westlands': 'Nairobi',
@@ -63,6 +61,12 @@ export const LOCATION_HUBS: Record<string, string> = {
   'embakasi': 'Nairobi',
   'langata': 'Nairobi',
   'nairobi cbd': 'Nairobi',
+  'upper hill': 'Nairobi',
+  'utawala': 'Nairobi',
+  'south b': 'Nairobi',
+  'south c': 'Nairobi',
+  'kileleshwa': 'Nairobi',
+  'lavington': 'Nairobi',
 };
 
 /**

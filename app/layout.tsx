@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     template: "%s | TaxiTao",
   },
   description:
-    "Book reliable taxi and car hire services across Kenya. Professional drivers, well-maintained vehicles, 24/7 customer support in all 47 counties.",
+    "Book reliable taxi and car hire services in Nairobi, Machakos, Kericho, Kitui, Kajiado, and Makueni. Verified local drivers, transparent pricing, 24/7 direct service.",
   metadataBase: new URL(BASE_URL),
   openGraph: {
     type: "website",
@@ -75,7 +75,7 @@ const organizationJsonLd = {
   url: BASE_URL,
   logo: `${BASE_URL}/icon.png`,
   description:
-    "Kenya's complete transport ecosystem — taxi, car hire, transport, and hearse services across all 47 counties.",
+    "Kenya's regional transport ecosystem — taxi and car hire services across Nairobi, Machakos, Kericho, Kitui, Kajiado, and Makueni.",
   contactPoint: [
     {
       "@type": "ContactPoint",
@@ -108,7 +108,7 @@ const softwareAppJsonLd = {
   downloadUrl: "https://play.google.com/store/apps/details?id=com.taxitao.mobile",
   installUrl: "https://play.google.com/store/apps/details?id=com.taxitao.mobile",
   description:
-    "Book taxis, hire cars, and access transport services across Kenya's 47 counties.",
+    "Book taxis, hire cars, and access transport services across Nairobi, Machakos, Kericho, Kitui, Kajiado, and Makueni.",
 };
 
 export default async function RootLayout({

@@ -1,7 +1,7 @@
 "use client";
 
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
 
 export interface CrashReport {
   errorMessage: string;
@@ -200,6 +200,11 @@ class CrashAnalytics {
 
   async logEvent(eventName: string, eventData?: Record<string, any>): Promise<void> {
     try {
+      // app_events collection in Firestore requires authenticated users per security rules
+      if (!this.userId && !auth.currentUser) {
+        return;
+      }
+
       const rawEvent: Record<string, any> = {
         eventName,
         eventData: {
@@ -210,14 +215,19 @@ class CrashAnalytics {
         timestamp: serverTimestamp(),
       };
 
-      if (this.userId) rawEvent.userId = this.userId;
+      if (this.userId || auth.currentUser?.uid) rawEvent.userId = this.userId || auth.currentUser?.uid;
       if (this.userRole) rawEvent.userRole = this.userRole;
 
       const event = sanitizeFirestoreData(rawEvent);
 
       await addDoc(collection(db, "app_events"), event);
     } catch (error: any) {
-      if (error?.code === "already-exists" || error?.message?.includes("already exists")) {
+      if (
+        error?.code === "already-exists" ||
+        error?.code === "permission-denied" ||
+        error?.message?.includes("already exists") ||
+        error?.message?.includes("insufficient permissions")
+      ) {
         return;
       }
       if (process.env.NODE_ENV === "development") {

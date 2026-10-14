@@ -128,6 +128,7 @@ export default function Navbar() {
               <div className="flex items-center gap-3">
                 <Link
                   href="/login"
+                  prefetch={false}
                   className="text-sm font-semibold text-gray-700 hover:text-gray-900 transition-colors whitespace-nowrap px-4 py-2 border border-gray-300 rounded-lg hover:border-gray-400"
                 >
                   Login
@@ -239,7 +240,7 @@ export default function Navbar() {
 
             {!user && (
               <div className="mt-4 px-4 pt-4 border-t border-gray-200 space-y-2">
-                <Link href="/login" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-center text-sm font-semibold text-gray-700 hover:text-gray-900 transition-colors px-4 py-3 border border-gray-300 rounded-lg">
+                <Link href="/login" prefetch={false} onClick={() => setIsMenuOpen(false)} className="flex items-center justify-center text-sm font-semibold text-gray-700 hover:text-gray-900 transition-colors px-4 py-3 border border-gray-300 rounded-lg">
                   Login
                 </Link>
                 <Link href="/#booking" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-center bg-gray-900 hover:bg-gray-800 text-white px-4 py-3 rounded-lg font-semibold transition-colors shadow-md">

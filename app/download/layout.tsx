@@ -5,7 +5,7 @@ const BASE_URL = "https://taxitao.co.ke";
 export const metadata: Metadata = {
   title: "Download TaxiTao App — Free Taxi & Car Hire on Android",
   description:
-    "Download TaxiTao for free on Google Play. Book taxis, hire cars, and access transport services across Kenya's 47 counties. Android 9.0+ required.",
+    "Download TaxiTao for free on Google Play. Book taxis, hire cars, and access transport services across Nairobi, Machakos, Kericho, Kitui, Kajiado, and Makueni. Android 9.0+ required.",
   openGraph: {
     type: "website",
     title: "Download TaxiTao — Kenya's Transport Ecosystem",

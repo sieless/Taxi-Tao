@@ -5,17 +5,19 @@ export type FirestoreTimestamp = Timestamp | null;
 
 export type BookingStatus = 
   | "pending"        // Initial state, looking for drivers
-  | "searching"      // Driver has sent an offer
-  | "offered"        // Price negotiation in progress
-  | "price_pending"  // Assigned to a driver
-  | "accepted"       // Driver confirmed (Phase 3)
-  | "confirmed"      // Driver on the way
-  | "en_route"       // Driver at pickup location
-  | "arrived"        // Trip active
-  | "in_progress"    // Trip finished
-  | "completed"      // Trip aborted
-  | "cancelled"      // No driver found
-  | "expired";       // 
+  | "searching"      // Finding drivers
+  | "offered"        // Price negotiation / offers in progress
+  | "price_pending"  // Legacy active status during price negotiation
+  | "accepted"       // Driver + Customer matched
+  | "confirmed"      // Driver confirmed
+  | "en_route"       // Driver on the way
+  | "arrived"        // Driver at pickup location
+  | "in_progress"    // Trip active
+  | "completed"      // Trip finished
+  | "cancelled"      // Manually cancelled
+  | "annulled"       // Customer test / dead ride
+  | "expired"        // Timed out
+  | "failed";        // System dispatch error
 
 export interface Driver {
   id: string;
@@ -59,6 +61,8 @@ export interface Driver {
   isPublicDirectory?: boolean;
   addedBy?: "admin" | "system" | "driver" | "owner" | "staff";
   serviceTowns?: string[];
+  serviceCounty?: string;
+  location?: string | string[];
 
   mpesaDetails?: {
     accountName?: string;
@@ -197,10 +201,16 @@ export interface BookingRequest {
   status: BookingStatus;
   
   // High-level phase tracking
-  acceptedBy?: string | null; // Driver ID
+  acceptedDriverId?: string | null; // ID of winning driver
+  acceptedBy?: string | null; // Legacy driver ID alias
   driverPhone?: string; // Driver Phone Number
   driverName?: string;
   acceptedAt?: any; // Firestore Timestamp
+  finalFare?: number; // Canonical agreed price
+  coordsResolved?: boolean; // Geocoding resolved flag
+  pickupResolved?: boolean; // Manual pickup resolution flag
+  matchStatus?: "queued" | "matching" | "notifying" | "waiting" | "done" | "no_drivers" | "broadcast";
+  fareStatus?: "estimate" | "offered" | "agreed" | "not_needed";
   createdAt: any; // Firestore Timestamp
   expiresAt: any; // Firestore Timestamp
   notifiedDrivers: string[]; // Array of Driver IDs who received the notification
@@ -295,6 +305,16 @@ export interface User {
   companyStatus?: "pending" | "active" | "suspended" | "rejected";
   companyId?: string;
   profilePhotoUrl?: string;
+  /** Canonical assistant administrative permissions */
+  adminPermissions?: {
+    manageDrivers?: boolean;
+    manageKyc?: boolean;
+    managePayments?: boolean;
+    manageRides?: boolean;
+    manageUsers?: boolean;
+    manageIssues?: boolean;
+    viewAnalytics?: boolean;
+  };
   /** Car-hire staff permissions (company-specific operational duties) */
   permissions?: {
     manageFleet?: boolean;
@@ -329,6 +349,16 @@ export interface AppUser {
   companyStatus?: "pending" | "active" | "suspended" | "rejected";
   companyId?: string;
   profilePhotoUrl?: string;
+  /** Canonical assistant administrative permissions */
+  adminPermissions?: {
+    manageDrivers?: boolean;
+    manageKyc?: boolean;
+    managePayments?: boolean;
+    manageRides?: boolean;
+    manageUsers?: boolean;
+    manageIssues?: boolean;
+    viewAnalytics?: boolean;
+  };
   /** Car-hire staff permissions (company-specific operational duties) */
   permissions?: {
     manageFleet?: boolean;

@@ -417,6 +417,45 @@ export async function rejectDriverKYC(
   }
 }
 
+/**
+ * Resets driver KYC status back to pending for re-review.
+ * Updates both the 'drivers' collection and the 'users' collection (verification object).
+ */
+export async function reviewDriverKYC(
+  driverId: string,
+  adminUid: string,
+  notes?: string
+): Promise<void> {
+  try {
+    const driverRef = doc(db, "drivers", driverId);
+    const userRef = doc(db, "users", driverId);
+    const timestamp = serverTimestamp();
+
+    // 1. Update Drivers Collection
+    await updateDoc(driverRef, {
+      kycStatus: "pending",
+      kycReviewedAt: timestamp,
+      kycReviewedBy: adminUid,
+      kycReviewNotes: notes || "",
+      updatedAt: timestamp,
+    });
+
+    // 2. Update Users Collection (Verification object)
+    await updateDoc(userRef, {
+      "verification.driverKyc": "pending",
+      "verification.kycReviewedAt": timestamp,
+      "verification.kycReviewedBy": adminUid,
+      "verification.kycReviewNotes": notes || "",
+      updatedAt: timestamp,
+    });
+
+    await logAdminAction("kyc_review_requested", driverId, { adminUid, notes });
+  } catch (err: any) {
+    logError("admin", err);
+    throw new Error(err.message || "Failed to reset KYC to review");
+  }
+}
+
 // ── In-app messaging ──────────────────────────────────────────────────────────
 
 export interface SendMessageResult {

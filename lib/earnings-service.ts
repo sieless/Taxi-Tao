@@ -30,6 +30,7 @@ export async function getTodayEarnings(driverId: string): Promise<number> {
 
     snapshot.forEach((doc) => {
       const booking = doc.data() as BookingRequest;
+      if (booking.status === "annulled" || booking.status === "cancelled" || booking.status === "failed") return;
       // Use earnings if available, otherwise fall back to fare
       total += booking.earnings || booking.fare || 0;
     });
@@ -62,6 +63,7 @@ export async function getMonthlyEarnings(driverId: string): Promise<number> {
 
     snapshot.forEach((doc) => {
       const booking = doc.data() as BookingRequest;
+      if (booking.status === "annulled" || booking.status === "cancelled" || booking.status === "failed") return;
       // Use earnings if available, otherwise fall back to fare
       total += booking.earnings || booking.fare || 0;
     });
@@ -108,6 +110,7 @@ export async function getEarningsHistory(
 
       snapshot.forEach((doc) => {
         const booking = doc.data() as BookingRequest;
+        if (booking.status === "annulled" || booking.status === "cancelled" || booking.status === "failed") return;
         monthTotal += booking.earnings || 0;
       });
 

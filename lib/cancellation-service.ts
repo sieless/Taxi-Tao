@@ -38,30 +38,50 @@ async function updateBookingStatus(
 }
 
 /* -----------------------------------------------------
+ * In-flight debounce set to prevent rapid double-clicks
+ * --------------------------------------------------- */
+const pendingCancellations = new Set<string>();
+
+/* -----------------------------------------------------
  * Customer Cancels Booking
  * --------------------------------------------------- */
 export async function cancelBooking(
   bookingId: string,
   reason: string
 ): Promise<void> {
-  const booking = await getBookingOrFail(bookingId);
+  if (pendingCancellations.has(bookingId)) {
+    return; // Already being processed
+  }
+  pendingCancellations.add(bookingId);
 
-  // Update status
-  await updateBookingStatus(bookingId, {
-    status: "cancelled",
-    cancellationReason: reason,
-    cancelledAt: serverTimestamp(),
-  });
+  try {
+    const booking = await getBookingOrFail(bookingId);
 
-  // Notify driver
-  if (booking.acceptedBy) {
-    await createDriverNotification({
-      driverId: booking.acceptedBy,
-      type: "booking_cancelled",
-      title: "Booking Cancelled",
-      message: `The booking from ${booking.pickupLocation} has been cancelled by the customer. Reason: ${reason}`,
-      bookingId,
+    // Idempotency: if already cancelled or annulled, do not rewrite terminal state
+    if (booking.status === "cancelled" || booking.status === "annulled") {
+      return;
+    }
+
+    // Update status
+    await updateBookingStatus(bookingId, {
+      status: "cancelled",
+      cancellationReason: reason,
+      cancelledAt: serverTimestamp(),
     });
+
+    // Notify driver (supporting both acceptedDriverId and acceptedBy)
+    const assignedDriverId = booking.acceptedDriverId || booking.acceptedBy;
+    if (assignedDriverId) {
+      await createDriverNotification({
+        driverId: assignedDriverId,
+        type: "booking_cancelled",
+        title: "Booking Cancelled",
+        message: `The booking from ${booking.pickupLocation} has been cancelled by the customer. Reason: ${reason}`,
+        bookingId,
+      });
+    }
+  } finally {
+    pendingCancellations.delete(bookingId);
   }
 }
 
@@ -73,27 +93,43 @@ export async function cancelBookingByDriver(
   driverId: string,
   reason: string
 ): Promise<void> {
-  const booking = await getBookingOrFail(bookingId);
-
-  if (booking.acceptedBy !== driverId) {
-    throw new Error("You are not the assigned driver for this booking.");
+  if (pendingCancellations.has(bookingId)) {
+    return;
   }
+  pendingCancellations.add(bookingId);
 
-  // Reset to searching state
-  await updateBookingStatus(bookingId, {
-    status: "searching",
-    acceptedBy: null,
-    acceptedAt: null,
-  });
+  try {
+    const booking = await getBookingOrFail(bookingId);
 
-  // Notify customer
-  if (booking.customerId) {
-    await createNotification(
-      booking.customerId,
-      bookingId,
-      "driver_cancelled" as any,
-      `Driver cancelled: ${reason}. We are looking for another driver near you...`,
-      { action: "view_booking" }
-    );
+    // Idempotency: if ride is already cancelled, completed or annulled
+    if (booking.status === "cancelled" || booking.status === "completed" || booking.status === "annulled") {
+      return;
+    }
+
+    const assignedDriverId = booking.acceptedDriverId || booking.acceptedBy;
+    if (assignedDriverId !== driverId) {
+      throw new Error("You are not the assigned driver for this booking.");
+    }
+
+    // Reset to searching state for other drivers
+    await updateBookingStatus(bookingId, {
+      status: "searching",
+      acceptedBy: null,
+      acceptedDriverId: null,
+      acceptedAt: null,
+    });
+
+    // Notify customer
+    if (booking.customerId) {
+      await createNotification(
+        booking.customerId,
+        bookingId,
+        "driver_cancelled" as any,
+        `Driver cancelled: ${reason}. We are looking for another driver near you...`,
+        { action: "view_booking" }
+      );
+    }
+  } finally {
+    pendingCancellations.delete(bookingId);
   }
 }

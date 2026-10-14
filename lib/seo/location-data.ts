@@ -1,3 +1,10 @@
+export interface RegionalContact {
+  name: string;
+  phone: string;
+  whatsapp?: string;
+  role?: string;
+}
+
 export interface LocationInfo {
   county: string;
   town: string;
@@ -6,295 +13,332 @@ export interface LocationInfo {
   description?: string;
   keywords: string[];
   subLocations: string[];
+  directContacts: RegionalContact[];
 }
 
-const PHASE_1_LOCATIONS: LocationInfo[] = [
+/**
+ * STRICT OPERATIONAL SERVICE AREAS ONLY:
+ * Kericho, Machakos, Kitui, Kajiado, Nairobi, Makueni.
+ * All out-of-scope regions have been pruned to prevent unfulfillable customer calls.
+ */
+const OPERATIONAL_LOCATIONS: LocationInfo[] = [
+  // 1. MACHAKOS COUNTY
   {
     county: "Machakos",
     town: "Machakos Town",
     slug: "machakos-town",
     population: "200,000+",
-    description: "Machakos Town is the capital of Machakos County, a major transport hub linking Nairobi to Ukambani region.",
-    keywords: ["taxi Machakos", "car hire Machakos", "Machakos taxi service", "Machakos car rental", "taxi from Machakos to Nairobi", "Machakos town transport"],
-    subLocations: ["Machakos CBD", "Masii", "Kangundo", "Athi River", "Mlolongo", "Syokimau", "Kathiani", "Tala"],
+    description: "Machakos Town is the bustling capital of Machakos County, linking Nairobi to the Ukambani region with direct local driver services.",
+    keywords: [
+      "taxi Machakos",
+      "car hire Machakos",
+      "Machakos taxi service",
+      "Machakos car rental",
+      "taxi from Machakos to Nairobi",
+      "Machakos town transport"
+    ],
+    subLocations: ["Machakos CBD", "Masii", "Kangundo", "Kathiani", "Tala", "Wamunyu", "Mitaboni"],
+    directContacts: [
+      { name: "Benjamin Mutua (Semse)", phone: "+254 710 450640", whatsapp: "+254 710 450640", role: "Local Driver / Car Hire" },
+      { name: "Benjamin Mutwii", phone: "+254 723 950265", role: "Machakos Taxi Driver" },
+      { name: "Charles Nziu", phone: "+254 727 494137", role: "Machakos Taxi Driver" },
+      { name: "Sebastian Francis", phone: "+254 754 706204", role: "Machakos Taxi Driver" },
+    ],
   },
   {
     county: "Machakos",
     town: "Athi River",
     slug: "athi-river",
     population: "150,000+",
-    description: "Athi River is a growing industrial and residential town along the Nairobi-Mombasa highway in Machakos County.",
-    keywords: ["taxi Athi River", "car hire Athi River", "Athi River taxi service", "Athi River car rental", "Mlolongo taxi", "Syokimau taxi"],
-    subLocations: ["Mlolongo", "Syokimau", "Kitengela", "Athi River CBD", "Estey"],
+    description: "Athi River, Mlolongo, and Syokimau corridor along Mombasa Road with fast direct driver dispatch to JKIA, SGR, and Nairobi CBD.",
+    keywords: [
+      "taxi Athi River",
+      "car hire Athi River",
+      "Athi River taxi service",
+      "Mlolongo taxi",
+      "Syokimau taxi",
+      "JKIA to Athi River taxi"
+    ],
+    subLocations: ["Mlolongo", "Syokimau", "Athi River CBD", "Greatwall", "SGR Terminus"],
+    directContacts: [
+      { name: "Stephen Nthakyo", phone: "+254 743 471227", role: "Athi River Driver" },
+      { name: "Nicholas Mutisya", phone: "+254 710 122800", role: "Kyumvi Junction / Athi River Corridor" },
+    ],
   },
+
+  // 2. NAIROBI COUNTY
   {
     county: "Nairobi",
     town: "Nairobi CBD",
     slug: "nairobi-cbd",
     population: "5,000,000+",
-    description: "Nairobi CBD is the commercial heart of Kenya's capital city, served by TaxiTao's extensive taxi and car hire network.",
-    keywords: ["taxi Nairobi", "car hire Nairobi", "Nairobi taxi booking", "Nairobi car rental", "Nairobi to airport taxi", "Nairobi executive car hire"],
-    subLocations: ["Westlands", "Upper Hill", "Kilimani", "Lavington", "Kileleshwa", "South B", "South C", "Lang'ata", "Karen", "Ngong Road"],
+    description: "Nairobi CBD and central business hub served by dedicated TaxiTao verified drivers for direct city rides, airport transfers, and inter-county travel.",
+    keywords: [
+      "taxi Nairobi",
+      "car hire Nairobi",
+      "Nairobi taxi booking",
+      "Nairobi car rental",
+      "Nairobi to airport taxi",
+      "Nairobi executive car hire"
+    ],
+    subLocations: ["Nairobi CBD", "Upper Hill", "South B", "South C", "Eastlands", "Utawala", "Embakasi"],
+    directContacts: [
+      { name: "Vincent Nzioki", phone: "+254 721 317413", role: "Nairobi Executive Driver" },
+      { name: "Bonface Moriang’o", phone: "+254 710 600013", role: "Utawala / Nairobi Driver" },
+    ],
   },
   {
     county: "Nairobi",
     town: "Westlands",
     slug: "westlands",
     population: "300,000+",
-    description: "Westlands is Nairobi's premier business and entertainment district, with high demand for executive taxi and car hire services.",
-    keywords: ["taxi Westlands Nairobi", "car hire Westlands", "Westlands taxi service", "Westlands car rental", "Westlands to airport"],
-    subLocations: ["Westlands CBD", "Parklands", "Highridge", "Windsor"],
-  },
-  {
-    county: "Mombasa",
-    town: "Mombasa CBD",
-    slug: "mombasa-cbd",
-    population: "1,200,000+",
-    description: "Mombasa CBD is the coastal commercial hub of Kenya, serving tourists and businesses with reliable taxi and car hire services.",
-    keywords: ["taxi Mombasa", "car hire Mombasa", "Mombasa taxi service", "Mombasa car rental", "Mombasa airport taxi", "Mombasa self drive"],
-    subLocations: ["Nyali", "Bamburi", "Likoni", "Changamwe", "Kisauni", "Tudor", "Mikindani"],
-  },
-  {
-    county: "Kisumu",
-    town: "Kisumu Town",
-    slug: "kisumu-town",
-    population: "500,000+",
-    description: "Kisumu Town is the lakeside capital of Nyanza region, offering taxi and car hire services for business and tourism.",
-    keywords: ["taxi Kisumu", "car hire Kisumu", "Kisumu taxi service", "Kisumu car rental", "Kisumu airport transfer", "taxi Kisumu town"],
-    subLocations: ["Kisumu CBD", "Milimani", "Migosi", "Kondele", "Manyatta", "Nyalenda", "Kibos"],
-  },
-  {
-    county: "Nakuru",
-    town: "Nakuru Town",
-    slug: "nakuru-town",
-    population: "600,000+",
-    description: "Nakuru Town is the Rift Valley's commercial hub, with TaxiTao providing reliable transport services across the city.",
-    keywords: ["taxi Nakuru", "car hire Nakuru", "Nakuru taxi service", "Nakuru car rental", "Nakuru town transport", "taxi Nakuru CBD"],
-    subLocations: ["Nakuru CBD", "Milimani", "Lanet", "Njoro", "Naivasha", "Molo", "Mau Summit"],
-  },
-  {
-    county: "Uasin Gishu",
-    town: "Eldoret Town",
-    slug: "eldoret-town",
-    population: "500,000+",
-    description: "Eldoret Town is a major agricultural and academic center in the North Rift, served by TaxiTao's professional transport network.",
-    keywords: ["taxi Eldoret", "car hire Eldoret", "Eldoret taxi service", "Eldoret car rental", "Eldoret airport transfer", "taxi Eldoret town"],
-    subLocations: ["Eldoret CBD", "Kapsoya", "Langas", "Huruma", "Kipkenyo", "Pioneer", "Ngeria"],
-  },
-  {
-    county: "Kericho",
-    town: "Kericho Town",
-    slug: "kericho-town",
-    population: "200,000+",
-    description: "Kericho Town is the tea-growing capital of Kenya, with TaxiTao providing dependable taxi and car hire services.",
-    keywords: ["taxi Kericho", "car hire Kericho", "Kericho taxi service", "Kericho car rental", "Kericho town taxi", "taxi Kericho county"],
-    subLocations: ["Kericho CBD", "Kapkatet", "Londiani", "Sotik", "Bomet", "Kipkelion"],
-  },
-  {
-    county: "Kiambu",
-    town: "Thika",
-    slug: "thika",
-    population: "300,000+",
-    description: "Thika is an industrial town in Kiambu County, with TaxiTao providing fast and affordable taxi and car hire services.",
-    keywords: ["taxi Thika", "car hire Thika", "Thika taxi service", "Thika car rental", "Thika to Nairobi taxi", "taxi Thika town"],
-    subLocations: ["Thika CBD", "Juja", "Ruiru", "Gatundu", "Ruiru", "Kenol", "Makongeni"],
-  },
-  {
-    county: "Kilifi",
-    town: "Malindi",
-    slug: "malindi",
-    population: "200,000+",
-    description: "Malindi is a popular coastal tourist destination, with TaxiTao offering reliable taxi and car hire for visitors and residents.",
-    keywords: ["taxi Malindi", "car hire Malindi", "Malindi taxi service", "Malindi car rental", "Malindi airport taxi", "Malindi tourist transport"],
-    subLocations: ["Malindi CBD", "Watamu", "Kilifi Town", "Mambrui", "Gede", "Marafa"],
-  },
-  {
-    county: "Trans Nzoia",
-    town: "Kitale",
-    slug: "kitale",
-    population: "150,000+",
-    description: "Kitale is the agricultural hub of the North Rift, offering reliable taxi and car hire services through TaxiTao.",
-    keywords: ["taxi Kitale", "car hire Kitale", "Kitale taxi service", "Kitale car rental", "Kitale town transport", "taxi Kitale Trans Nzoia"],
-    subLocations: ["Kitale CBD", "Sirende", "Matunda", "Endebess", "Kiminini", "Saboti"],
-  },
-  {
-    county: "Garissa",
-    town: "Garissa Town",
-    slug: "garissa-town",
-    population: "200,000+",
-    description: "Garissa Town is the capital of Garissa County in North Eastern Kenya, with TaxiTao connecting residents to reliable transport.",
-    keywords: ["taxi Garissa", "car hire Garissa", "Garissa taxi service", "Garissa car rental", "Garissa town taxi", "taxi Garissa county"],
-    subLocations: ["Garissa CBD", "Dujis", "Lagdera", "Balambala", "Iftin", "Modogashe"],
-  },
-  {
-    county: "Nairobi",
-    town: "Karen",
-    slug: "karen",
-    population: "200,000+",
-    description: "Karen is an upscale suburb of Nairobi known for its leafy residential areas and the Karen Blixen Museum.",
-    keywords: ["taxi Karen Nairobi", "car hire Karen", "Karen taxi service", "Karen car rental", "Karen to airport taxi", "executive taxi Karen"],
-    subLocations: ["Karen CBD", "Lang'ata", "Ole Sereni", "Hardy", "Bogani", "Magadi Road"],
-  },
-  {
-    county: "Kajiado",
-    town: "Ngong",
-    slug: "ngong",
-    population: "200,000+",
-    description: "Ngong Town sits at the foot of the Ngong Hills, serving as a key transport link between Nairobi and Kajiado County.",
-    keywords: ["taxi Ngong", "car hire Ngong", "Ngong taxi service", "Ngong car rental", "Ngong to Nairobi taxi", "taxi Ngong town"],
-    subLocations: ["Ngong CBD", "Ongata Rongai", "Kiserian", "Matasia", "Lenana", "Karen-Ngong"],
-  },
-  {
-    county: "Meru",
-    town: "Meru Town",
-    slug: "meru-town",
-    population: "300,000+",
-    description: "Meru Town is the commercial and administrative hub of Meru County at the base of Mount Kenya, served by TaxiTao's reliable transport network.",
-    keywords: ["taxi Meru", "car hire Meru", "Meru taxi service", "Meru car rental", "Meru to Nairobi taxi", "taxi Meru town"],
-    subLocations: ["Meru CBD", "Gatimbi", "Kaaga", "Makutano", "Nkubu", "Timau"],
-  },
-  {
-    county: "Nyeri",
-    town: "Nyeri Town",
-    slug: "nyeri-town",
-    population: "200,000+",
-    description: "Nyeri Town is the central hub of Kenya's Central Highlands, offering taxi and car hire services to residents and tourists visiting the Aberdares.",
-    keywords: ["taxi Nyeri", "car hire Nyeri", "Nyeri taxi service", "Nyeri car rental", "Nyeri to Nairobi taxi", "taxi Nyeri town"],
-    subLocations: ["Nyeri CBD", "King'ong'o", "Tetu", "Mukurwe-ini", "Othaya", "Karatina"],
-  },
-  {
-    county: "Kakamega",
-    town: "Kakamega Town",
-    slug: "kakamega-town",
-    population: "250,000+",
-    description: "Kakamega Town is the capital of Kakamega County in Western Kenya, known for the nearby Kakamega Forest, with TaxiTao providing dependable transport.",
-    keywords: ["taxi Kakamega", "car hire Kakamega", "Kakamega taxi service", "Kakamega car rental", "taxi Kakamega town", "Kakamega to Kisumu taxi"],
-    subLocations: ["Kakamega CBD", "Lurambi", "Shinyalu", "Mumias", "Butere", "Malava"],
-  },
-  {
-    county: "Bungoma",
-    town: "Bungoma Town",
-    slug: "bungoma-town",
-    population: "200,000+",
-    description: "Bungoma Town is the capital of Bungoma County in Western Kenya, a key agricultural and transport hub served by TaxiTao.",
-    keywords: ["taxi Bungoma", "car hire Bungoma", "Bungoma taxi service", "Bungoma car rental", "taxi Bungoma town", "Bungoma to Nairobi taxi"],
-    subLocations: ["Bungoma CBD", "Chwele", "Kimilili", "Webuye", "Siritany", "Kanduyi"],
-  },
-  {
-    county: "Nandi",
-    town: "Kapsabet",
-    slug: "kapsabet",
-    population: "150,000+",
-    description: "Kapsabet is the capital of Nandi County in the Rift Valley, known for its athletics heritage and served by TaxiTao's transport services.",
-    keywords: ["taxi Kapsabet", "car hire Kapsabet", "Kapsabet taxi service", "Kapsabet car rental", "taxi Kapsabet town", "Nandi transport"],
-    subLocations: ["Kapsabet CBD", "Nandi Hills", "Mosoriot", "Kabisaga", "Kobujoi", "Tinderet"],
-  },
-  {
-    county: "Lamu",
-    town: "Lamu Town",
-    slug: "lamu-town",
-    population: "100,000+",
-    description: "Lamu Town is a UNESCO World Heritage Site on Kenya's coast, with TaxiTao offering reliable transport for tourists exploring Lamu Island.",
-    keywords: ["taxi Lamu", "car hire Lamu", "Lamu taxi service", "Lamu car rental", "Lamu airport transfer", "Lamu tourist transport"],
-    subLocations: ["Lamu Old Town", "Shella", "Manda", "Mpeketoni", "Kizingo", "Faza"],
-  },
-  {
-    county: "Makueni",
-    town: "Wote",
-    slug: "wote",
-    population: "100,000+",
-    description: "Wote is the capital of Makueni County in Eastern Kenya, providing taxi and car hire services for residents and businesses in the region.",
-    keywords: ["taxi Wote", "car hire Makueni", "Wote taxi service", "Wote car rental", "taxi Wote town", "Makueni transport"],
-    subLocations: ["Wote CBD", "Makindu", "Sultan Hamud", "Emali", "Kibwezi", "Mtito Andei"],
-  },
-  {
-    county: "Murang'a",
-    town: "Murang'a Town",
-    slug: "muranga-town",
-    population: "150,000+",
-    description: "Murang'a Town is the capital of Murang'a County in Central Kenya, a key agricultural hub served by TaxiTao's transport network.",
-    keywords: ["taxi Murang'a", "car hire Murang'a", "Murang'a taxi service", "Murang'a car rental", "taxi Murang'a town", "Murang'a to Nairobi taxi"],
-    subLocations: ["Murang'a CBD", "Kangari", "Kigumo", "Kandara", "Gatanga", "Maragua"],
-  },
-  {
-    county: "Kirinyaga",
-    town: "Kerugoya",
-    slug: "kerugoya",
-    population: "100,000+",
-    description: "Kerugoya is the capital of Kirinyaga County in Central Kenya, serving the fertile rice-growing region with reliable taxi services.",
-    keywords: ["taxi Kerugoya", "car hire Kirinyaga", "Kerugoya taxi service", "Kerugoya car rental", "taxi Kerugoya town", "Kirinyaga transport"],
-    subLocations: ["Kerugoya CBD", "Kutus", "Sagana", "Baricho", "Mwea", "Ngariama"],
-  },
-  {
-    county: "Taita Taveta",
-    town: "Voi",
-    slug: "voi",
-    population: "100,000+",
-    description: "Voi is the gateway town to Tsavo National Parks in Taita Taveta County, with TaxiTao providing transport for tourists and residents.",
-    keywords: ["taxi Voi", "car hire Voi", "Voi taxi service", "Voi car rental", "Voi to Mombasa taxi", "Tsavo transport"],
-    subLocations: ["Voi CBD", "Taveta", "Mwatate", "Wundanyi", "Mbale", "Sagala"],
-  },
-  {
-    county: "Laikipia",
-    town: "Nanyuki",
-    slug: "nanyuki",
-    population: "100,000+",
-    description: "Nanyuki is a busy town on the equator at the foot of Mount Kenya, serving the Laikipia tourism and agricultural region.",
-    keywords: ["taxi Nanyuki", "car hire Nanyuki", "Nanyuki taxi service", "Nanyuki car rental", "Nanyuki to Nairobi taxi", "Mount Kenya transport"],
-    subLocations: ["Nanyuki CBD", "Rumuruti", "Nyahururu", "Doldol", "Timau", "Mukogodo"],
-  },
-  {
-    county: "Narok",
-    town: "Narok Town",
-    slug: "narok-town",
-    population: "100,000+",
-    description: "Narok Town is the gateway to the Maasai Mara Game Reserve, with TaxiTao offering reliable transport for safari tourism.",
-    keywords: ["taxi Narok", "car hire Narok", "Narok taxi service", "Narok car rental", "Maasai Mara taxi", "Narok to Nairobi taxi"],
-    subLocations: ["Narok CBD", "Kilgoris", "Lemek", "Ololulunga", "Suswa", "Ewaso Nyiro"],
+    description: "Westlands premier commercial and entertainment hub with verified drivers available for executive car hire, airport runs, and city transport.",
+    keywords: [
+      "taxi Westlands Nairobi",
+      "car hire Westlands",
+      "Westlands taxi service",
+      "Westlands car rental",
+      "Westlands to airport"
+    ],
+    subLocations: ["Westlands CBD", "Parklands", "Highridge", "Sarit", "Waiyaki Way"],
+    directContacts: [
+      { name: "Vincent Nzioki", phone: "+254 721 317413", role: "Nairobi Driver" },
+    ],
   },
   {
     county: "Nairobi",
     town: "Kilimani",
     slug: "kilimani",
     population: "200,000+",
-    description: "Kilimani is an upscale residential and commercial neighborhood in Nairobi with high demand for executive taxi and car hire services.",
-    keywords: ["taxi Kilimani", "car hire Kilimani", "Kilimani taxi service", "Kilimani car rental", "Kilimani to airport taxi", "executive taxi Nairobi"],
-    subLocations: ["Kilimani CBD", "Adams Arcade", "Woodley", "Mountain View", "Kileleshwa", "Hurlingham"],
+    description: "Kilimani and Kileleshwa upscale residential and business district with on-demand taxis and executive car rentals.",
+    keywords: [
+      "taxi Kilimani",
+      "car hire Kilimani",
+      "Kilimani taxi service",
+      "Kilimani car rental",
+      "Kileleshwa taxi",
+      "Hurlingham taxi"
+    ],
+    subLocations: ["Kilimani CBD", "Yaya Centre", "Kileleshwa", "Hurlingham", "Lavington"],
+    directContacts: [
+      { name: "Vincent Nzioki", phone: "+254 721 317413", role: "Nairobi Driver" },
+    ],
   },
   {
-    county: "Mombasa",
-    town: "Nyali",
-    slug: "nyali",
+    county: "Nairobi",
+    town: "Karen",
+    slug: "karen",
     population: "200,000+",
-    description: "Nyali is an upscale coastal suburb of Mombasa known for its beaches, hotels, and residential estates, served by TaxiTao's premium transport.",
-    keywords: ["taxi Nyali Mombasa", "car hire Nyali", "Nyali taxi service", "Nyali car rental", "Nyali beach taxi", "Nyali to airport taxi"],
-    subLocations: ["Nyali CBD", "Mkomani", "Bamburi", "Mtopanga", "Kongowea", "Frere Town"],
+    description: "Karen leafy suburbs and Lang'ata with direct driver bookings for airport transfers, leisure trips, and day-hire chauffeured vehicles.",
+    keywords: [
+      "taxi Karen Nairobi",
+      "car hire Karen",
+      "Karen taxi service",
+      "Karen car rental",
+      "Karen to airport taxi",
+      "executive taxi Karen"
+    ],
+    subLocations: ["Karen Shopping Centre", "Lang'ata", "Hardy", "Bogani", "Ngong Road"],
+    directContacts: [
+      { name: "Geoffrey", phone: "+254 791 374281", whatsapp: "+254 791 374281", role: "Karen / Ngong Corridor Driver" },
+      { name: "Vincent Nzioki", phone: "+254 721 317413", role: "Nairobi Driver" },
+    ],
+  },
+
+  // 3. KERICHO COUNTY
+  {
+    county: "Kericho",
+    town: "Kericho Town",
+    slug: "kericho-town",
+    population: "200,000+",
+    description: "Kericho Town tea capital transport hub with verified local drivers offering direct taxi bookings and car hire across the South Rift.",
+    keywords: [
+      "taxi Kericho",
+      "car hire Kericho",
+      "Kericho taxi service",
+      "Kericho car rental",
+      "Kericho town taxi",
+      "taxi Kericho county"
+    ],
+    subLocations: ["Kericho CBD", "Brooke", "Chepseon", "Kipkelion", "Londiani", "Litein", "Kabianga"],
+    directContacts: [
+      { name: "Ben Car Hire", phone: "+254 724 280783", whatsapp: "+254 724 280783", role: "Kericho Car Hire & Taxi" },
+      { name: "Ramsey Car Hire", phone: "+254 701 037992", whatsapp: "+254 701 037992", role: "Kericho Car Hire & Taxi" },
+      { name: "Michael Chege", phone: "+254 708 627454", role: "Kericho Taxi Driver" },
+    ],
+  },
+  {
+    county: "Kericho",
+    town: "Kapkatet",
+    slug: "kapkatet",
+    population: "80,000+",
+    description: "Kapkatet and Litein commercial hub in Kericho County with on-demand taxi rides and inter-town travel connections.",
+    keywords: [
+      "taxi Kapkatet",
+      "car hire Kapkatet",
+      "Kapkatet taxi service",
+      "Litein taxi",
+      "Kapkatet transport",
+      "Kericho to Kapkatet taxi"
+    ],
+    subLocations: ["Kapkatet CBD", "Litein", "Bureti", "Roret", "Sotik Junction"],
+    directContacts: [
+      { name: "Ben Car Hire", phone: "+254 724 280783", whatsapp: "+254 724 280783", role: "Kericho / Kapkatet Fleet" },
+      { name: "Ramsey Car Hire", phone: "+254 701 037992", whatsapp: "+254 701 037992", role: "Kericho / Kapkatet Fleet" },
+    ],
+  },
+
+  // 4. KAJIADO COUNTY
+  {
+    county: "Kajiado",
+    town: "Kitengela",
+    slug: "kitengela",
+    population: "250,000+",
+    description: "Kitengela bustling commercial hub with direct taxi and car rental drivers connecting to Nairobi, Athi River, and Namanga.",
+    keywords: [
+      "taxi Kitengela",
+      "car hire Kitengela",
+      "Kitengela taxi service",
+      "Kitengela car rental",
+      "taxi Kitengela to Nairobi",
+      "Kitengela airport taxi"
+    ],
+    subLocations: ["Kitengela CBD", "Yukos", "Acacia", "EPZ", "Isinya"],
+    directContacts: [
+      { name: "Geoffrey", phone: "+254 791 374281", whatsapp: "+254 791 374281", role: "Kajiado Regional Driver" },
+      { name: "Stephen Nthakyo", phone: "+254 743 471227", role: "Athi River / Kitengela Driver" },
+    ],
+  },
+  {
+    county: "Kajiado",
+    town: "Ngong",
+    slug: "ngong",
+    population: "200,000+",
+    description: "Ngong Town, Ongata Rongai, and Kiserian transport network providing reliable direct rides to Karen, Nairobi, and Kajiado.",
+    keywords: [
+      "taxi Ngong",
+      "car hire Ngong",
+      "Ngong taxi service",
+      "Ongata Rongai taxi",
+      "Kiserian taxi",
+      "Ngong to Nairobi taxi"
+    ],
+    subLocations: ["Ngong CBD", "Ongata Rongai", "Kiserian", "Matasia", "Kahuho"],
+    directContacts: [
+      { name: "Geoffrey", phone: "+254 791 374281", whatsapp: "+254 791 374281", role: "Ngong / Rongai Driver" },
+    ],
+  },
+
+  // 5. KITUI COUNTY
+  {
+    county: "Kitui",
+    town: "Kitui Town",
+    slug: "kitui-town",
+    population: "150,000+",
+    description: "Kitui Town administrative and commercial center with direct local drivers for town trips and inter-county journeys to Nairobi and Machakos.",
+    keywords: [
+      "taxi Kitui",
+      "car hire Kitui",
+      "Kitui taxi service",
+      "Kitui car rental",
+      "taxi from Kitui to Nairobi",
+      "Kitui town transport"
+    ],
+    subLocations: ["Kitui CBD", "Kwa Vonza", "Kalundu", "Manyenyoni", "Matinyani", "Kabati"],
+    directContacts: [
+      { name: "Christopher Kavwele", phone: "+254 728 860376", role: "Kitui Regional Driver" },
+      { name: "Kimuyu", phone: "+254 720 599970", role: "Kitui Driver" },
+    ],
+  },
+  {
+    county: "Kitui",
+    town: "Mwingi",
+    slug: "mwingi",
+    population: "100,000+",
+    description: "Mwingi Town major transit corridor linking Kitui to Garissa highway with dependable direct driver services.",
+    keywords: [
+      "taxi Mwingi",
+      "car hire Mwingi",
+      "Mwingi taxi service",
+      "Mwingi car rental",
+      "taxi Mwingi to Nairobi",
+      "Mwingi transport"
+    ],
+    subLocations: ["Mwingi CBD", "Waita", "Nguni", "Migwani"],
+    directContacts: [
+      { name: "Christopher Kavwele", phone: "+254 728 860376", role: "Kitui / Mwingi Driver" },
+    ],
+  },
+
+  // 6. MAKUENI COUNTY
+  {
+    county: "Makueni",
+    town: "Wote",
+    slug: "wote",
+    population: "100,000+",
+    description: "Wote capital of Makueni County providing verified direct taxi and car hire services for business, agriculture, and inter-town travel.",
+    keywords: [
+      "taxi Wote",
+      "car hire Makueni",
+      "Wote taxi service",
+      "Wote car rental",
+      "taxi Wote town",
+      "Makueni transport"
+    ],
+    subLocations: ["Wote CBD", "Unkoa", "Kaiti", "Malivani"],
+    directContacts: [
+      { name: "Bosco Muoka", phone: "+254 706 167329", role: "Makueni Driver" },
+      { name: "Nicholas Mutisya", phone: "+254 710 122800", role: "Ukambani Corridor Driver" },
+    ],
+  },
+  {
+    county: "Makueni",
+    town: "Makindu & Kibwezi",
+    slug: "makindu-kibwezi",
+    population: "120,000+",
+    description: "Makindu, Kibwezi, Mtito Andei, and Sultan Hamud corridor along Nairobi-Mombasa highway with direct driver connections.",
+    keywords: [
+      "taxi Makindu",
+      "taxi Kibwezi",
+      "taxi Mtito Andei",
+      "car hire Makindu",
+      "Sultan Hamud taxi",
+      "Makueni highway transport"
+    ],
+    subLocations: ["Makindu", "Kibwezi", "Mtito Andei", "Emali", "Sultan Hamud", "Salama"],
+    directContacts: [
+      { name: "Bosco Muoka", phone: "+254 706 167329", role: "Makueni Driver" },
+      { name: "Nicholas Mutisya", phone: "+254 710 122800", role: "Highway Corridor Driver" },
+    ],
   },
 ];
 
 export function getAllLocations(): LocationInfo[] {
-  return PHASE_1_LOCATIONS;
+  return OPERATIONAL_LOCATIONS;
 }
 
 export function getLocationBySlug(slug: string): LocationInfo | undefined {
-  return PHASE_1_LOCATIONS.find((loc) => loc.slug === slug);
+  return OPERATIONAL_LOCATIONS.find((loc) => loc.slug === slug);
 }
 
 export function getLocationsByCounty(county: string): LocationInfo[] {
-  return PHASE_1_LOCATIONS.filter(
+  return OPERATIONAL_LOCATIONS.filter(
     (loc) => loc.county.toLowerCase() === county.toLowerCase()
   );
 }
 
 export function getCountiesWithLocations(): string[] {
-  const counties = new Set(PHASE_1_LOCATIONS.map((loc) => loc.county));
+  const counties = new Set(OPERATIONAL_LOCATIONS.map((loc) => loc.county));
   return Array.from(counties).sort();
 }
 
 export function getLocationPageMeta(location: LocationInfo) {
+  const primaryPhone = location.directContacts?.[0]?.phone;
+  const phoneText = primaryPhone ? `Call direct: ${primaryPhone}.` : "Professional local drivers.";
+
   return {
-    title: `Taxi & Car Hire in ${location.town}, ${location.county} | TaxiTao`,
-    description: `Book reliable taxi and car hire services in ${location.town}, ${location.county}. Professional drivers, well-maintained vehicles, 24/7 support. Call +254 708 674 665.`,
+    title: `Taxi & Car Hire in ${location.town}, ${location.county} | Direct Driver Booking | TaxiTao`,
+    description: `Book direct taxi and car hire in ${location.town}, ${location.county}. ${phoneText} Fast dispatch, transparent pricing.`,
     keywords: location.keywords.join(", "),
   };
 }

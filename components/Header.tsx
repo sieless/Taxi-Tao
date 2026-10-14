@@ -49,6 +49,7 @@ export default function Header() {
               </Link>
               <Link
                 href="/login"
+                prefetch={false}
                 className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg transition font-medium"
               >
                 Login

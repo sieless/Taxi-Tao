@@ -26,11 +26,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const location = getLocationBySlug(town);
   if (!location) return {};
 
-  const desc = location.description ?? "";
-  const ogTitle = `Taxi & Car Hire in ${location.town}, ${location.county} | TaxiTao`;
+  const primaryPhone = location.directContacts?.[0]?.phone;
+  const desc = primaryPhone 
+    ? `${location.description} Call driver directly at ${primaryPhone}. Direct local bookings.`
+    : location.description ?? "";
+  const ogTitle = `Taxi & Car Hire in ${location.town}, ${location.county} | Direct Driver Booking`;
 
   return {
-    title: `Taxi & Car Hire in ${location.town}, ${location.county}`,
+    title: `Taxi & Car Hire in ${location.town}, ${location.county} | Call Direct`,
     description: desc,
     keywords: location.keywords.join(", "),
     alternates: {
@@ -60,42 +63,86 @@ export default async function TownPage({ params }: Props) {
   const keywords = getLocationKeywords(location.county, location.town);
   const countyLocations = getLocationsByCounty(location.county);
 
-  // Fetch public directory drivers for this town
-  // We use a single where clause to avoid Firestore composite index errors
+  // Fetch verified active drivers operating in this town or county
   let directoryDrivers: Driver[] = [];
   try {
     const snapshot = await adminDb
       .collection("drivers")
-      .where("isPublicDirectory", "==", true)
       .get();
     
+    const normalizedTown = location.town.toLowerCase();
+    const normalizedCounty = location.county.toLowerCase();
+    const normalizedSlug = location.slug.toLowerCase();
+
     directoryDrivers = snapshot.docs
       .map(doc => {
-        const data = doc.data();
-        
-        // Production-Ready Serialization: 
-        // Explicitly extract and convert Firestore Timestamps into standard ISO strings
-        // so Client Components receive standard predictable Date strings.
-        const serializedDriver = {
-          ...data,
+        const rawData = doc.data();
+        const safeDriver: Driver = {
           id: doc.id,
-          createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : null,
-          updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : null,
+          name: rawData.name || "Verified Driver",
+          slug: rawData.slug || doc.id,
+          phone: rawData.phone || "",
+          whatsapp: rawData.whatsapp || rawData.phone || "",
+          active: rawData.active ?? true,
+          rating: rawData.rating || 5,
+          vehicles: Array.isArray(rawData.vehicles) ? rawData.vehicles : [],
+          serviceTowns: Array.isArray(rawData.serviceTowns) ? rawData.serviceTowns : [],
+          businessLocation: rawData.businessLocation || rawData.currentLocation || "",
+          currentLocation: rawData.currentLocation || "",
+          serviceCounty: rawData.serviceCounty || "",
+          location: rawData.location || "",
+          bio: rawData.bio || "",
+          email: "",
+          subscriptionStatus: rawData.subscriptionStatus || "active",
+          createdAt: null,
+          lastPaymentDate: null,
+          nextPaymentDue: null,
+          paymentHistory: [],
+          isVisibleToPublic: rawData.isVisibleToPublic ?? true,
+          totalRides: rawData.totalRides || 0,
+          averageRating: rawData.averageRating || 5,
+          totalRatings: rawData.totalRatings || 0,
+          status: rawData.status || "available",
         };
-        
-        return serializedDriver as unknown as Driver;
+        return safeDriver;
       })
-      .filter(d => d.active === true && d.serviceTowns?.includes(town))
-      .slice(0, 10);
+      .filter(d => {
+        if (d.active === false) return false;
+        if (!d.phone && !d.whatsapp) return false;
+
+        const towns = (d.serviceTowns || []).map((t: string) => t.toLowerCase());
+        const loc = (typeof d.location === "string" ? d.location : Array.isArray(d.location) ? d.location.join(" ") : "").toLowerCase();
+        const currLoc = (d.currentLocation || "").toLowerCase();
+        const sCounty = (d.serviceCounty || "").toLowerCase();
+
+        const matchesTown =
+          towns.includes(normalizedSlug) ||
+          towns.includes(normalizedTown) ||
+          loc.includes(normalizedSlug) ||
+          loc.includes(normalizedTown) ||
+          currLoc.includes(normalizedSlug) ||
+          currLoc.includes(normalizedTown);
+
+        const matchesCounty =
+          sCounty.includes(normalizedCounty) ||
+          currLoc.includes(normalizedCounty) ||
+          loc.includes(normalizedCounty);
+
+        return matchesTown || matchesCounty;
+      })
+      .slice(0, 8);
   } catch (error) {
     console.error("Error fetching directory drivers:", error);
   }
 
+  const primaryPhone = location.directContacts?.[0]?.phone || "+254710450640";
+
   const localBusinessSchema = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
-    name: "TaxiTao",
-    description: `Taxi and car hire services in ${location.town}, ${location.county}, Kenya.`,
+    name: `TaxiTao - ${location.town}`,
+    telephone: primaryPhone,
+    description: `Direct taxi and car hire services in ${location.town}, ${location.county}, Kenya. Call local driver directly at ${primaryPhone}.`,
     url: `${BASE_URL}/locations/${location.county.toLowerCase()}/${location.slug}`,
     areaServed: {
       "@type": "City",
@@ -144,6 +191,59 @@ export default async function TownPage({ params }: Props) {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="md:col-span-2">
+
+              {/* Direct Regional Driver Contacts */}
+              {location.directContacts && location.directContacts.length > 0 && (
+                <div className="bg-gradient-to-br from-emerald-50 to-primary-50 rounded-2xl border-2 border-emerald-300 p-6 mb-8 shadow-sm">
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-2xl font-bold text-gray-900">
+                      Direct Driver Contacts for {location.town}
+                    </h2>
+                    <span className="bg-emerald-600 text-white text-xs font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider">
+                      Available Now
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-700 mb-5">
+                    Call or WhatsApp verified local drivers stationed in {location.town} directly for immediate pickups, airport runs, or car hire:
+                  </p>
+
+                  <div className="space-y-3">
+                    {location.directContacts.map((c, idx) => (
+                      <div
+                        key={idx}
+                        className="bg-white rounded-xl p-4 border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm hover:border-emerald-400 transition"
+                      >
+                        <div>
+                          <div className="font-bold text-gray-900 text-lg">{c.name}</div>
+                          {c.role && (
+                            <div className="text-xs text-emerald-800 font-medium mt-0.5">{c.role}</div>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <a
+                            href={`tel:${c.phone.replace(/\s+/g, '')}`}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold transition shadow-sm"
+                          >
+                            📞 Call {c.phone}
+                          </a>
+                          {c.whatsapp && (
+                            <a
+                              href={`https://wa.me/${c.whatsapp.replace(/\D/g, '')}?text=Hello%20${encodeURIComponent(c.name)},%20I%20need%20a%20ride/car%20in%20${encodeURIComponent(location.town)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-3 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg text-sm font-semibold transition shadow-sm"
+                            >
+                              💬 WhatsApp
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Services in this Town */}
               <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-8">
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">
                   Our Services in {location.town}
@@ -154,8 +254,8 @@ export default async function TownPage({ params }: Props) {
                       <span className="text-primary-600 text-xl">🚕</span>
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-900">Taxi Services</h3>
-                      <p className="text-gray-600">Fast, reliable rides within {location.town} and to nearby towns. Available 24/7.</p>
+                      <h3 className="font-bold text-gray-900">Direct Taxi Services</h3>
+                      <p className="text-gray-600">Reliable local rides within {location.town} and inter-town connections with verified local drivers.</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
@@ -163,17 +263,18 @@ export default async function TownPage({ params }: Props) {
                       <span className="text-amber-600 text-xl">🚗</span>
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-900">Car Hire</h3>
-                      <p className="text-gray-600">Self-drive or chauffeur-driven vehicles for your convenience in {location.town}.</p>
+                      <h3 className="font-bold text-gray-900">Car Hire & Chauffeured Travel</h3>
+                      <p className="text-gray-600">Self-drive or chauffeured vehicle rentals from local fleet owners in {location.town}.</p>
                     </div>
                   </div>
                 </div>
               </div>
 
+              {/* Registered Directory Drivers */}
               {directoryDrivers.length > 0 && (
                 <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-8">
                   <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                    Local Drivers in {location.town}
+                    Verified Drivers in {location.town}
                   </h2>
                   <p className="text-gray-600 mb-6">Contact our registered drivers operating in your area directly.</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -184,22 +285,12 @@ export default async function TownPage({ params }: Props) {
                 </div>
               )}
 
-              <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                  Contact & Booking
-                </h2>
-                <div className="space-y-3 text-gray-600">
-                  <p><strong>Phone:</strong> <a href="tel:+254708674665" className="text-primary-600 hover:underline">+254 708 674 665</a></p>
-                  <p><strong>Email:</strong> <a href="mailto:info@taxitao.co.ke" className="text-primary-600 hover:underline">info@taxitao.co.ke</a></p>
-                  <p><strong>Hours:</strong> 24 hours a day, 7 days a week</p>
-                </div>
-              </div>
             </div>
 
             <div>
               <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">
-                  Areas We Serve in {location.county}
+                  Active Service Towns in {location.county}
                 </h2>
                 <ul className="space-y-2">
                   {countyLocations.map((loc) => (

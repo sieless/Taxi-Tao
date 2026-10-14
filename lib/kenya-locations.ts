@@ -1,5 +1,19 @@
-// Kenya Counties List - All 47 Counties
-export const KENYA_COUNTIES = [
+// Active Operational Service Counties Only (Brutal shift to 6 verified zones)
+export const OPERATIONAL_COUNTIES = [
+  'Kajiado',
+  'Kericho',
+  'Kitui',
+  'Machakos',
+  'Makueni',
+  'Nairobi',
+];
+
+// Alias KENYA_COUNTIES to OPERATIONAL_COUNTIES so booking and dashboard forms
+// only allow selections in areas where TaxiTao actually has drivers.
+export const KENYA_COUNTIES = OPERATIONAL_COUNTIES;
+
+// Full administrative list of all 47 counties for reference
+export const ALL_KENYA_COUNTIES = [
   'Baringo',
   'Bomet',
   'Bungoma',
@@ -49,20 +63,25 @@ export const KENYA_COUNTIES = [
   'West Pokot',
 ];
 
-// Common specific locations within counties
+// Verified operational towns and spokes within the 6 counties
 export const COMMON_LOCATIONS = [
   'Nairobi CBD',
+  'Westlands',
+  'Kilimani',
+  'Karen',
   'Machakos Town',
-  'Masii',
-  'Kitui Town',
-  'Wote',
-  'Mombasa CBD',
-  'Thika',
   'Athi River',
   'Mlolongo',
   'Syokimau',
+  'Masii',
   'Kangundo',
-  'Westlands',
-  'Karen',
+  'Kericho Town',
+  'Kapkatet',
+  'Kitui Town',
+  'Mwingi',
+  'Kitengela',
   'Ngong',
+  'Ongata Rongai',
+  'Wote',
+  'Makindu',
 ];

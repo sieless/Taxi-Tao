@@ -7,7 +7,7 @@ export function organizationSchema() {
     name: "TaxiTao",
     url: BASE_URL,
     logo: `${BASE_URL}/icon.png`,
-    description: "Kenya's complete transport ecosystem — taxi, car hire, transport, and hearse services across all 47 counties.",
+    description: "Kenya's regional transport ecosystem — taxi and car hire services across Nairobi, Machakos, Kericho, Kitui, Kajiado, and Makueni.",
     foundingDate: "2023",
     contactPoint: [
       {

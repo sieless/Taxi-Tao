@@ -25,18 +25,19 @@ export default function AllDriversPage() {
   const [routeTo, setRouteTo] = useState("");
   const [driverPricing, setDriverPricing] = useState<Record<string, any>>({});
 
-  // Available locations for filter dropdown
+  // Available operational locations for filter dropdown
   const locations = [
     "Nairobi",
-    "Mombasa",
-    "Kisumu",
-    "Nakuru",
-    "Eldoret",
-    "Thika",
-    "Malindi",
-    "Kitale",
-    "Garissa",
-    "Kakamega"
+    "Machakos",
+    "Kericho",
+    "Kitui",
+    "Kajiado",
+    "Makueni",
+    "Athi River",
+    "Kitengela",
+    "Ngong",
+    "Kapkatet",
+    "Wote",
   ];
 
   // Count online drivers

@@ -39,9 +39,7 @@ interface SearchFilters {
 
 const VEHICLE_TYPES = ["sedan", "suv", "van", "bike", "tuk-tuk"];
 const COUNTIES = [
-  "Nairobi", "Mombasa", "Kisumu", "Nakuru", "Uasin Gishu",
-  "Machakos", "Kiambu", "Kericho", "Kilifi", "Trans Nzoia",
-  "Garissa", "Kajiado",
+  "Nairobi", "Machakos", "Kericho", "Kitui", "Kajiado", "Makueni",
 ];
 
 export default function SearchPage() {

@@ -39,10 +39,18 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
     
-    // Get current user's profile data (returns {} if user doc missing)
+    // Check if user is NOT suspended
+    function isNotSuspended() {
+      return isSignedIn() && (
+        !exists(/databases/$(database)/documents/users/$(request.auth.uid)) ||
+        !("suspended" in get(/databases/$(database)/documents/users/$(request.auth.uid)).data) ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.suspended != true
+      );
+    }
+    
+    // Get current user's profile data
     function getUserData() {
-      let ref = /databases/$(database)/documents/users/$(request.auth.uid);
-      return exists(ref) ? get(ref).data : {};
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
     
     // Check if user is admin (requires email verification)
@@ -105,6 +113,12 @@ service cloud.firestore {
       );
     }
 
+    // Check if current user's companyId matches the given id (vendor ownership)
+    function isCompanyOwner(companyId) {
+      return isCarHire() &&
+             getUserData().companyId == companyId;
+    }
+
     // Check if current user matches the driver for a resource
     function driverMatches(driverId) {
       // Allow match by auth uid OR driverId stored on profile (even if role not set yet)
@@ -149,13 +163,33 @@ service cloud.firestore {
              request.resource.data.proposedPrice == resource.data.proposedPrice;
     }
 
+    // Check if user has a specific granular permission (for assistants)
+    function hasGranularPermission(permission) {
+      return isSignedIn() && isEmailVerified() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        getUserData().role == 'assistant' &&
+        permission in getUserData().permissions &&
+        getUserData().permissions[permission] == true;
+    }
+
+    // Check if user is an assistant with a specific admin permission
+    function isAssistantWithAdminPermission(permission) {
+      return isSignedIn() && isEmailVerified() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        getUserData().role == 'assistant' &&
+        (!("suspended" in getUserData()) || getUserData().suspended != true) &&
+        ("adminPermissions" in getUserData()) &&
+        (permission in getUserData().adminPermissions) &&
+        getUserData().adminPermissions[permission] == true;
+    }
+
     // ============================================================
     // PUBLIC COLLECTIONS (Must be at top for guest access)
     // ============================================================
     
     match /drivers/{driverId} {
-      // Public read/list for hire marketplace landing (peer hosts)
-      allow read, list: if true;
+      // Authenticated read/list for hire marketplace (guests must sign up first)
+      allow read, list: if isSignedIn();
 
       // Drivers can create their own profile (during signup, before email verification), or admins can create any
       allow create: if isSignedIn() && (
@@ -179,10 +213,10 @@ service cloud.firestore {
         allow write: if isSignedIn() && (isOwner(driverId) || isAdmin());
       }
       
-      // Nested payments subcollection
+      // Nested payments subcollection (server-side only)
       match /payments/{paymentId} {
         allow read: if isSignedIn() && (isOwner(driverId) || isAdmin());
-        allow write: if isSignedIn() && isOwner(driverId);
+        allow create, update, delete: if false;
       }
 
       // Nested verification events audit subcollection
@@ -245,10 +279,7 @@ service cloud.firestore {
       // Admins can create any profile
       // Also allow company owners (role car_hire) to create user documents for company staff.
       allow create: if isSignedIn() && (
-        (isOwner(userId) && 
-         request.resource.data.role in ['customer', 'driver', 'car_hire'] &&
-         (!request.resource.data.keys().hasAny(['suspended']) || request.resource.data.suspended != true)
-        ) || 
+        isOwner(userId) || 
         isAdmin() ||
         (
           (getUserData().role == 'car_hire' || request.auth.token.role == 'car_hire') &&
@@ -260,16 +291,14 @@ service cloud.firestore {
       // Users can update their own profile (email verification required, or basic info / push tokens if unverified during onboarding) or admins can update any.
       // Also allow company owners (role car_hire) to update their company assistants' permissions Map (strictly limited to company scope).
       allow update: if isSignedIn() && (
-        (isOwner(userId) && 
-          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'suspended']) &&
-          (
-            isEmailVerified() ||
-            request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-              'name', 'phone', 'bio', 'yearsOfExperience', 'verification', 'emailVerified',
-              'verificationEmailSent', 'verificationEmailSentCount', 'pushToken', 'pushTokenUpdatedAt', 'companyId'
-            ])
-          )
-        ) || 
+        (isOwner(userId) && (
+          isEmailVerified() ||
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'name', 'phone', 'bio', 'yearsOfExperience', 'verification', 'emailVerified',
+            'verificationEmailSent', 'verificationEmailSentCount', 'pushToken', 'pushTokenUpdatedAt',
+            'appVersionCode', 'appVersionUpdatedAt', 'companyId'
+          ])
+        )) || 
         isAdmin() ||
         (
           getUserData().role == 'assistant' && 
@@ -383,11 +412,21 @@ service cloud.firestore {
       // Customer who created the booking OR any driver can read (drivers scan for rides in area)
       allow read: if isSignedIn() && isEmailVerified() && (
         request.auth.uid == resource.data.customerId ||
-        isDriver()
+        isDriver() ||
+        isAdmin() ||
+        isAssistantWithAdminPermission('manageRides')
+      );
+
+      // Admin or assistant with manageRides can list all bookings (for admin panel statistics & monitoring)
+      allow list: if isSignedIn() && isEmailVerified() && (
+        isAdmin() ||
+        isAssistantWithAdminPermission('manageRides')
       );
       
       // Update logic - multi-party access (email verification required)
       allow update: if isSignedIn() && isEmailVerified() && (
+        isAdmin() ||
+        isAssistantWithAdminPermission('manageRides') ||
         // Customer who created the booking (can cancel, negotiate, confirm)
         request.auth.uid == resource.data.customerId ||
 
@@ -407,23 +446,8 @@ service cloud.firestore {
         ))
       );
       
-      // Allow deletion of rides under specific conditions (email verification required):
-      // 1. Driver can delete only rides explicitly marked expired and assigned to them
-      // 2. Customer can delete their own cancelled rides (for cleanup)
-      allow delete: if isSignedIn() && isEmailVerified() && (
-        // Admin can delete any booking request
-        isAdmin() ||
-
-        // Driver can delete only expired rides connected to their driver identity
-        (resource.data.status == 'expired' && (
-          request.auth.uid == resource.data.acceptedBy ||
-          request.auth.uid == resource.data.acceptedDriverId ||
-          request.auth.uid == resource.data.targetDriverId
-        )) ||
-        // Customer can delete their own cancelled rides
-        (request.auth.uid == resource.data.customerId &&
-         resource.data.status == 'cancelled')
-      );
+      // Only Admins can delete root booking requests (preserves system history and audit trail)
+      allow delete: if isSignedIn() && isEmailVerified() && isAdmin();
     }
 
     // ============================================================
@@ -434,7 +458,8 @@ service cloud.firestore {
       allow read, list: if isSignedIn() && isEmailVerified() && (
         (isDriver() && resource.data.driverId == request.auth.uid) ||
         request.auth.uid == get(/databases/$(database)/documents/bookingRequests/$(bookingId)).data.customerId ||
-        isAdmin()
+        isAdmin() ||
+        isAssistantWithAdminPermission('manageRides')
       );
 
       // Driver can create their own proposal
@@ -462,7 +487,8 @@ service cloud.firestore {
       // Driver can query/list their own proposals across all booking requests; admin any
       allow read, list: if isSignedIn() && isEmailVerified() && (
         resource.data.driverId == request.auth.uid ||
-        isAdmin()
+        isAdmin() ||
+        isAssistantWithAdminPermission('manageRides')
       );
     }
 
@@ -472,9 +498,13 @@ service cloud.firestore {
     // ============================================================
     match /bookingRequestPrivate/{bookingId} {
       // CRITICAL: Only subscribed drivers (with verified email) OR admins can read private data
-      allow read: if isSignedIn() && isEmailVerified() && (isSubscribedDriver() || isAdmin());
+      allow read: if isSignedIn() && isEmailVerified() && (
+        isSubscribedDriver() ||
+        isAdmin() ||
+        isAssistantWithAdminPermission('manageRides')
+      );
       
-      // Cloud Functions use Admin SDK (bypasses rules) — deny all client writes
+      // Only Admin SDK (Cloud Functions) can create — client writes are forbidden
       allow create: if false;
       
       // Only admins can modify
@@ -528,11 +558,13 @@ service cloud.firestore {
       
       // Drivers can read their own (email verification required), admins can read all
       allow read: if isSignedIn() && isEmailVerified() && (
-        resource.data.driverId == request.auth.uid || isAdmin()
+        resource.data.driverId == request.auth.uid ||
+        isAdmin() ||
+        isAssistantWithAdminPermission('managePayments')
       );
       
-      // Only admins can verify/reject
-      allow update, delete: if isAdmin();
+      // Only admins or permitted assistants can verify/reject
+      allow update, delete: if isAdmin() || isAssistantWithAdminPermission('managePayments');
     }
 
     // ============================================================
@@ -596,7 +628,7 @@ service cloud.firestore {
     // RIDE REQUESTS (Legacy fallback)
     // ============================================================
     match /rideRequests/{requestId} {
-      allow create: if isSignedIn() && isEmailVerified();
+      allow create: if true;
       allow read: if isSignedIn() && (isDriver() || isAdmin());
       allow update: if isSignedIn() && (
         (isDriver() && resource.data.status == 'pending') ||
@@ -620,6 +652,13 @@ service cloud.firestore {
       // Anyone authenticated can create notifications (cross-party alerts)
       allow create: if isSignedIn();
 
+      // Admin can list all customer notifications (for admin panel)
+      allow list: if isSignedIn() && isEmailVerified() && (
+        request.auth.uid == resource.data.recipientId ||
+        request.auth.uid == resource.data.userId ||
+        isAdmin()
+      );
+
       // Only recipient/owner can update (e.g., mark as read)
       allow update: if isSignedIn() && (
         request.auth.uid == resource.data.recipientId ||
@@ -631,17 +670,38 @@ service cloud.firestore {
     }
 
     match /driverNotifications/{notificationId} {
-      // Only the driver can read their notifications (email verification required)
-      allow read: if isSignedIn() && isEmailVerified() && request.auth.uid == resource.data.driverId;
+      // Only the driver can read their notifications
+      allow read: if isSignedIn() && (request.auth.uid == resource.data.driverId || request.auth.uid == resource.data.userId);
 
-      // Anyone authenticated with verified email can create (customer confirms, system alerts)
-      allow create: if isSignedIn() && isEmailVerified();
+      // Driver can list their own notifications; admin can list all
+      allow list: if isSignedIn() && (
+        request.auth.uid == resource.data.driverId ||
+        request.auth.uid == resource.data.userId ||
+        isAdmin()
+      );
+
+      // Anyone authenticated can create (customer confirms, system alerts)
+      allow create: if isSignedIn();
       
-      // Only driver can update (e.g., mark as read) (email verification required)
-      allow update: if isSignedIn() && isEmailVerified() && request.auth.uid == resource.data.driverId;
+      // Only driver can update (e.g., mark as read)
+      allow update: if isSignedIn() && (request.auth.uid == resource.data.driverId || request.auth.uid == resource.data.userId);
       
       // No deletion
       allow delete: if false;
+    }
+
+    // ============================================================
+    // DRIVER MAILBOXES (Per-Driver Inbox Architecture)
+    // ============================================================
+    match /driverMailboxes/{driverId}/rides/{rideId} {
+      // Driver can only read and list their own mailbox entries
+      allow read, list: if isSignedIn() && (request.auth.uid == driverId || isAdmin());
+
+      // Driver can update or delete their own mailbox item (e.g., mark read/dismissed)
+      allow update, delete: if isSignedIn() && request.auth.uid == driverId;
+
+      // Backend Cloud Functions (Admin SDK) handles create
+      allow create: if isAdmin();
     }
 
     // ============================================================
@@ -651,7 +711,14 @@ service cloud.firestore {
       // Users can read their own issues (email verification required), admins can read all
       allow read: if isSignedIn() && isEmailVerified() && (
         request.auth.uid == resource.data.userId ||
-        isAdmin()
+        isAdmin() ||
+        isAssistantWithAdminPermission('manageIssues')
+      );
+
+      // Admin or permitted assistant can list all issues (for admin panel)
+      allow list: if isSignedIn() && isEmailVerified() && (
+        isAdmin() ||
+        isAssistantWithAdminPermission('manageIssues')
       );
 
       // Any authenticated user with verified email can create their own issue report
@@ -660,8 +727,8 @@ service cloud.firestore {
         request.auth.uid == request.resource.data.userId &&
         request.resource.data.userType in ['customer', 'driver'];
 
-      // Only admins can update issue status
-      allow update: if isAdmin();
+      // Only admins or permitted assistants can update issue status
+      allow update: if isAdmin() || isAssistantWithAdminPermission('manageIssues');
 
       // No deletion
       allow delete: if false;
@@ -721,21 +788,22 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Payment audit logs — Cloud Functions write only
+    match /paymentAuditLogs/{eventId} {
+      allow read, list: if isAdmin();
+      allow create: if false;
+      allow update, delete: if false;
+    }
+
     // App crash reports (web portal name — mirrors crashReports collection)
     // Clients create; admins manage.
     match /app_crashes/{crashId} {
-      allow create: if isSignedIn() && isEmailVerified();
+      allow create: if true;
       allow read, list: if isAdmin();
       allow update: if isAdmin(); // mark resolved
-      allow delete: if false;
+      allow delete: if isAdmin();
     }
 
-    // App analytics events (screen views, user actions)
-    match /app_events/{eventId} {
-      allow create: if isSignedIn();
-      allow read, list: if isAdmin();
-      allow update, delete: if false;
-    }
 
     // Per-admin notification/display and global admin settings
     match /adminSettings/{docId} {
@@ -814,6 +882,18 @@ service cloud.firestore {
         request.auth.token.role == 'assistant' ||
         isCarHireOrStaff() ||
         resource.data.companyId == getUserData().companyId ||
+        resource.data.companyId == request.auth.uid
+      );
+      allow write: if isSignedIn() && isAdmin();
+    }
+
+    // Company payment records (created when admin records manual payments)
+    match /companyPayments/{paymentId} {
+      allow read, list: if isSignedIn() && (
+        isAdmin() ||
+        request.auth.token.role == 'car_hire' ||
+        request.auth.token.role == 'assistant' ||
+        isCarHireOrStaff() ||
         resource.data.companyId == request.auth.uid
       );
       allow write: if isSignedIn() && isAdmin();
@@ -919,7 +999,7 @@ service cloud.firestore {
       // Only authenticated company owners (vendors) can create workspace invitations
       allow create: if isSignedIn() && (
         isAdmin() ||
-        (isCarHire() && request.resource.data.companyId == request.auth.uid)
+        (isCarHire() && request.resource.data.companyId == getUserData().companyId)
       );
 
       // Allow updates to the invitation (candidate submits or CEO approves)
@@ -936,24 +1016,28 @@ service cloud.firestore {
           resource.data.status == "submitted" &&
           request.resource.data.status == "approved" &&
           // CEO can only approve tokens created by their company
-          resource.data.companyId == request.auth.uid &&
+          resource.data.companyId == getUserData().companyId &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'usedBy', 'usedAt'])
         )
       ) || isAdmin();
 
-      // Only admins can delete tokens
-      allow delete: if isAdmin();
+      // Only admins or company owners can delete tokens
+      allow delete: if isAdmin() || (
+        isSignedIn() && isCarHire() &&
+        resource.data.companyId == getUserData().companyId
+      );
     }
 
     // Issue reply threads (admin sends responses into this subcollection)
     match /issues/{issueId}/replies/{replyId} {
-      // Issue owner or admin can read replies
+      // Issue owner or admin or permitted assistant can read replies
       allow read, list: if isSignedIn() && isEmailVerified() && (
         get(/databases/$(database)/documents/issues/$(issueId)).data.userId == request.auth.uid ||
-        isAdmin()
+        isAdmin() ||
+        isAssistantWithAdminPermission('manageIssues')
       );
-      // Only admins can create replies (admin responds to user)
-      allow create: if isAdmin();
+      // Only admins or permitted assistants can create replies (admin responds to user)
+      allow create: if isAdmin() || isAssistantWithAdminPermission('manageIssues');
       allow update, delete: if false;
     }
 
@@ -1033,6 +1117,19 @@ service cloud.firestore {
         (isCarHireOrStaff() && resource.data.completedBy == request.auth.uid)
       );
       allow delete: if isAdmin();
+    }
+
+    // ============================================================
+    // PAYMENT RECORDS (top-level collection for ride payments)
+    // Server-side only: all writes must go through Cloud Functions
+    // ============================================================
+    match /payments/{paymentId} {
+      allow read, list: if isSignedIn() && isEmailVerified() && (
+        request.auth.uid == resource.data.customerId ||
+        request.auth.uid == resource.data.driverId ||
+        isAdmin()
+      );
+      allow create, update, delete: if false;
     }
 
     // ============================================================

@@ -12,7 +12,43 @@ service firebase.storage {
     
     // Helper function to check if user is the owner
     function isOwner(userId) {
-      return request.auth.uid == userId;
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Helper function to check if user is admin (custom claims)
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.admin == true ||
+        request.auth.token.role == "admin"
+      );
+    }
+
+    // Helper function to check if user is the representative of a company
+    function isCompanyRep(companyId) {
+      return isSignedIn() && (
+        firestore.get(/databases/(default)/documents/companies/$(companyId)).data.representativeId == request.auth.uid
+      );
+    }
+
+    // Helper function to check if user is staff belonging to a company
+    function isStaffForCompany(companyId) {
+      return isSignedIn() && (
+        request.auth.token.role == "car_hire_staff" &&
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.companyId == companyId
+      );
+    }
+    
+    // Helper function to check if user is a driver
+    function isDriver() {
+      return isSignedIn() && request.auth.token.role == "driver";
+    }
+
+    // Helper function to check if user is a car hire rep or staff
+    function isStaff() {
+      return isSignedIn() && (
+        request.auth.token.role == "car_hire" ||
+        request.auth.token.role == "car_hire_staff"
+      );
     }
     
     // Helper function to check file size (max 10MB)
@@ -63,9 +99,25 @@ service firebase.storage {
       allow read: if true;
     }
     
+    function isKycReviewer(driverId) {
+      return isSignedIn() && request.auth.token.email_verified == true && (
+        isAdmin() ||
+        (request.auth.token.role == "assistant" &&
+          firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.adminPermissions.manageKyc == true)
+      );
+    }
+
+    // Private KYC uploads use a dedicated path; legacy vehicles/kyc uploads are
+    // also excluded from the public read rule below.
+    match /drivers/{driverId}/kyc/{fileName} {
+      allow read: if isOwner(driverId) || isKycReviewer(driverId);
+      allow write: if isSignedIn() && isOwner(driverId) && isUnderSizeLimit() && isImage();
+    }
+
     // Mobile Sync: Driver data (Profile, Vehicles, Ownership)
     match /drivers/{userId}/{allPaths=**} {
-      allow read: if true;
+      allow read: if !allPaths.matches('kyc/.*') &&
+        !allPaths.matches('vehicles/kyc/.*');
       allow write: if isSignedIn() && isOwner(userId) && isUnderSizeLimit();
     }
 
