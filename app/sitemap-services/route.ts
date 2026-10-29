@@ -4,6 +4,7 @@ const BASE_URL = "https://taxitao.co.ke";
 
 const services = [
   { path: "/services/taxi", priority: "0.8" },
+  { path: "/services/boda", priority: "0.8" },
   { path: "/services/car-hire", priority: "0.8" },
   { path: "/services/transport", priority: "0.6" },
   { path: "/services/hearse", priority: "0.6" },

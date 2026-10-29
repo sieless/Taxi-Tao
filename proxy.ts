@@ -20,8 +20,37 @@ function matchesRoute(pathname: string, routes: string[]): boolean {
   return routes.some((route) => pathname === route || pathname.startsWith(route + "/"));
 }
 
+const OPERATIONAL_COUNTIES = new Set([
+  "kajiado",
+  "kericho",
+  "kitui",
+  "machakos",
+  "makueni",
+  "nairobi",
+]);
+
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Intercept purged/non-operational locations and return HTTP 410 Gone with noindex
+  if (pathname.startsWith("/locations/")) {
+    const segments = pathname.split("/").filter(Boolean);
+    if (segments.length >= 2) {
+      const county = segments[1].toLowerCase();
+      if (!OPERATIONAL_COUNTIES.has(county)) {
+        return new NextResponse(
+          `<!DOCTYPE html><html><head><title>410 Location Permanently Removed | TaxiTao</title><meta name="robots" content="noindex, nofollow, noarchive" /></head><body style="font-family: sans-serif; text-align: center; padding: 50px;"><h1>410 - Location No Longer Served</h1><p>TaxiTao does not operate in this region. We currently operate exclusively in Machakos, Nairobi, Kericho, Kitui, Kajiado, and Makueni.</p><a href="/" style="display:inline-block; margin-top:20px; padding:10px 20px; background:#111827; color:#fff; border-radius:8px; text-decoration:none;">Go to Home</a></body></html>`,
+          {
+            status: 410,
+            headers: {
+              "Content-Type": "text/html; charset=utf-8",
+              "X-Robots-Tag": "noindex, nofollow, noarchive",
+            },
+          }
+        );
+      }
+    }
+  }
 
   // Firebase Auth handler — bypass CSP, let Firebase manage its own security
   if (pathname.startsWith("/__/auth/")) {

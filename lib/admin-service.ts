@@ -19,11 +19,13 @@ import {
   where,
   getDocs,
   limit,
-  orderBy
+  orderBy,
+  onSnapshot
 } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import { db, functions, auth } from "@/lib/firebase";
 import { computeSubscriptionExtension } from "@/lib/subscription-utils";
+import { KycAdminSettings } from "@/lib/types";
 
 
 import { logError } from "@/lib/logger";// ── Token helpers ─────────────────────────────────────────────────────────────
@@ -872,4 +874,78 @@ export async function syncCompanyFleetVisibility(
     logError("admin", err);
   }
 }
+
+// ── KYC & Compliance Settings ────────────────────────────────────────────────
+
+export const DEFAULT_KYC_SETTINGS: KycAdminSettings = {
+  requireManualRecheck: true,
+  enforceActiveDriverLicence: true,
+};
+
+/**
+ * Fetches the global KYC settings from adminSettings/kyc.
+ */
+export async function getKycSettings(): Promise<KycAdminSettings> {
+  try {
+    const kycDocRef = doc(db, "adminSettings", "kyc");
+    const snap = await getDoc(kycDocRef);
+    if (!snap.exists()) {
+      return DEFAULT_KYC_SETTINGS;
+    }
+    const data = snap.data();
+    return {
+      requireManualRecheck: data.requireManualRecheck ?? true,
+      enforceActiveDriverLicence: data.enforceActiveDriverLicence ?? true,
+    };
+  } catch (err) {
+    logError("admin", err);
+    return DEFAULT_KYC_SETTINGS;
+  }
+}
+
+/**
+ * Updates the global KYC settings in adminSettings/kyc.
+ */
+export async function updateKycSettings(settings: Partial<KycAdminSettings>): Promise<void> {
+  try {
+    const kycDocRef = doc(db, "adminSettings", "kyc");
+    await setDoc(kycDocRef, {
+      ...settings,
+      updatedAt: serverTimestamp(),
+      updatedBy: auth.currentUser?.uid || "admin",
+    }, { merge: true });
+
+    await logAdminAction("update_kyc_settings", "kyc", settings);
+  } catch (err: any) {
+    logError("admin", err);
+    throw new Error(err.message || "Failed to update KYC settings");
+  }
+}
+
+/**
+ * Subscribes to real-time updates for global KYC settings.
+ */
+export function subscribeToKycSettings(
+  callback: (settings: KycAdminSettings) => void
+): () => void {
+  const kycDocRef = doc(db, "adminSettings", "kyc");
+  return onSnapshot(
+    kycDocRef,
+    (snap) => {
+      if (!snap.exists()) {
+        callback(DEFAULT_KYC_SETTINGS);
+        return;
+      }
+      const data = snap.data();
+      callback({
+        requireManualRecheck: data.requireManualRecheck ?? true,
+        enforceActiveDriverLicence: data.enforceActiveDriverLicence ?? true,
+      });
+    },
+    (err) => {
+      logError("admin", err);
+    }
+  );
+}
+
 

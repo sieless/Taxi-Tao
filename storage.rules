@@ -114,9 +114,22 @@ service firebase.storage {
       allow write: if isSignedIn() && isOwner(driverId) && isUnderSizeLimit() && isImage();
     }
 
+    // Driver private KYC documents (Driving license, National ID - strictly private)
+    match /drivers/{driverId}/documents/{fileName} {
+      // Strictly readable only by compliance administrators and authorized assistants
+      allow read: if isSignedIn() && (
+        isAdmin() || 
+        (request.auth.token.role == "assistant" && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.adminPermissions.manageDrivers == true) ||
+        isKycReviewer(driverId)
+      );
+      allow write: if isSignedIn() && (isOwner(driverId) || isAdmin()) && isUnderSizeLimit() && isImage();
+      allow delete: if isSignedIn() && (isOwner(driverId) || isAdmin());
+    }
+
     // Mobile Sync: Driver data (Profile, Vehicles, Ownership)
     match /drivers/{userId}/{allPaths=**} {
       allow read: if !allPaths.matches('kyc/.*') &&
+        !allPaths.matches('documents/.*') &&
         !allPaths.matches('vehicles/kyc/.*');
       allow write: if isSignedIn() && isOwner(userId) && isUnderSizeLimit();
     }

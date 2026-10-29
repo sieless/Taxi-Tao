@@ -805,9 +805,10 @@ service cloud.firestore {
     }
 
 
-    // Per-admin notification/display and global admin settings
+    // Global admin settings & system flags (app version gating, KYC policies)
     match /adminSettings/{docId} {
-      allow read, write: if isAdmin();
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
     }
 
     // Admin-managed ride share links

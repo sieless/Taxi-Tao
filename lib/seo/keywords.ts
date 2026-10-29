@@ -81,6 +81,23 @@ export function getKeywordClusters(): KeywordCluster[] {
       ],
     },
     {
+      topic: "boda-machakos",
+      primary: [
+        "boda boda Machakos town",
+        "book boda boda Machakos",
+        "boda delivery Machakos",
+        "motorcycle taxi Machakos",
+        "errand delivery Machakos town",
+      ],
+      longTail: [
+        "fast boda boda rider in Machakos town",
+        "send parcel via boda boda Machakos",
+        "boda boda from Machakos main stage",
+        "boda boda to Machakos University",
+        "reliable courier motorcycle Machakos town",
+      ],
+    },
+    {
       topic: "swahili",
       primary: [
         "teksi karibu nami",

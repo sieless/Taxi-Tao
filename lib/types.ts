@@ -17,7 +17,8 @@ export type BookingStatus =
   | "cancelled"      // Manually cancelled
   | "annulled"       // Customer test / dead ride
   | "expired"        // Timed out
-  | "failed";        // System dispatch error
+  | "failed"         // System dispatch error
+  | "archived";      // Stale ride archived by cloud function
 
 export interface Driver {
   id: string;
@@ -45,6 +46,9 @@ export interface Driver {
   currentLocation?: string;
   businessLocation?: string;
   experienceYears?: number;
+  yearsOfExperience?: number | string;
+  currentRideId?: string | null;
+  kycDraft?: any;
   insuranceExpiry?: any;
   licenseExpiry?: any;
   vehicleInspectionDue?: any;
@@ -110,7 +114,6 @@ export interface Vehicle {
   
   description?: string;
   mileage?: number;
-  isCorporate?: boolean;
   isVisibleToPublic?: boolean;
   isRental?: boolean;
   addedBy?: "owner" | "staff";
@@ -168,6 +171,7 @@ export interface Vehicle {
 
   fuelLevel?: number;
   engineSize?: string;
+  isCorporate?: boolean;
   capacity?: number;
   assignedGarage?: string;
   conditionRating?: string;
@@ -213,6 +217,7 @@ export interface BookingRequest {
   fareStatus?: "estimate" | "offered" | "agreed" | "not_needed";
   createdAt: any; // Firestore Timestamp
   expiresAt: any; // Firestore Timestamp
+  ttlSeconds?: number; // Search window in seconds (e.g. 120s / 2m)
   notifiedDrivers: string[]; // Array of Driver IDs who received the notification
 
   // Driver Location Tracking
@@ -305,6 +310,10 @@ export interface User {
   companyStatus?: "pending" | "active" | "suspended" | "rejected";
   companyId?: string;
   profilePhotoUrl?: string;
+  licenseNumber?: string;
+  appVersionCode?: number;
+  appVersionUpdatedAt?: any;
+  bio?: string;
   /** Canonical assistant administrative permissions */
   adminPermissions?: {
     manageDrivers?: boolean;
@@ -349,6 +358,10 @@ export interface AppUser {
   companyStatus?: "pending" | "active" | "suspended" | "rejected";
   companyId?: string;
   profilePhotoUrl?: string;
+  licenseNumber?: string;
+  appVersionCode?: number;
+  appVersionUpdatedAt?: any;
+  bio?: string;
   /** Canonical assistant administrative permissions */
   adminPermissions?: {
     manageDrivers?: boolean;
@@ -812,4 +825,39 @@ export interface InvoiceLineItem {
   label: string;
   amount: number;
   type: "base" | "fee" | "deposit" | "extra" | "discount";
+}
+
+// ========== DRIVER PAYMENT PRIVATE (Phase 2 Data Boundary) ==========
+// Isolated from KYC documents to protect sensitive bank and payout details
+export interface DriverPaymentPrivate {
+  id: string; // matches Driver UID
+  bankDetails?: {
+    bankName: string;
+    accountName: string;
+    accountNumber: string;
+    branchCode?: string;
+  };
+  currentSubscription?: {
+    status: "active" | "expired" | "pending" | "none";
+    plan?: "daily" | "weekly" | "monthly";
+    expiresAt?: any;
+    lastPaymentDate?: any;
+    lastVerificationId?: string | null;
+  };
+  lastPaymentInfo?: {
+    mpesaMessage?: string;
+    amount?: number;
+    plan?: "daily" | "weekly" | "monthly";
+    status?: "pending" | "verified" | "rejected" | "skipped";
+    verifiedAt?: any;
+    verifiedBy?: string | null;
+  };
+  updatedAt: any;
+}
+
+// ========== KYC ADMIN SETTINGS ==========
+// Global KYC settings in adminSettings/kyc
+export interface KycAdminSettings {
+  requireManualRecheck: boolean;
+  enforceActiveDriverLicence?: boolean;
 }

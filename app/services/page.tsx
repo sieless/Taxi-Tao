@@ -6,9 +6,9 @@ import JsonLd from "@/components/seo/JsonLd";
 const BASE_URL = "https://taxitao.co.ke";
 
 export const metadata: Metadata = {
-  title: "Our Services — Taxi, Car Hire, Transport & Hearse | TaxiTao",
+  title: "Our Services — Taxi, Boda Boda, Car Hire & Transport | TaxiTao",
   description:
-    "Explore TaxiTao's full range of transport services: taxi rides, car hire, logistics, and funeral transport across Kenya.",
+    "Explore TaxiTao's transport services: taxi rides, Machakos Town boda boda rides & deliveries, car hire, and logistics.",
   alternates: {
     canonical: `${BASE_URL}/services`,
   },
@@ -25,6 +25,19 @@ const services = [
       "Real-time tracking",
       "Professional drivers",
       "Cashless payments",
+    ],
+    active: true,
+  },
+  {
+    name: "Boda Boda",
+    slug: "boda",
+    description:
+      "Fast, affordable motorcycle rides and instant parcel delivery in Machakos Town. Book verified boda riders for quick local trips, errands, and market deliveries.",
+    features: [
+      "Operating in Machakos Town",
+      "Instant parcel & grocery errand delivery",
+      "Stage-verified and vetted riders",
+      "Transparent, affordable local fares",
     ],
     active: true,
   },
