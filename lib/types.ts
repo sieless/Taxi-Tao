@@ -203,6 +203,7 @@ export interface BookingRequest {
   pickupDate: string;
   pickupTime: string;
   status: BookingStatus;
+  version?: number; // Monotonically increasing version counter for optimistic locking
   
   // High-level phase tracking
   acceptedDriverId?: string | null; // ID of winning driver

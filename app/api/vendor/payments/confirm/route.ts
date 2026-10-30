@@ -23,26 +23,65 @@ export async function POST(request: NextRequest) {
 
     const { paymentId, notes } = validation.data;
 
-    const paymentDoc = await adminDb.collection("hirePayments").doc(paymentId).get();
-    if (!paymentDoc.exists) {
+    // Fetch payment to check company ownership before transaction
+    const initialPaymentDoc = await adminDb.collection("hirePayments").doc(paymentId).get();
+    if (!initialPaymentDoc.exists) {
       return NextResponse.json({ error: "Payment not found" }, { status: 404 });
     }
 
-    const paymentData = paymentDoc.data()!;
-    const session = await requireCompanyOwnership(paymentData.companyId);
+    const initialData = initialPaymentDoc.data()!;
+    const session = await requireCompanyOwnership(initialData.companyId);
 
-    if (paymentData.status === "confirmed") {
-      return NextResponse.json({ error: "Payment already processed" }, { status: 409 });
-    }
+    const transactionResult = await adminDb.runTransaction(async (transaction) => {
+      const paymentRef = adminDb.collection("hirePayments").doc(paymentId);
+      const paymentDoc = await transaction.get(paymentRef);
 
-    await adminDb.collection("hirePayments").doc(paymentId).update({
-      status: "confirmed",
-      confirmedBy: session.uid,
-      confirmedAt: FieldValue.serverTimestamp(),
-      notes: notes || null,
-      updatedAt: FieldValue.serverTimestamp(),
+      if (!paymentDoc.exists) {
+        throw new Error("NOT_FOUND");
+      }
+
+      const paymentData = paymentDoc.data()!;
+
+      if (paymentData.status === "confirmed") {
+        throw new Error("ALREADY_PROCESSED");
+      }
+
+      // GLOBAL M-PESA TRANSACTION UNIQUENESS CHECK
+      const rawCode = paymentData.mpesaTransactionCode || paymentData.mpesaReceiptNumber;
+      const mpesaCode = typeof rawCode === "string" ? rawCode.trim().toUpperCase() : null;
+
+      if (mpesaCode) {
+        const mpesaLockRef = adminDb.collection("mpesaTransactions").doc(mpesaCode);
+        const mpesaLockDoc = await transaction.get(mpesaLockRef);
+
+        if (mpesaLockDoc.exists && mpesaLockDoc.data()?.paymentId !== paymentId) {
+          throw new Error("DUPLICATE_MPESA_CODE");
+        }
+
+        transaction.set(mpesaLockRef, {
+          mpesaCode,
+          paymentId,
+          hireRequestId: paymentData.hireRequestId || "",
+          companyId: session.companyId,
+          customerId: paymentData.customerId || "",
+          amount: paymentData.amount || 0,
+          confirmedBy: session.uid,
+          confirmedAt: FieldValue.serverTimestamp(),
+        });
+      }
+
+      transaction.update(paymentRef, {
+        status: "confirmed",
+        confirmedBy: session.uid,
+        confirmedAt: FieldValue.serverTimestamp(),
+        notes: notes || null,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+
+      return { paymentData };
     });
 
+    const paymentData = transactionResult.paymentData;
     const ipAddress = getClientIp(request.headers);
     const userAgent = getUserAgent(request.headers);
 
@@ -66,6 +105,18 @@ export async function POST(request: NextRequest) {
     }
     if (error.message.includes("Forbidden")) {
       return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
+    }
+    if (error.message === "NOT_FOUND") {
+      return NextResponse.json({ error: "Payment not found" }, { status: 404 });
+    }
+    if (error.message === "ALREADY_PROCESSED") {
+      return NextResponse.json({ error: "Payment already processed" }, { status: 409 });
+    }
+    if (error.message === "DUPLICATE_MPESA_CODE") {
+      return NextResponse.json(
+        { error: "M-Pesa transaction code has already been confirmed on another payment" },
+        { status: 409 }
+      );
     }
 
     const ipAddress = getClientIp(request.headers);

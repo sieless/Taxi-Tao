@@ -126,6 +126,14 @@ export const HireRequestRejectSchema = z.object({
 });
 
 /**
+ * Hire request vehicle release schema.
+ */
+export const HireRequestReleaseSchema = z.object({
+  requestId: z.string().min(1, "Request ID is required"),
+  vehicleId: z.string().min(1, "Vehicle ID is required"),
+});
+
+/**
  * Staff permissions update schema.
  */
 export const StaffPermissionsSchema = z.object({

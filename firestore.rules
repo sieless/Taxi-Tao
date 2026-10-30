@@ -451,19 +451,21 @@ service cloud.firestore {
     }
 
     // ============================================================
-    // PROPOSALS SUBCOLLECTION
+    // PROPOSALS SUBCOLLECTION: 1 Proposal per Driver
+    // Keyed by driverId (request.auth.uid)
     // ============================================================
-    match /bookingRequests/{bookingId}/proposals/{proposalId} {
+    match /bookingRequests/{bookingId}/proposals/{driverId} {
       // Driver can read only their own proposals; customer who owns the booking reads all; admin any
       allow read, list: if isSignedIn() && isEmailVerified() && (
-        (isDriver() && resource.data.driverId == request.auth.uid) ||
+        (isDriver() && driverId == request.auth.uid) ||
         request.auth.uid == get(/databases/$(database)/documents/bookingRequests/$(bookingId)).data.customerId ||
         isAdmin() ||
         isAssistantWithAdminPermission('manageRides')
       );
 
-      // Driver can create their own proposal
+      // Driver can create ONLY their own proposal doc (path driverId must match auth.uid)
       allow create: if isSignedIn() && isEmailVerified() && isDriver() &&
+        driverId == request.auth.uid &&
         request.resource.data.driverId == request.auth.uid;
       // Admins may also create proposals (e.g., for testing or manual overrides)
       allow create: if isAdmin();
@@ -472,12 +474,24 @@ service cloud.firestore {
       // 1. Driver can update their own proposal (change price, proposedAt, negotiationRound, etc.)
       // 2. Customer can update the proposal status (accept/reject)
       allow update: if isSignedIn() && isEmailVerified() && (
-        (isDriver() && resource.data.driverId == request.auth.uid && request.resource.data.driverId == request.auth.uid) ||
-        (request.auth.uid == resource.data.customerId)
+        (isDriver() && driverId == request.auth.uid && request.resource.data.driverId == request.auth.uid) ||
+        (request.auth.uid == get(/databases/$(database)/documents/bookingRequests/$(bookingId)).data.customerId)
       );
 
-      // Only admins can delete proposals
-      allow delete: if isAdmin();
+      // Driver can withdraw their own proposal; Admins can purge
+      allow delete: if isAdmin() || (isSignedIn() && isDriver() && driverId == request.auth.uid);
+    }
+
+    // ============================================================
+    // ATOMIC ACCEPTANCE LOCKS SUBCOLLECTION
+    // ============================================================
+    match /bookingRequests/{bookingId}/_locks/{lockId} {
+      allow read: if isSignedIn() && isEmailVerified();
+      allow write: if isSignedIn() && isEmailVerified() && (
+        isDriver() ||
+        request.auth.uid == get(/databases/$(database)/documents/bookingRequests/$(bookingId)).data.customerId ||
+        isAdmin()
+      );
     }
 
     // ============================================================
@@ -1073,6 +1087,7 @@ service cloud.firestore {
 
     // ============================================================
     // HIRE PAYMENTS (top-level collection for car hire payments)
+    // Server-side only: all writes must go through Cloud Functions / Admin SDK
     // ============================================================
     match /hirePayments/{paymentId} {
       allow get: if isSignedIn() && (
@@ -1082,18 +1097,10 @@ service cloud.firestore {
       );
       allow list: if isSignedIn() && (
         isAdmin() ||
-        isCarHireOrStaff() ||
-        request.auth.uid != null
+        (isCarHireOrStaff() && getUserData().companyId == resource.data.companyId) ||
+        resource.data.customerId == request.auth.uid
       );
-      allow create: if isSignedIn() && (
-        isAdmin() ||
-        request.resource.data.customerId == request.auth.uid
-      );
-      allow update: if isSignedIn() && (
-        isAdmin() ||
-        (isCarHireOrStaff() && getUserData().companyId == resource.data.companyId)
-      );
-      allow delete: if isAdmin();
+      allow create, update, delete: if false;
     }
 
     // ============================================================

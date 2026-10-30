@@ -404,29 +404,26 @@ export async function completeRentalHandshake(
 /**
  * Release a vehicle to the customer after pre-release inspection.
  * This transitions the hire from "approved" to "active".
+ *
+ * SECURITY: Handled server-side with company ownership validation and audit logging.
  */
 export async function releaseVehicle(
   requestId: string,
   vehicleId: string,
-  releasedBy: string
-): Promise<void> {
-  const requestRef = doc(db, COLLECTIONS.HIRE_REQUESTS, requestId);
-  const vehicleRef = doc(db, COLLECTIONS.VEHICLES, vehicleId);
-
-  await runTransaction(db, async (transaction) => {
-    // Update hire request to active
-    transaction.update(requestRef, {
-      status: "active",
-      startedAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-
-    // Update vehicle status to in_use
-    transaction.update(vehicleRef, {
-      status: "in_use",
-      updatedAt: serverTimestamp(),
-    });
+  releasedBy?: string
+): Promise<{ success: boolean }> {
+  const response = await fetch("/api/vendor/hire-requests/release", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ requestId, vehicleId }),
   });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.error || "Failed to release vehicle");
+  }
+
+  return { success: true };
 }
 
 // ============ ADMIN FUNCTIONS ============

@@ -18,9 +18,34 @@ import {
 
 const COLLECTION_NAME = "bookingRequests";
 
+export const VALID_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
+  pending: ["searching", "cancelled", "expired"],
+  searching: ["offered", "price_pending", "accepted", "cancelled", "expired", "failed"],
+  offered: ["accepted", "searching", "cancelled", "expired"],
+  price_pending: ["accepted", "searching", "cancelled", "expired"],
+  accepted: ["confirmed", "en_route", "cancelled"],
+  confirmed: ["en_route", "cancelled"],
+  en_route: ["arrived", "cancelled"],
+  arrived: ["in_progress", "cancelled"],
+  in_progress: ["completed", "cancelled"],
+  completed: [],
+  cancelled: [],
+  annulled: [],
+  expired: [],
+  failed: [],
+  archived: [],
+};
+
+export function assertValidTransition(currentStatus: BookingStatus, nextStatus: BookingStatus) {
+  const allowed = VALID_TRANSITIONS[currentStatus] || [];
+  if (!allowed.includes(nextStatus)) {
+    throw new Error(`ILLEGAL_LIFECYCLE_TRANSITION: Cannot transition from '${currentStatus}' to '${nextStatus}'`);
+  }
+}
+
 export class RideLifecycle {
   /**
-   * Helper to update booking status with timestamp and notification
+   * Helper to update booking status with timestamp, version check, and notification
    */
   private static async transition(
     bookingId: string, 
@@ -31,11 +56,15 @@ export class RideLifecycle {
     const bookingSnap = await getDoc(bookingRef);
     
     if (!bookingSnap.exists()) throw new Error("Booking not found");
-    const booking = bookingSnap.id ? { id: bookingSnap.id, ...bookingSnap.data() } as BookingRequest : null;
-    if (!booking) throw new Error("Invalid booking data");
+    const booking = { id: bookingSnap.id, ...bookingSnap.data() } as BookingRequest;
 
+    // Validate State Transition Invariant
+    assertValidTransition(booking.status, newStatus);
+
+    const nextVersion = (booking.version || 0) + 1;
     const updateData: Record<string, any> = {
       status: newStatus,
+      version: nextVersion,
       ...metadata
     };
 
@@ -99,11 +128,14 @@ export class RideLifecycle {
   }
 
   /**
-   * Driver accepts the ride
+   * Driver accepts the ride with atomic lock and versioning
    */
   static async accept(bookingId: string, driverId: string) {
     return runTransaction(db, async (transaction) => {
       const ref = doc(db, COLLECTION_NAME, bookingId);
+      const lockRef = doc(db, COLLECTION_NAME, bookingId, "_locks", "acceptance");
+      const proposalRef = doc(db, COLLECTION_NAME, bookingId, "proposals", driverId);
+
       const snap = await transaction.get(ref);
       if (!snap.exists()) throw new Error("Booking not found");
       
@@ -114,13 +146,40 @@ export class RideLifecycle {
         throw new Error("Ride is no longer available");
       }
 
+      // Check atomic acceptance lock
+      const lockSnap = await transaction.get(lockRef);
+      if (lockSnap.exists() && lockSnap.data()?.locked === true) {
+        throw new Error("Acceptance is already in progress by another driver");
+      }
+
+      const nextVersion = (booking.version || 0) + 1;
+
+      // Acquire atomic lock
+      transaction.set(lockRef, {
+        locked: true,
+        lockedBy: driverId,
+        lockedAt: Timestamp.now(),
+      });
+
+      // Update ride with winning driver and version increment
       transaction.update(ref, {
         status: "accepted",
         acceptedBy: driverId,
-        acceptedAt: Timestamp.now()
+        acceptedDriverId: driverId,
+        acceptedAt: Timestamp.now(),
+        version: nextVersion,
       });
+
+      // Atomically mark driver's proposal as accepted if exists
+      const proposalSnap = await transaction.get(proposalRef);
+      if (proposalSnap.exists()) {
+        transaction.update(proposalRef, {
+          status: "accepted",
+          resolvedAt: Timestamp.now(),
+        });
+      }
       
-      return { success: true };
+      return { success: true, version: nextVersion };
     }).then(() => this.notifyCustomer({ id: bookingId, acceptedBy: driverId } as any, "accepted"));
   }
 
@@ -204,19 +263,25 @@ export class RideLifecycle {
       const booking = snap.data() as BookingRequest;
       if (!booking.acceptedBy) throw new Error("No driver assigned");
 
+      assertValidTransition(booking.status, "completed");
+      const nextVersion = (booking.version || 0) + 1;
+
       const driverRef = doc(db, "drivers", booking.acceptedBy);
       const driverSnap = await transaction.get(driverRef);
 
       transaction.update(ref, {
         status: "completed",
         completedAt: Timestamp.now(),
-        fare
+        fare,
+        version: nextVersion,
       });
 
       if (driverSnap.exists()) {
         const total = driverSnap.data().totalRides || 0;
         transaction.update(driverRef, { totalRides: total + 1 });
       }
-    }).then(() => this.transition(bookingId, "completed", { fare }));
+
+      return { booking, nextVersion };
+    }).then(({ booking }) => this.notifyCustomer({ id: bookingId, acceptedBy: booking.acceptedBy, customerId: booking.customerId, pickupLocation: booking.pickupLocation } as any, "completed"));
   }
 }

@@ -25,6 +25,7 @@ export type AuditAction =
   | "reject_payment"
   | "approve_hire_request"
   | "reject_hire_request"
+  | "release_vehicle"
   | "invite_staff"
   | "remove_staff"
   | "update_permissions"

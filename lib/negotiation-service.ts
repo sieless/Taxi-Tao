@@ -9,6 +9,7 @@ import {
   where,
   getDocs,
   Timestamp,
+  runTransaction,
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { Negotiation, NegotiationMessage } from "./types";
@@ -138,36 +139,92 @@ export async function acceptOffer(
   negotiationId: string,
   acceptedBy: "customer" | "driver"
 ): Promise<void> {
-  const negotiation = await getNegotiationOrFail(negotiationId);
-
   const message = createMessage(acceptedBy, "accept", {
-    price: negotiation.currentOffer,
+    price: 0,
     message: `${acceptedBy === "driver" ? "Driver" : "Customer"} accepted the offer`,
   });
 
-  await updateDoc(doc(db, "negotiations", negotiationId), {
-    status: "accepted",
-    resolvedAt: now(),
-    messages: [...negotiation.messages, message],
-  });
+  const { finalFare, otherParty, bookingRequestId } = await runTransaction(db, async (transaction) => {
+    const negRef = doc(db, "negotiations", negotiationId);
+    const negSnap = await transaction.get(negRef);
+    if (!negSnap.exists()) throw new Error("Negotiation not found");
 
-  // Overhaul: Synchronize with BookingRequest
-  const bookingRef = doc(db, "bookingRequests", negotiation.bookingRequestId);
-  await updateDoc(bookingRef, {
-    status: "confirmed",
-    fare: negotiation.currentOffer,
-    acceptedBy: negotiation.driverId,
-    confirmedAt: now(),
-  });
+    const negData = negSnap.data() as Negotiation;
+    if (negData.status !== "pending") {
+      throw new Error("Negotiation is no longer pending");
+    }
 
-  const otherParty =
-    acceptedBy === "driver" ? negotiation.customerId : negotiation.driverId;
+    const bookingRef = doc(db, "bookingRequests", negData.bookingRequestId);
+    const lockRef = doc(db, "bookingRequests", negData.bookingRequestId, "_locks", "acceptance");
+    const proposalRef = doc(db, "bookingRequests", negData.bookingRequestId, "proposals", negData.driverId);
+
+    const bookingSnap = await transaction.get(bookingRef);
+    if (!bookingSnap.exists()) throw new Error("Booking request not found");
+
+    const bookingData = bookingSnap.data();
+    const validPreAcceptance = ["searching", "offered", "price_pending"];
+    if (!validPreAcceptance.includes(bookingData.status)) {
+      throw new Error("Ride is no longer available");
+    }
+
+    // Check atomic acceptance lock
+    const lockSnap = await transaction.get(lockRef);
+    if (lockSnap.exists() && lockSnap.data()?.locked === true) {
+      throw new Error("Acceptance is already in progress");
+    }
+
+    const nextVersion = (bookingData.version || 0) + 1;
+    message.price = negData.currentOffer;
+
+    // Acquire lock
+    transaction.set(lockRef, {
+      locked: true,
+      lockedBy: negData.driverId,
+      lockedAt: Timestamp.now(),
+      negotiationId,
+    });
+
+    // Update negotiation
+    transaction.update(negRef, {
+      status: "accepted",
+      resolvedAt: Timestamp.now(),
+      messages: [...(negData.messages || []), message],
+    });
+
+    // Update booking request atomically
+    transaction.update(bookingRef, {
+      status: "accepted",
+      fare: negData.currentOffer,
+      finalFare: negData.currentOffer,
+      acceptedBy: negData.driverId,
+      acceptedDriverId: negData.driverId,
+      acceptedAt: Timestamp.now(),
+      version: nextVersion,
+    });
+
+    // Update proposal doc if present
+    const proposalSnap = await transaction.get(proposalRef);
+    if (proposalSnap.exists()) {
+      transaction.update(proposalRef, {
+        status: "accepted",
+        price: negData.currentOffer,
+        resolvedAt: Timestamp.now(),
+      });
+    }
+
+    const recipient = acceptedBy === "driver" ? negData.customerId : negData.driverId;
+    return {
+      finalFare: negData.currentOffer,
+      otherParty: recipient,
+      bookingRequestId: negData.bookingRequestId,
+    };
+  });
 
   await notify(
     otherParty,
-    negotiation.bookingRequestId,
+    bookingRequestId,
     "ride_request",
-    `${acceptedBy === "driver" ? "Driver" : "Customer"} accepted the offer of KES ${negotiation.currentOffer}.`,
+    `${acceptedBy === "driver" ? "Driver" : "Customer"} accepted the offer of KES ${finalFare}.`,
     { action: "view_booking" }
   );
 }
